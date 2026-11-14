@@ -87,7 +87,6 @@ class PasswordResetTest extends TestCase
 
         $this->get('/login')->assertRedirect('/app/login');
         $this->post('/login', ['email' => $user->email, 'password' => 'password'])->assertStatus(405);
-        $this->post('/logout')->assertNotFound();
         $this->assertGuest();
     }
 }

@@ -2,10 +2,21 @@ import { defineConfig } from 'vite';
 import laravel from 'laravel-vite-plugin';
 import tailwindcss from '@tailwindcss/vite';
 
+// Keep in sync with App\Enums\MenuTheme (enforced by tests/Feature/Architecture/FrontendBundlesTest.php).
+const menuThemes = ['classic', 'minimal', 'bistro', 'cafe', 'grid'];
+
 export default defineConfig({
     plugins: [
         laravel({
-            input: ['resources/css/app.css', 'resources/js/app.js'],
+            input: [
+                // Public site (marketing + auth pages): Tailwind, Alpine, axios.
+                'resources/css/app.css',
+                'resources/js/app.js',
+                // QR menus: base styles + one theme stylesheet + Alpine-only script.
+                'resources/css/menu-base.css',
+                'resources/js/menu.js',
+                ...menuThemes.map((theme) => `resources/css/themes/${theme}.css`),
+            ],
             refresh: true,
         }),
         tailwindcss(),

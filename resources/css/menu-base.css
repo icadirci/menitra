@@ -1,0 +1,18 @@
+/*
+ * QR menu base bundle.
+ *
+ * Loaded on every public menu page, before exactly one theme stylesheet
+ * (resources/css/themes/{key}.css). Never loaded on the public site or in the
+ * Filament panels, and it scans only menu markup, so marketing classes never
+ * end up in menu CSS (and vice versa).
+ *
+ * Tenant customisation (ThemeSettings: colours, fonts) is applied at runtime as
+ * CSS custom properties on the menu root element, never as per-tenant builds.
+ * Shared, theme-independent menu styles belong here; theme looks do not.
+ */
+@import 'tailwindcss' source(none);
+
+@source '../views/menu';
+@source '../views/components/menu';
+@source '../views/themes';
+@source '../js/menu.js';

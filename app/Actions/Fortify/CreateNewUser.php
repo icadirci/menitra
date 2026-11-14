@@ -58,17 +58,15 @@ class CreateNewUser implements CreatesNewUsers
             'slug' => __('auth.fields.slug'),
         ])->validate();
 
-        $locale = array_key_exists(app()->getLocale(), config('locales.supported'))
-            ? app()->getLocale()
-            : config('locales.default');
-
         return $this->registration->register(
             name: $data['name'],
             email: Str::lower($data['email']),
             password: $data['password'],
             businessName: $data['business_name'],
             slug: $data['slug'],
-            locale: $locale,
+            // New businesses always start in the platform default (tr); they can
+            // enable and switch locales later. Independent of the UI language.
+            locale: config('locales.default'),
         );
     }
 }

@@ -130,7 +130,7 @@ Details: [tenancy.md](tenancy.md), [menu-system.md](menu-system.md).
 - After commit, `TenantRegistered` is fired.
 - Registration fields: name, email, password, business name, slug (auto-suggested, editable).
 - Rate limits: Filament login (5/min), registration (`registration`: 5/min per IP), password reset (`password-reset`: 5/min per email+IP, 20/min per IP), verification links and resends (6/min). The session is regenerated on login.
-- `User` implements `MustVerifyEmail`, so registration sends a verification email. Panels don't require a verified email yet (open decision).
+- `User` implements `MustVerifyEmail`, so registration sends a verification email. **The business panel requires a verified email** (`EnsureEmailIsVerified` in the `app` panel's auth middleware, Livewire-persistent); unverified users are redirected to `/email/verify`. The admin panel doesn't require it. A central `POST /logout` (Fortify controller) lets an unverified user leave the verification page.
 - The session cookie is bound to the central domain only (see [tenancy.md](tenancy.md#security-controls)).
 - `/account` is minimal and read-only: plan, trial/grace status, public menu link and QR link. **It is not a dashboard.**
 
@@ -178,7 +178,7 @@ Platform roles: `super_admin` holds every platform permission; `platform_staff` 
   - Themes showcase (live demo menus from `DemoTenantSeeder`, no hard-coded menu data)
   - Contact (Form Request, rate limited, queued mail)
   - Privacy and Terms
-- Locales: Turkish at `/`, English at `/en/…`, set by the `SetMarketingLocale` middleware. All strings come from `lang/{locale}/marketing.php`.
+- Locales: Turkish at `/`, English at `/en/…`, set by the `SetMarketingLocale` middleware. All strings come from `lang/{locale}/marketing.php`. App locale `tr`, fallback `en`; Laravel's own strings are translated in `lang/tr/{validation,passwords,pagination,auth}.php` and `lang/tr.json`.
 - SEO: per-page meta and Open Graph component, canonical URLs, hreflang between tr and en, `sitemap.xml`.
 - Assets: `app.css` and `app.js`, which are never loaded on menu pages.
 
@@ -237,8 +237,10 @@ app/
 config/                      tenancy.php, locales.php, subscriptions.php, fortify.php
 lang/{tr,en}/                auth.php, marketing.php, menu.php, validation.php
 resources/
-  css/                       app.css, menu-base.css, themes/{classic,minimal,bistro,cafe,grid}.css
-  js/                        app.js (marketing + Alpine), menu.js (Alpine only)
+  css/                       app.css (public site), menu-base.css (menus, Tailwind source(none)),
+                             themes/{classic,minimal,bistro,cafe,grid}.css (@reference menu-base)
+  js/                        app.js (marketing + auth + Alpine), menu.js (Alpine only),
+                             lib/alpine.js (single guarded Alpine starter)
   views/
     layouts/                 marketing, auth, menu
     components/{ui,marketing,menu}/
@@ -283,7 +285,7 @@ Each phase ends with tests run, a summary of changed files, and a review pause.
 |---|---|---|
 | 0. Environment | Docker Compose (PHP 8.5 + `intl`, `bcmath`, PostgreSQL, Redis); `composer.json` php `^8.4`; `.env.example` → `pgsql` + `redis` (separate DBs); PostgreSQL test DB (`restano_test`). `laravel/fortify` moves to Phase 4, `alpinejs` to Phase 5 | `docker exec restano-php-fpm-1 php artisan test` green on PostgreSQL |
 | P. Panels | Filament 5 install; `admin` and `app` panels with login and dashboards on the central domain; `PlatformRole` + `users.platform_role`; `TenantContext`, `BelongsToTenant`; tenants, translations, memberships, locations, `location_user`; `ResolveTenantFromMembership`; branch authorization | Panel, isolation and authorization tests pass |
-| 1. Tenancy core | Remainder after Phase P: resolver pipeline, public middleware, queue propagation, `tenant_locales` | Isolation, scope and queue tests pass |
+| 1. Tenancy core | Remainder after Phase P: resolver pipeline, public middleware, `tenant_locales` (queue propagation done 2026-11-15) | Isolation, scope and queue tests pass |
 | 2. Database foundation | Remaining migrations with composite FKs, enums, models, `HasTranslations`, factories | DB rejects cross-tenant inserts; relationship tests pass |
 | 3. Subscriptions | Plans, prices, limits, `SubscriptionService`, lifecycle command, `FeatureGate`, `PlanSeeder` | Lifecycle and grace tests pass |
 | 4. Authentication | Fortify (registration, password reset, email verification), Blade auth views (tr/en), `TenantRegistrationService`, `/account`; `GET /login` → `/app/login` | Registration atomicity and auth tests pass |
@@ -292,7 +294,7 @@ Each phase ends with tests run, a summary of changed files, and a review pause.
 | 7. Themes | `minimal`, `bistro`, `cafe`, `grid`; theme showcase | Theme architecture and zero-query tests pass for all five |
 | 8. Hardening | CSP and security headers, HTTP caching/ETag, image upload pipeline, rate limits, performance pass | Security checklist and performance budget met |
 
-**Environment status** (2026-11-15): Node 24 LTS runs in the on-demand `node` Compose service; Postgres data is on the named volume `restano_postgres-data`; Alpine.js is not installed yet (Phase 5).
+**Environment status** (2026-11-15): Node 24 LTS runs in the on-demand `node` Compose service; Postgres data is on the named volume `restano_postgres-data`; `queue` (Redis worker), `scheduler` and `mailpit` services run with Compose; Alpine.js is installed (public site and menus only).
 
 ## Open decisions
 
@@ -303,7 +305,6 @@ Working defaults apply until each item is confirmed.
 | Plan names, TRY prices, limits | Placeholder seeds |
 | Pricing shown KDV-inclusive or "+KDV" | Display-only decision; storage unaffected |
 | Trial / grace length | 14 days / 7 days |
-| When email verification is required | To be decided |
 | QR image generation library | `chillerlan/php-qrcode` is now installed as a mandatory Filament dependency; using it directly for QR images still needs a decision |
 | Per-location price overrides | Deferred (`location_item_states` can take `price_override` later) |
 | Marketing locales | `tr` at `/`, `en` at `/en` |

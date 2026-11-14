@@ -30,7 +30,7 @@ Area-specific rules live in [.claude/rules/](.claude/rules/) (backend, frontend,
 ## 2. Technology Stack
 
 - **Backend:** PHP 8.4+, Laravel 12, PostgreSQL, Redis (cache, queue, session on separate DBs), Eloquent, Form Requests, Policies/Gates, Queues, **Laravel Fortify** (headless auth with our own Blade views for public registration, password reset and email verification), **Filament 5** (the `/admin` and `/app` panels only).
-- **Frontend:** Blade (SSR), Tailwind CSS 4, Alpine.js, Vite, vanilla JS when appropriate.
+- **Frontend:** Blade (SSR), Tailwind CSS 4, Alpine.js (npm `alpinejs`, public site and QR menus only), Vite, vanilla JS when appropriate. Bundles: `app.css` + `app.js` (public site, auth); `menu-base.css` + one `themes/{key}.css` + `menu.js` (QR menus). Filament panels load none of them.
 - **Testing:** PHPUnit against a PostgreSQL test database.
 - **Livewire exception:** Livewire is installed **only as a Filament dependency** and is used only inside the `/admin` and `/app` panels. Never build Livewire components, or load Livewire assets, in the marketing site, auth pages or public QR menus. Those stay Blade + Tailwind + Alpine.
 - **Forbidden unless explicitly requested:** React, Vue, Next, Nuxt, Inertia, Livewire (outside the exception above), Filament plugins, Bootstrap, jQuery, Laravel starter kits, tenancy packages (e.g. `stancl/tenancy`), translation packages (e.g. `spatie/laravel-translatable`).
@@ -43,16 +43,16 @@ Area-specific rules live in [.claude/rules/](.claude/rules/) (backend, frontend,
 3. **Tenant identification (v1):** central domain `restano.app`, subdomains `{slug}.restano.app`, path `restano.app/m/{slug}`. In the business panel the URL is `/app/{tenant-slug}`. The slug is an identifier, not authorization: the tenant is set in `TenantContext` only after the user's active membership in it is verified. A raw tenant ID from the client is never trusted. Custom domains later.
 4. **Business structure:** tenant → many `locations` (branches) ↔ many `menus` via the `location_menu` pivot. Menus belong to the tenant so they can be shared across branches. Content is shared; operational state (sold-out, hours) is per location.
 5. **Menu content:** menus → categories → items → variants; reusable extra groups → extras; allergens and dietary labels are PHP enums stored in pivot tables; featured/popular flags; availability per item and sold-out per location.
-6. **Translations:** one `{entity}_translations` table per translatable entity; base tables hold no translatable text. In-house `HasTranslations` trait with fallback (requested → tenant default → first available). Platform locales in `config/locales.php`; per-tenant locales in `tenant_locales`. UI strings in `lang/{locale}/`.
+6. **Translations:** one `{entity}_translations` table per translatable entity; base tables hold no translatable text. In-house `HasTranslations` trait with fallback (requested → tenant default → first available). Platform locales in `config/locales.php`; per-tenant locales in `tenant_locales`. UI strings in `lang/{locale}/`. App locale `tr`, fallback `en`; new businesses always start with `default_locale = tr`.
 7. **Integrity:** every tenant-owned table has `UNIQUE (tenant_id, id)`; tenant-owned children and pivots reference parents with **composite foreign keys** `(tenant_id, parent_id)` so cross-tenant links cannot be stored.
 8. **QR codes:** stable `restano.app/q/{code}` (random, non-sequential) → 302 to the current canonical menu URL computed at scan time by `MenuUrlGenerator`. `QrCodeScanned` event is the analytics hook.
 9. **Rendering:** `PublicMenuService` builds a cached, locale-resolved, allow-listed `MenuSnapshot` DTO; time-dependent state (open now, serving now) is computed per request in `LiveMenuState` and never cached.
 10. **Themes:** pure presentation. Selected per tenant with an optional location override. Themes receive only `MenuSnapshot`, `LiveMenuState`, `ThemeSettings`. Five themes: `classic`, `minimal`, `bistro`, `cafe`, `grid`.
 11. **Caching:** version-counter invalidation — a tenant content version and a per-location version, both embedded in snapshot keys. All keys built only by `MenuCacheKeys`, prefixed `qrmenu:`.
-12. **Queues:** `tenant_id` is injected into every job payload and the context is restored on `JobProcessing` (before unserialization) and always cleared afterwards.
+12. **Queues:** `tenant_id` is injected into every job payload and the context is restored on `JobProcessing` (before unserialization) and always cleared afterwards (`TenantQueueListener`). Jobs never inherit a context; a missing, deleted or suspended tenant fails the job without running it.
 13. **Subscriptions:** provider-agnostic; monthly/annual prices in TRY (stored in kuruş), trial → active → grace → expired lifecycle, configurable grace period, plan limits via `PlanFeature` enum + `FeatureGate`. After grace the public menu shows a professional unavailable page. **Tenant data is never deleted automatically.**
 14. **Registration** (Fortify → `TenantRegistrationService`) creates in one transaction: user, tenant (+ name translation), owner membership, default location, default menu (attached), trial subscription (+ `trial_started` event). Tenant locales, default theme settings and the default QR code are added to the same transaction when those tables exist. Public registration can never grant a platform role.
-15. **Panels (Filament 5):** `admin` panel at `/admin` (platform owners and staff) and `app` panel at `/app/{tenant-slug}` (business users, Filament tenancy + tenant switcher). Both use Filament's own login (`/admin/login`, `/app/login`) on the shared `web` guard and session; panel registration is disabled. Both are registered for the central domain only, and so are Livewire's update, upload and preview endpoints. Fortify's own routes are ignored: only registration, password reset and email verification are exposed (`routes/auth.php`); `GET /login` redirects to `/app/login`. Members of a suspended business get an explicit 403 in `/app`; their data is untouched. Panels are presentation: they call the same services and policies as the rest of the app.
+15. **Panels (Filament 5):** `admin` panel at `/admin` (platform owners and staff) and `app` panel at `/app/{tenant-slug}` (business users, Filament tenancy + tenant switcher). Both use Filament's own login (`/admin/login`, `/app/login`) on the shared `web` guard and session; panel registration is disabled. Both are registered for the central domain only, and so are Livewire's update, upload and preview endpoints. Fortify's own routes are ignored: only registration, password reset and email verification are exposed (`routes/auth.php`); `GET /login` redirects to `/app/login`. Members of a suspended business get an explicit 403 in `/app`; their data is untouched. `/app` requires a verified email (unverified users go to `/email/verify`); `/admin` doesn't. A central `POST /logout` exists for the verification page. Panels are presentation: they call the same services and policies as the rest of the app.
 16. **Roles:** platform roles in a nullable `users.platform_role` (`PlatformRole`: `super_admin`, `platform_staff`). Business roles on the membership `tenant_user.role` (`TenantRole`: `owner`, `manager`, `branch_staff`). Branch access through `location_user` (membership ↔ location, composite FKs). Owners reach every branch of their tenant; managers and branch staff only their assigned branches. No roles/permissions package. Access to both panels requires both grants explicitly.
 
 ## 4. Development Principles
@@ -94,7 +94,6 @@ Work proceeds phase by phase with a review pause between phases (details in [ove
 - Plan names, prices and limits — placeholder seeds until defined.
 - Pricing shown KDV-inclusive or "+KDV" — display only.
 - Trial 14 days, grace 7 days.
-- Email verification requirement timing (the Fortify flow works; panels don't enforce verified emails yet).
 - QR image generation library (`chillerlan/php-qrcode` is installed as a mandatory Filament dependency; using it directly for QR images still needs a decision).
 - Per-location price overrides — deferred.
 - Marketing site locales: `tr` at `/`, `en` at `/en`.
@@ -118,6 +117,12 @@ Inside the Compose network, services reach each other by service name (`postgres
 - PHP extensions are installed in `phpdocker/php-fpm/Dockerfile` as `php8.5-*` apt packages (e.g. `php8.5-intl`, `php8.5-bcmath`); rebuild with `docker compose up -d --build php-fpm`.
 - Databases: `restano` (development) and `restano_test` (PHPUnit, configured in `phpunit.xml`). If the test DB is ever missing: `docker exec restano-postgres-1 createdb -U root restano_test`.
 - Redis logical DBs: `0` default/locks, `1` cache, `2` queue, `3` session.
+
+| Service | Container | Purpose |
+|---|---|---|
+| `queue` | `restano-queue-1` | `php artisan queue:work redis` as `www-data` (same image as php-fpm). **Restart after code changes:** `docker compose restart queue` |
+| `scheduler` | `restano-scheduler-1` | `php artisan schedule:work` as `www-data` |
+| `mailpit` | `restano-mailpit-1` | Mail catcher (`axllent/mailpit:v1.33.1`): SMTP `mailpit:1025` inside the network, UI at http://localhost:8025 (bound to 127.0.0.1) |
 
 ### PHP, Composer, Artisan, tests → `php-fpm` container
 

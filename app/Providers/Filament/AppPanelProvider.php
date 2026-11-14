@@ -15,6 +15,7 @@ use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
 use Filament\Widgets\AccountWidget;
+use Illuminate\Auth\Middleware\EnsureEmailIsVerified;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
@@ -25,7 +26,8 @@ use Illuminate\View\Middleware\ShareErrorsFromSession;
 /**
  * Business management panel (/app/{tenant-slug}) for tenant members.
  *
- * - Panel access: User::canAccessPanel() (active membership required).
+ * - Panel access: User::canAccessPanel() (active membership required) and a
+ *   verified email address (EnsureEmailIsVerified).
  * - Tenant access: Filament resolves the slug and calls User::canAccessTenant();
  *   ResolveTenantFromMembership re-verifies and fills TenantContext.
  * - Isolation: BelongsToTenant on every tenant-owned model, not Filament's
@@ -72,8 +74,12 @@ class AppPanelProvider extends PanelProvider
                 DisableBladeIconComponents::class,
                 DispatchServingFilamentEvent::class,
             ])
+            // A verified email is required for the business panel; unverified users
+            // are sent to Fortify's notice page (/email/verify). Persistent, so it
+            // is enforced on Livewire updates too (403 for JSON requests).
             ->authMiddleware([
                 Authenticate::class,
-            ]);
+                EnsureEmailIsVerified::class,
+            ], isPersistent: true);
     }
 }

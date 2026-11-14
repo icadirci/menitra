@@ -17,7 +17,7 @@
             </button>
         </form>
 
-        <form method="POST" action="{{ route('filament.app.auth.logout') }}">
+        <form method="POST" action="{{ route('logout') }}">
             @csrf
             <button type="submit" class="text-sm font-medium text-zinc-600 underline underline-offset-2 hover:text-zinc-900">
                 {{ __('auth.verify.logout') }}

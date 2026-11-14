@@ -102,12 +102,26 @@ class RegistrationTest extends TestCase
         Notification::assertSentTo($user, VerifyEmail::class);
     }
 
-    public function test_registered_owner_lands_in_their_business_panel(): void
+    public function test_registered_owner_must_verify_their_email_before_entering_the_panel(): void
     {
         $this->post('/register', $this->payload());
 
+        $this->get('/app/yaman-kahvesi')->assertRedirect('http://localhost/email/verify');
+
+        // Verify the instance the session guard holds (signed in by registration).
+        auth()->user()->markEmailAsVerified();
+
         $this->get('/app')->assertRedirect('http://localhost/app/yaman-kahvesi');
         $this->get('/app/yaman-kahvesi')->assertOk()->assertSee('Yaman Kahvesi');
+    }
+
+    public function test_new_businesses_default_to_turkish_whatever_the_ui_language(): void
+    {
+        app()->setLocale('en');
+
+        $this->post('/register', $this->payload());
+
+        $this->assertSame('tr', Tenant::query()->sole()->default_locale);
     }
 
     public function test_public_registration_can_never_grant_a_platform_role_or_pick_a_tenant(): void

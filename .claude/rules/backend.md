@@ -24,6 +24,7 @@
 - Scope bypass (`withoutTenantScope()`) is allowed only in tenant resolvers, `QrCodeResolver` and commands/jobs marked `TenantAgnostic`.
 - Cross-tenant work (e.g. subscription lifecycle) loops over tenants and dispatches one tenant-scoped job per tenant.
 - Listeners, observers and dispatched jobs that depend on written data use `afterCommit`.
+- Jobs get the tenant automatically from the dispatching context (`TenantQueueListener`); never pass a raw tenant id to a job to switch tenants.
 
 ## Panels and authorization
 - Filament panels are presentation only: resources and pages call services and policies, and never hold business logic.

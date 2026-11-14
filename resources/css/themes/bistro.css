@@ -1,0 +1,11 @@
+/*
+ * Menu theme: bistro (App\Enums\MenuTheme::Bistro).
+ *
+ * Loaded after menu-base.css on menu pages whose active theme is `bistro`.
+ * Pure presentation:
+ *   - style only markup from resources/views/themes/bistro/ and components/menu/;
+ *   - scope rules under [data-theme='bistro'];
+ *   - read tenant colours/fonts from CSS custom properties, never hard-code them.
+ * @reference gives access to Tailwind utilities/@apply without re-emitting them.
+ */
+@reference '../menu-base.css';

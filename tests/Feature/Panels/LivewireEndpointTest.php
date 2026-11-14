@@ -103,6 +103,16 @@ class LivewireEndpointTest extends TestCase
         $this->update($snapshot)->assertNotFound();
     }
 
+    public function test_update_is_refused_once_the_email_is_no_longer_verified(): void
+    {
+        $membership = TenantMembership::factory()->create();
+        $snapshot = $this->snapshotFrom($this->actingAs($membership->user)->get("/app/{$membership->tenant->slug}")->assertOk());
+
+        $membership->user->forceFill(['email_verified_at' => null])->save();
+
+        $this->update($snapshot)->assertForbidden();
+    }
+
     public function test_update_from_a_suspended_tenant_page_is_refused(): void
     {
         $membership = TenantMembership::factory()->create();

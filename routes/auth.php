@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use Illuminate\Routing\RedirectController;
 use Illuminate\Support\Facades\Route;
+use Laravel\Fortify\Http\Controllers\AuthenticatedSessionController;
 use Laravel\Fortify\Http\Controllers\EmailVerificationNotificationController;
 use Laravel\Fortify\Http\Controllers\EmailVerificationPromptController;
 use Laravel\Fortify\Http\Controllers\NewPasswordController;
@@ -17,8 +18,10 @@ use Laravel\Fortify\Http\Controllers\VerifyEmailController;
 |--------------------------------------------------------------------------
 |
 | Fortify controllers for registration, password reset and email
-| verification. There is deliberately no POST /login or /logout here: login
-| and logout belong to the Filament panels (/admin/login, /app/login).
+| verification. There is deliberately no POST /login: login belongs to the
+| Filament panels (/admin/login, /app/login). POST /logout exists because the
+| panel's own logout sits behind the verified-email requirement, which an
+| unverified user on /email/verify can't pass.
 |
 */
 
@@ -56,5 +59,7 @@ Route::domain(config('tenancy.central_domain'))->group(function (): void {
         Route::post('/email/verification-notification', [EmailVerificationNotificationController::class, 'store'])
             ->middleware('throttle:6,1')
             ->name('verification.send');
+
+        Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
     });
 });

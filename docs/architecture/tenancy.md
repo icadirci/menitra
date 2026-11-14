@@ -101,7 +101,7 @@ Request
 
 - Lookups are cached as `qrmenu:host:{host}` and `qrmenu:slug:{slug}`, both holding a `ResolvedTenant`. With a warm cache, resolution needs zero queries. The entries are cleared when the slug, status, locales, theme or subscription changes (see [caching.md](caching.md)).
 - A suspended tenant resolves, but `PublicMenuService` renders the unavailable page. An unknown slug or host returns 404.
-- Marketing, auth and panel routes are registered only for the central domain. Tenant subdomains serve only public menu routes.
+- Marketing, auth and panel routes are registered only for the central domain. Tenant subdomains serve only public menu routes; until those exist, every path on a tenant subdomain (including `/`) is 404.
 
 ## Business panel tenancy (`/app/{tenant-slug}`)
 
@@ -152,6 +152,13 @@ Livewire is used only by the panels, so its endpoints follow the panels:
 4. Jobs and commands that span tenants implement the `TenantAgnostic` marker. They iterate over tenants and dispatch one tenant-scoped job per tenant, so a failure in one tenant doesn't affect the others.
 5. Listeners, observers and jobs that depend on newly written data are dispatched `afterCommit`.
 
+**Implementation (2026-11-15):** `App\Tenancy\Queue\TenantQueueListener`, registered in `TenancyServiceProvider`.
+- `Queue::createPayloadUsing()` adds `tenant_id` only while a context is active.
+- On `JobProcessing` the context is **cleared first** (a job never inherits one), then loaded from the payload. A missing, soft-deleted or suspended tenant marks the job failed (`TenantNotResolvedException`) and its `handle()` never runs. A job without `tenant_id` runs with an empty context, so any tenant-owned query throws.
+- After the attempt (`JobProcessed`, `JobFailed`, `JobExceptionOccurred`, `JobAttempted`) the previous context is restored, idempotently per job UUID: empty in a worker, the request's own context for jobs run inline by the `sync` driver.
+- The worker additionally resets scoped instances (and so `TenantContext`) between jobs.
+- `TenantAgnostic` is introduced with the first cross-tenant command (subscription lifecycle).
+
 ## File storage
 
 - Path layout: `tenants/{tenant_public_id}/{type}/{uuid}.{ext}`, where type is `logo`, `cover`, `locations`, `categories` or `items`.
@@ -185,9 +192,10 @@ Livewire is used only by the panels, so its endpoints follow the panels:
 - Tenant A cannot list, bind, update or delete tenant B's records.
 - Querying a tenant-owned model without a context throws.
 - Inserting a child row whose `tenant_id` differs from its parent's fails at the database level.
-- A job dispatched under tenant A runs under tenant A, and the context is empty after it.
+- A job dispatched under tenant A runs under tenant A, and the context is empty after it; jobs never inherit a stale context; jobs of suspended, deleted or unknown tenants fail without running; inline `sync` jobs restore the request's context. *(TenantQueueTest)*
 - Subdomain and path resolve the same tenant. An unknown slug gives 404. A reserved slug is rejected at registration.
-- The session cookie isn't sent to tenant subdomains (configuration test).
+- The session cookie isn't sent to tenant subdomains: config, raw `Set-Cookie` headers (no `Domain` attribute) and RFC 6265 domain matching. *(SessionCookieTest)*
+- Central-only routes are 404 on tenant subdomains and unknown hosts. *(DomainIsolationTest)*
 - `/app/{slug}` returns 404 for a user without an active membership in that tenant and for an inactive membership; members of a suspended tenant get 403; `TenantContext` stays empty in all three cases.
 - Livewire updates are refused on tenant hosts and re-check panel and tenant access on every request.
 - A member of tenant A sees only tenant A's locations in `/app/{a}`; branch staff see only assigned locations.

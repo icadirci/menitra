@@ -33,7 +33,10 @@
 - Livewire endpoints serve panels only: the update route is bound to the central domain (the default host-agnostic route is disabled), and temporary upload/preview require the central host plus a user with panel access (`RestrictLivewireFileEndpoints`), on top of Livewire's signed URLs and throttling.
 - Members of a suspended tenant get an explicit 403 in `/app` and `TenantContext` is never set; non-members always get 404.
 - Public registration never accepts `platform_role`, `tenant_id` or `role`; only the validated fields reach `TenantRegistrationService`.
-- There is a single login per panel (Filament). Fortify's own routes are ignored; do not add another `POST /login`.
+- There is a single login per panel (Filament). Fortify's own routes are ignored; do not add another `POST /login`. The central `POST /logout` exists only because the verification page can't reach the panel's logout.
+- The business panel requires a verified email (`EnsureEmailIsVerified`, Livewire-persistent); the admin panel doesn't.
+- Marketing and auth routes are registered for the central domain only; a tenant subdomain's `/` is 404 until public menus exist.
+- Queued jobs carry `tenant_id` in the payload and never inherit a context; jobs of missing, deleted or suspended tenants fail without running.
 
 ## Sessions and domains
 - The session cookie is bound to the central domain only, never `.restano.app`, so tenant subdomains never receive auth cookies.

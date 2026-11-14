@@ -18,6 +18,10 @@
 
 ## Bundles
 - Marketing and auth pages (`layouts/auth`) load `resources/css/app.css` + `resources/js/app.js`.
+- Alpine is started only through `resources/js/lib/alpine.js` (`startAlpine()`), which never starts a second instance if one exists. Filament/Livewire bring their own Alpine; never load `app.js` or `menu.js` in the panels.
+- `menu.js` stays Alpine-only: no axios, no `bootstrap.js`, no marketing code.
+- `menu-base.css` imports Tailwind with `source(none)` and scans only menu markup; `app.css` excludes menu markup. Never mix the two.
+- One stylesheet per `MenuTheme` in `resources/css/themes/{key}.css`, listed in `vite.config.js` `menuThemes` (enforced by `FrontendBundlesTest`). Theme files use `@reference '../menu-base.css'`, scope rules under `[data-theme='{key}']` and read tenant values from CSS custom properties.
 - All npm/Vite commands run in the `node` Docker service (CLAUDE.md §9); never on the host.
 - Menu pages load `menu-base.css`, the active theme stylesheet and `menu.js` (Alpine only). Never load marketing assets on menu pages.
 

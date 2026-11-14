@@ -1,0 +1,11 @@
+/*
+ * Menu theme: classic (App\Enums\MenuTheme::Classic).
+ *
+ * Loaded after menu-base.css on menu pages whose active theme is `classic`.
+ * Pure presentation:
+ *   - style only markup from resources/views/themes/classic/ and components/menu/;
+ *   - scope rules under [data-theme='classic'];
+ *   - read tenant colours/fonts from CSS custom properties, never hard-code them.
+ * @reference gives access to Tailwind utilities/@apply without re-emitting them.
+ */
+@reference '../menu-base.css';

@@ -1,0 +1,11 @@
+/*
+ * Menu theme: grid (App\Enums\MenuTheme::Grid).
+ *
+ * Loaded after menu-base.css on menu pages whose active theme is `grid`.
+ * Pure presentation:
+ *   - style only markup from resources/views/themes/grid/ and components/menu/;
+ *   - scope rules under [data-theme='grid'];
+ *   - read tenant colours/fonts from CSS custom properties, never hard-code them.
+ * @reference gives access to Tailwind utilities/@apply without re-emitting them.
+ */
+@reference '../menu-base.css';

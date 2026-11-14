@@ -32,6 +32,54 @@ services:
             - './phpdocker/php-fpm/php-ini-overrides.ini:/etc/php/8.5/fpm/conf.d/99-overrides.ini'
             - './phpdocker/php-fpm/php-ini-overrides.ini:/etc/php/8.5/cli/conf.d/99-overrides.ini'
 
+    # Redis queue worker. Same image as php-fpm; runs as www-data so files it
+    # writes in storage/ stay writable for PHP-FPM. Restart it after code changes:
+    # `docker compose restart queue`.
+    queue:
+        image: 'restano-php-fpm'
+        pull_policy: never
+        init: true
+        user: 'www-data'
+        working_dir: /application
+        command: ['php', 'artisan', 'queue:work', 'redis', '--queue=default', '--tries=3', '--backoff=10', '--sleep=3', '--max-time=3600']
+        environment:
+            - HOME=/tmp
+        volumes:
+            - '.:/application'
+            - './phpdocker/php-fpm/php-ini-overrides.ini:/etc/php/8.5/cli/conf.d/99-overrides.ini'
+        depends_on:
+            - php-fpm
+            - postgres
+            - redis
+        restart: unless-stopped
+        stop_grace_period: 70s
+
+    # Laravel scheduler (runs due tasks every minute).
+    scheduler:
+        image: 'restano-php-fpm'
+        pull_policy: never
+        init: true
+        user: 'www-data'
+        working_dir: /application
+        command: ['php', 'artisan', 'schedule:work']
+        environment:
+            - HOME=/tmp
+        volumes:
+            - '.:/application'
+            - './phpdocker/php-fpm/php-ini-overrides.ini:/etc/php/8.5/cli/conf.d/99-overrides.ini'
+        depends_on:
+            - php-fpm
+            - postgres
+            - redis
+        restart: unless-stopped
+
+    # Local mail catcher: SMTP on mailpit:1025 (internal), web UI on localhost:8025.
+    mailpit:
+        image: 'axllent/mailpit:v1.33.1'
+        ports:
+            - '127.0.0.1:8025:8025'
+        restart: unless-stopped
+
     # On-demand Node.js (LTS) for npm and Vite. Not started by `docker compose up`;
     # see CLAUDE.md §9 for npm ci / run dev / run build commands.
     node:
