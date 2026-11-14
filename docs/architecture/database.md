@@ -1,6 +1,8 @@
 # Database Architecture
 
-> Status: **Approved — v0.2**. PostgreSQL. Every change goes through a migration; this document must be updated with it.
+> Status: **Approved — v0.3** (2026-11-15: platform roles, `TenantRole.branch_staff`, `location_user`).
+>
+> **Implemented so far:** `users.platform_role`, `tenants`, `tenant_translations`, `tenant_user`, `locations`, `location_translations`, `location_user`, `menus`, `menu_translations`, `location_menu`, `plans`, `plan_translations`, `subscriptions`, `subscription_events`. The rest of this document is the approved target schema. PostgreSQL. Every change goes through a migration; this document must be updated with it.
 
 ## Contents
 
@@ -41,7 +43,7 @@
                                           │1            ──1:*── plan_translations
                                           │*
  users ─*:*─ tenant_user ─*:1─ ┌──────────┴───────┐ 1:* subscription_events
-   (role)                      │     tenants      │──1:*── subscriptions
+   (platform_role) (role)      │     tenants      │──1:*── subscriptions
                                │  (one business)  │──1:*── tenant_locales (tr, en …)
                                └──┬─────┬─────┬───┘──1:*── tenant_translations
                                   │1    │1    │1   ──1:*── theme_settings (per theme)
@@ -67,7 +69,8 @@
          │   │   │                  └────────1:*── menu_item_dietary_labels  (enum value)
          │   │   └──1:*── location_opening_hours / location_special_hours
          │   └──────1:*── location_item_states (sold-out per branch) ──*:1── menu_items
-         └──────────1:*── qr_codes ──*:0..1── menus
+         ├──────────1:*── qr_codes ──*:0..1── menus
+         └──────────*:*── tenant_user via location_user (branch assignments)
 
  Every customer-facing entity also has a *_translations table (1:* by locale).
 ```
@@ -82,8 +85,9 @@
 | `tenant_translations` | `tenant_id` FK cascade, `locale`, `name`, `tagline` nullable, `description` nullable text | unique (`tenant_id`, `locale`) |
 | `tenant_locales` 🔒 | `locale`, `is_default`, `sort_order` | unique (`tenant_id`, `locale`); partial unique (`tenant_id`) where `is_default` |
 | `tenant_domains` 🔒 | `domain` (lowercase), `is_primary`, `verified_at` nullable | unique `domain`. Used in a later phase |
-| `users` | Laravel default (`name`, `email`, `password`, `email_verified_at`, `remember_token`) | unique `email` |
-| `tenant_user` | `tenant_id` FK, `user_id` FK, `role` (`TenantRole`) | unique (`tenant_id`, `user_id`); index `user_id` |
+| `users` | Laravel default (`name`, `email`, `password`, `email_verified_at`, `remember_token`), `platform_role` nullable (`PlatformRole`) | unique `email`. `platform_role` is null for business users and never mass-assignable |
+| `tenant_user` (membership) | `id`, `tenant_id` FK cascade, `user_id` FK cascade, `role` (`TenantRole`), `is_active` boolean default true | unique (`tenant_id`, `user_id`); **unique (`tenant_id`, `id`)** (target of `location_user`); index `user_id`. Not globally tenant-scoped: it is always read from the user side (`$user->memberships()`) |
+| `location_user` (branch assignment) | `id`, `tenant_id`, `tenant_user_id`, `location_id` | unique (`tenant_user_id`, `location_id`); composite FKs to `tenant_user (tenant_id, id)` and `locations (tenant_id, id)`, both cascade. Rows are needed only for `manager` and `branch_staff`; owners reach every branch implicitly |
 | `theme_settings` 🔒 | `theme` (`MenuTheme`), `settings` jsonb | unique (`tenant_id`, `theme`) |
 
 ### Locations
@@ -133,7 +137,7 @@
 | `plan_translations` | `plan_id`, `locale`, `name`, `description` | unique (`plan_id`, `locale`) |
 | `plan_prices` | `plan_id`, `interval` (`BillingInterval`), `amount` bigint, `currency` default `TRY`, `is_active` | unique (`plan_id`, `interval`, `currency`) |
 | `plan_limits` | `plan_id`, `feature` (`PlanFeature`), `limit_value` int nullable (null = unlimited; 0/1 for boolean features) | unique (`plan_id`, `feature`) |
-| `subscriptions` 🔒 | `plan_id`, `plan_price_id` nullable, `status` (`SubscriptionStatus`), `trial_ends_at`, `current_period_starts_at`, `current_period_ends_at`, `cancel_at_period_end`, `canceled_at`, `grace_ends_at`, `ended_at`, `provider` nullable, `provider_reference` nullable | partial unique (`tenant_id`) where `ended_at IS NULL`; index (`status`, `current_period_ends_at`) |
+| `subscriptions` 🔒 | `plan_id`, `plan_price_id` nullable (added together with `plan_prices`; not created yet), `status` (`SubscriptionStatus`), `trial_ends_at`, `current_period_starts_at`, `current_period_ends_at`, `cancel_at_period_end`, `canceled_at`, `grace_ends_at`, `ended_at`, `provider` nullable, `provider_reference` nullable | partial unique (`tenant_id`) where `ended_at IS NULL`; index (`status`, `current_period_ends_at`) |
 | `subscription_events` 🔒 | `subscription_id`, `type` (`SubscriptionEventType`), `from_status`, `to_status`, `meta` jsonb, `occurred_at` | Append-only; index (`subscription_id`, `occurred_at`) |
 
 Subscription semantics are in [subscriptions.md](subscriptions.md).
@@ -165,6 +169,8 @@ Composite foreign keys:
 | `tenant_locales`, `locations`, `menus`, `extra_groups`, `theme_settings`, `qr_codes`, `subscriptions`, `tenant_domains` | `tenants (id)` via `tenant_id` |
 | `location_opening_hours`, `location_special_hours` | `locations (tenant_id, id)` |
 | `location_menu` | `locations (tenant_id, id)`, `menus (tenant_id, id)` |
+| `tenant_user` | `tenants (id)` via `tenant_id`; carries `UNIQUE (tenant_id, id)` |
+| `location_user` | `tenant_user (tenant_id, id)`, `locations (tenant_id, id)`. A membership of tenant A can't be assigned a branch of tenant B |
 | `location_menu_hours` | `location_menu (tenant_id, id)` |
 | `location_item_states` | `locations (tenant_id, id)`, `menu_items (tenant_id, id)` |
 | `menu_categories` | `menus (tenant_id, id)` |
@@ -206,7 +212,8 @@ Composite foreign keys:
 | Enum | Values |
 |---|---|
 | `TenantStatus` | `active`, `suspended` |
-| `TenantRole` | `owner`, `manager`, `staff` |
+| `PlatformRole` | `super_admin`, `platform_staff` (on `users.platform_role`, nullable) |
+| `TenantRole` | `owner`, `manager`, `branch_staff` |
 | `MenuType` | `breakfast`, `lunch`, `dinner`, `beverages`, `desserts`, `all_day`, `other` |
 | `MenuTheme` | `classic`, `minimal`, `bistro`, `cafe`, `grid` |
 | `ExtraSelectionType` | `single`, `multiple` |

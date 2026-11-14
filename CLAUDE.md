@@ -13,32 +13,34 @@ This file holds the binding rules. The approved architecture (v0.2) is documente
 | Theme system | [themes.md](docs/architecture/themes.md) |
 | Redis caching and invalidation | [caching.md](docs/architecture/caching.md) |
 | Plans, subscription lifecycle, grace period | [subscriptions.md](docs/architecture/subscriptions.md) |
+| Filament panels, roles, panel authorization | [overview.md § Admin and business panels](docs/architecture/overview.md#admin-and-business-panels) |
 
 Area-specific rules live in [.claude/rules/](.claude/rules/) (backend, frontend, database, security).
 
 ## 1. Scope
 
-**In scope now:** public marketing website, pricing page, registration, login, forgot password, a minimal read-only `/account` page, public QR menu pages, stable QR redirects, five menu themes.
+**In scope now:** public marketing website, pricing page, registration, forgot password, email verification, a minimal read-only `/account` page, public QR menu pages, stable QR redirects, five menu themes, and the **Filament panel infrastructure**: `/admin` for the platform and `/app/{tenant-slug}` for businesses, each with login and an initial dashboard.
 
 **Out of scope — do not build unless explicitly requested:**
-- Admin dashboard or tenant management dashboard (the architecture must allow adding one later).
+- CRUD modules (Filament resources) in either panel: platform management in `/admin`, business management in `/app`. Only the panel infrastructure and initial dashboards exist.
 - Payment gateway integration (keep the provider-agnostic `PaymentGateway` contract only).
 - Online ordering, payment from the menu, waiter calling, table reservations (keep the design extensible for them).
 - Custom domains (table and resolver slot are reserved; implementation is a later phase).
 
 ## 2. Technology Stack
 
-- **Backend:** PHP 8.4+, Laravel 12, PostgreSQL, Redis (cache, queue, session on separate DBs), Eloquent, Form Requests, Policies/Gates, Queues, **Laravel Fortify** (headless auth with our own Blade views).
+- **Backend:** PHP 8.4+, Laravel 12, PostgreSQL, Redis (cache, queue, session on separate DBs), Eloquent, Form Requests, Policies/Gates, Queues, **Laravel Fortify** (headless auth with our own Blade views for public registration, password reset and email verification), **Filament 5** (the `/admin` and `/app` panels only).
 - **Frontend:** Blade (SSR), Tailwind CSS 4, Alpine.js, Vite, vanilla JS when appropriate.
 - **Testing:** PHPUnit against a PostgreSQL test database.
-- **Forbidden unless explicitly requested:** React, Vue, Next, Nuxt, Inertia, Livewire, Bootstrap, jQuery, Laravel starter kits, tenancy packages (e.g. `stancl/tenancy`), translation packages (e.g. `spatie/laravel-translatable`).
+- **Livewire exception:** Livewire is installed **only as a Filament dependency** and is used only inside the `/admin` and `/app` panels. Never build Livewire components, or load Livewire assets, in the marketing site, auth pages or public QR menus. Those stay Blade + Tailwind + Alpine.
+- **Forbidden unless explicitly requested:** React, Vue, Next, Nuxt, Inertia, Livewire (outside the exception above), Filament plugins, Bootstrap, jQuery, Laravel starter kits, tenancy packages (e.g. `stancl/tenancy`), translation packages (e.g. `spatie/laravel-translatable`).
 - **Any new Composer/NPM dependency requires explaining why and getting approval first.**
 
 ## 3. Finalized Architecture Decisions
 
 1. **Modular monolith**, server-side rendered. Controllers thin → Form Requests → Services → Models. No repositories, no CQRS.
 2. **Tenancy:** single database, shared schema, `tenant_id` column. One tenant = one business. Built in-house: `TenantContext` (scoped singleton), fail-closed `BelongsToTenant` global scope, resolver pipeline middleware.
-3. **Tenant identification (v1):** central domain `restano.app`, subdomains `{slug}.restano.app`, path `restano.app/m/{slug}`. Authenticated requests resolve the tenant from the user's membership, never from request input. Custom domains later.
+3. **Tenant identification (v1):** central domain `restano.app`, subdomains `{slug}.restano.app`, path `restano.app/m/{slug}`. In the business panel the URL is `/app/{tenant-slug}`. The slug is an identifier, not authorization: the tenant is set in `TenantContext` only after the user's active membership in it is verified. A raw tenant ID from the client is never trusted. Custom domains later.
 4. **Business structure:** tenant → many `locations` (branches) ↔ many `menus` via the `location_menu` pivot. Menus belong to the tenant so they can be shared across branches. Content is shared; operational state (sold-out, hours) is per location.
 5. **Menu content:** menus → categories → items → variants; reusable extra groups → extras; allergens and dietary labels are PHP enums stored in pivot tables; featured/popular flags; availability per item and sold-out per location.
 6. **Translations:** one `{entity}_translations` table per translatable entity; base tables hold no translatable text. In-house `HasTranslations` trait with fallback (requested → tenant default → first available). Platform locales in `config/locales.php`; per-tenant locales in `tenant_locales`. UI strings in `lang/{locale}/`.
@@ -49,7 +51,9 @@ Area-specific rules live in [.claude/rules/](.claude/rules/) (backend, frontend,
 11. **Caching:** version-counter invalidation — a tenant content version and a per-location version, both embedded in snapshot keys. All keys built only by `MenuCacheKeys`, prefixed `qrmenu:`.
 12. **Queues:** `tenant_id` is injected into every job payload and the context is restored on `JobProcessing` (before unserialization) and always cleared afterwards.
 13. **Subscriptions:** provider-agnostic; monthly/annual prices in TRY (stored in kuruş), trial → active → grace → expired lifecycle, configurable grace period, plan limits via `PlanFeature` enum + `FeatureGate`. After grace the public menu shows a professional unavailable page. **Tenant data is never deleted automatically.**
-14. **Registration** (Fortify → `TenantRegistrationService`) creates in one transaction: user, tenant, tenant locales, owner membership, default location, default menu (attached), default theme settings, trial subscription, default QR code.
+14. **Registration** (Fortify → `TenantRegistrationService`) creates in one transaction: user, tenant (+ name translation), owner membership, default location, default menu (attached), trial subscription (+ `trial_started` event). Tenant locales, default theme settings and the default QR code are added to the same transaction when those tables exist. Public registration can never grant a platform role.
+15. **Panels (Filament 5):** `admin` panel at `/admin` (platform owners and staff) and `app` panel at `/app/{tenant-slug}` (business users, Filament tenancy + tenant switcher). Both use Filament's own login (`/admin/login`, `/app/login`) on the shared `web` guard and session; panel registration is disabled. Both are registered for the central domain only, and so are Livewire's update, upload and preview endpoints. Fortify's own routes are ignored: only registration, password reset and email verification are exposed (`routes/auth.php`); `GET /login` redirects to `/app/login`. Members of a suspended business get an explicit 403 in `/app`; their data is untouched. Panels are presentation: they call the same services and policies as the rest of the app.
+16. **Roles:** platform roles in a nullable `users.platform_role` (`PlatformRole`: `super_admin`, `platform_staff`). Business roles on the membership `tenant_user.role` (`TenantRole`: `owner`, `manager`, `branch_staff`). Branch access through `location_user` (membership ↔ location, composite FKs). Owners reach every branch of their tenant; managers and branch staff only their assigned branches. No roles/permissions package. Access to both panels requires both grants explicitly.
 
 ## 4. Development Principles
 
@@ -83,14 +87,69 @@ Area-specific rules live in [.claude/rules/](.claude/rules/) (backend, frontend,
 
 Work proceeds phase by phase with a review pause between phases (details in [overview.md](docs/architecture/overview.md#implementation-roadmap)):
 
-0. Environment (Sail: PHP 8.4, PostgreSQL, Redis; Fortify, Alpine; config) → 1. Tenancy core → 2. Database foundation → 3. Subscriptions → 4. Authentication → 5. Marketing site → 6. Public menu infrastructure + `classic` theme → 7. Remaining four themes → 8. Hardening.
+0. Environment (Docker Compose: PHP 8.5, PostgreSQL, Redis — see §9) → P. Panels (Filament install, `admin` + `app` panels, platform roles, `TenantContext`, memberships, locations, branch authorization) → 1. Tenancy core (remainder) → 2. Database foundation → 3. Subscriptions → 4. Authentication (Fortify registration, reset, verification) → 5. Marketing site → 6. Public menu infrastructure + `classic` theme → 7. Remaining four themes → 8. Hardening.
 
 ## 8. Open Decisions (working defaults until confirmed)
 
 - Plan names, prices and limits — placeholder seeds until defined.
 - Pricing shown KDV-inclusive or "+KDV" — display only.
 - Trial 14 days, grace 7 days.
-- Email verification requirement timing.
-- QR image generation library (`chillerlan/php-qrcode` proposed, **not approved**).
+- Email verification requirement timing (the Fortify flow works; panels don't enforce verified emails yet).
+- QR image generation library (`chillerlan/php-qrcode` is installed as a mandatory Filament dependency; using it directly for QR images still needs a decision).
 - Per-location price overrides — deferred.
 - Marketing site locales: `tr` at `/`, `en` at `/en`.
+
+## 9. Docker Execution Strategy
+
+Docker Compose (`docker-compose.yml`, project `restano`, images in `phpdocker/`) is the **authoritative development environment**. Laravel Sail is not used.
+
+### Services (verified)
+
+| Service | Container | Image | Host port | Purpose |
+|---|---|---|---|---|
+| `php-fpm` | `restano-php-fpm-1` | `phpdocker/php-fpm` (PHP 8.5 from the `ondrej/php` PPA, Ubuntu 24.04, Composer 2) | — | PHP, Composer, Artisan, PHPUnit |
+| `webserver` | `restano-webserver-1` | `nginx:alpine` | `37000` → 80 | serves `public/` |
+| `postgres` | `restano-postgres-1` | `postgres:15-alpine` | `37004` → 5432 | database |
+| `redis` | `restano-redis-1` | `redis:alpine` | — | cache / queue / session |
+
+Inside the Compose network, services reach each other by service name (`postgres:5432`, `redis:6379`), not `127.0.0.1`.
+
+- Postgres data lives in the named volume `restano_postgres-data` (survives container removal; `docker compose down -v` would delete it — never use `-v`). Back up with `pg_dump -Fc` into `storage/app/private/backups/` (git-ignored).
+- PHP extensions are installed in `phpdocker/php-fpm/Dockerfile` as `php8.5-*` apt packages (e.g. `php8.5-intl`, `php8.5-bcmath`); rebuild with `docker compose up -d --build php-fpm`.
+- Databases: `restano` (development) and `restano_test` (PHPUnit, configured in `phpunit.xml`). If the test DB is ever missing: `docker exec restano-postgres-1 createdb -U root restano_test`.
+- Redis logical DBs: `0` default/locks, `1` cache, `2` queue, `3` session.
+
+### PHP, Composer, Artisan, tests → `php-fpm` container
+
+PHP-FPM runs as `www-data`, which owns `storage/` and `bootstrap/cache`. Run **Artisan and tests as `www-data`** so files they create (compiled views, logs, cache) stay writable by the web server. Composer runs as root (`vendor/` is root-owned). Run without `-it` for non-interactive commands (agents have no TTY).
+
+```bash
+docker exec -u www-data -e HOME=/tmp restano-php-fpm-1 php artisan migrate
+docker exec -u www-data -e HOME=/tmp restano-php-fpm-1 php artisan test
+docker exec restano-php-fpm-1 vendor/bin/pint     # root: rewrites source files
+docker exec restano-php-fpm-1 composer install
+docker exec -it restano-php-fpm-1 bash          # interactive shell
+```
+
+If pages fail with `tempnam(): file created in the system's temporary directory`, storage ownership was lost: `docker exec restano-php-fpm-1 sh -c 'chown -R www-data:www-data storage bootstrap/cache && chmod -R ug+rwX storage bootstrap/cache'`.
+
+### Node.js / NPM → `node` service
+
+On-demand service (`node:24-bookworm-slim`, Node 24 LTS; Vite 7 needs ≥ 22.12), profile `tools`, so `docker compose up` doesn't start it. `node_modules/` and `public/build/` are produced inside this container only.
+
+```bash
+docker compose run --rm node npm ci                          # install from package-lock.json
+docker compose run --rm node npm run build                   # production build → public/build
+docker compose run --rm --service-ports node npm run dev     # Vite dev server on :5173 (HMR)
+docker compose run --rm node npm install -D <pkg>            # new dependencies still need approval
+```
+
+Stop `npm run dev` with **Ctrl+C** so Vite removes `public/hot`. If the container is killed instead, delete `public/hot`, or Laravel keeps pointing assets at the stopped dev server.
+
+### Rules
+
+- Never run PHP, Composer, Artisan, PHPUnit, Node or NPM on the host, even when the host has them installed. The host's Node (nvm) must not be used for this project.
+- Before running commands, check that the container is up (`docker compose ps`). If it is down or a command fails for environment reasons, report it and ask. Never switch to the host silently.
+- Treat versions inside the containers as the source of truth (`php -v`, `php -m`, `composer --version`, and once added `node -v`, `npm -v`).
+- Never run `docker compose down -v` or delete Docker volumes (data loss).
+- Changes to `docker-compose.yml`, `phpdocker/*` or images, and installing system packages or PHP extensions, require approval first.

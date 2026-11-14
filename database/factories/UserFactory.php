@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Enums\PlatformRole;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
@@ -31,6 +32,20 @@ class UserFactory extends Factory
             'password' => static::$password ??= Hash::make('password'),
             'remember_token' => Str::random(10),
         ];
+    }
+
+    public function superAdmin(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'platform_role' => PlatformRole::SuperAdmin,
+        ]);
+    }
+
+    public function platformStaff(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'platform_role' => PlatformRole::PlatformStaff,
+        ]);
     }
 
     /**

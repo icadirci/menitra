@@ -15,6 +15,7 @@
 - Tenant-owned children and pivots reference tenant-owned parents with composite foreign keys `(tenant_id, parent_id) → parent (tenant_id, id)`.
 - Translation tables have no `tenant_id`; they reference exactly one parent row with `ON DELETE CASCADE`.
 - Business identifiers that must be unique per tenant use composite unique constraints (e.g. `(tenant_id, slug)`).
+- Membership-scoped tables (e.g. `location_user`) reference the membership with `(tenant_id, tenant_user_id) → tenant_user (tenant_id, id)` and the tenant-owned target with `(tenant_id, location_id) → locations (tenant_id, id)`, so a user can never be linked to another tenant's branch.
 - Never trust tenant IDs from client requests.
 - Never expose cross-tenant data.
 

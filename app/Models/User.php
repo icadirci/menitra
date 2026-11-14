@@ -1,20 +1,37 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Enums\PlatformRole;
 use Database\Factories\UserFactory;
+use Filament\Models\Contracts\FilamentUser;
+use Filament\Models\Contracts\HasTenants;
+use Filament\Panel;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Collection;
 
-class User extends Authenticatable
+class User extends Authenticatable implements FilamentUser, HasTenants, MustVerifyEmail
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
 
     /**
-     * The attributes that are mass assignable.
+     * Per-instance cache of membershipFor() results, keyed by tenant id.
+     *
+     * @var array<int, TenantMembership|null>
+     */
+    private array $resolvedMemberships = [];
+
+    /**
+     * The attributes that are mass assignable. `platform_role` is deliberately
+     * excluded: it is granted only explicitly (forceFill / artisan command).
      *
      * @var list<string>
      */
@@ -44,6 +61,91 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'platform_role' => PlatformRole::class,
         ];
+    }
+
+    public function hasPlatformRole(): bool
+    {
+        return $this->platform_role !== null;
+    }
+
+    public function isSuperAdmin(): bool
+    {
+        return $this->platform_role === PlatformRole::SuperAdmin;
+    }
+
+    /**
+     * Panel access is fail-closed: unknown panels and users without an
+     * explicit grant are denied. Hiding navigation is never authorization.
+     */
+    public function canAccessPanel(Panel $panel): bool
+    {
+        return match ($panel->getId()) {
+            'admin' => $this->hasPlatformRole(),
+            'app' => $this->memberships()->active()->exists(),
+            default => false,
+        };
+    }
+
+    public function memberships(): HasMany
+    {
+        return $this->hasMany(TenantMembership::class);
+    }
+
+    /**
+     * The user's active membership in the given tenant, or null when the
+     * membership is missing or inactive, or the tenant is suspended or deleted.
+     * This is what grants access to the tenant's data (context, policies).
+     */
+    public function membershipFor(Tenant $tenant): ?TenantMembership
+    {
+        if (! $tenant->isActive()) {
+            return null;
+        }
+
+        return $this->resolvedMemberships[$tenant->getKey()] ??= $this->memberships()
+            ->where('tenant_id', $tenant->getKey())
+            ->where('is_active', true)
+            ->first();
+    }
+
+    /**
+     * Whether the user has an active membership in the tenant, whatever the
+     * tenant's status. Members of a suspended tenant are recognised (so they
+     * get an explicit "suspended" response), but are never given its data.
+     */
+    public function isMemberOf(Tenant $tenant): bool
+    {
+        return ! $tenant->trashed() && $this->memberships()
+            ->where('tenant_id', $tenant->getKey())
+            ->where('is_active', true)
+            ->exists();
+    }
+
+    /**
+     * Called by Filament with the tenant loaded from the URL slug. The slug is
+     * only an identifier; this is the membership check. Non-members get 404;
+     * ResolveTenantFromMembership then refuses suspended tenants with 403.
+     */
+    public function canAccessTenant(Model $tenant): bool
+    {
+        return $tenant instanceof Tenant && $this->isMemberOf($tenant);
+    }
+
+    /**
+     * Tenants listed in the panel's tenant switcher.
+     *
+     * @return Collection<int, Tenant>
+     */
+    public function getTenants(Panel $panel): Collection
+    {
+        return Tenant::query()
+            ->whereHas('memberships', fn ($membership) => $membership
+                ->where('user_id', $this->getKey())
+                ->where('is_active', true))
+            ->with('translations')
+            ->orderBy('slug')
+            ->get();
     }
 }

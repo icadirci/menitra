@@ -1,6 +1,6 @@
 # Multi-Tenancy
 
-> Status: **Approved — v0.2**. This is the authoritative tenant identification and isolation strategy.
+> Status: **Approved — v0.3** (2026-11-15: business panel tenant URL strategy, branch roles). This is the authoritative tenant identification and isolation strategy.
 
 ## Contents
 
@@ -9,6 +9,7 @@
 - [Core components](#core-components)
 - [Tenant identification strategy](#tenant-identification-strategy)
 - [Resolution flow](#resolution-flow)
+- [Business panel tenancy](#business-panel-tenancy-apptenant-slug)
 - [Allowed scope bypasses](#allowed-scope-bypasses)
 - [Queue processing](#queue-processing)
 - [File storage](#file-storage)
@@ -19,7 +20,9 @@
 
 - **One tenant = one business** (`tenants` table).
 - A tenant has many **locations** (branches) and many **menus**. Menus are attached to locations through `location_menu` (see [menu-system.md](menu-system.md)).
-- Users relate to tenants through `tenant_user` with a `role` (`owner`, `manager`, `staff`). A user may belong to several tenants. The current tenant for an authenticated session is chosen from that user's memberships.
+- Users relate to tenants through memberships (`tenant_user`, model `TenantMembership`) with a `role` (`owner`, `manager`, `branch_staff`) and an `is_active` flag. A user may belong to several tenants.
+- Memberships are assigned to branches through `location_user`. Owners reach every location of their tenant; managers and branch staff reach only their assigned locations (see [database.md](database.md#platform-and-tenancy)).
+- Platform staff (`users.platform_role`) are not tenant members. A platform role grants nothing inside `/app`; a person who needs both needs both grants.
 
 ## Isolation model
 
@@ -45,12 +48,12 @@ PostgreSQL Row-Level Security is an optional fourth layer for a later phase.
 
 | Component | Responsibility |
 |---|---|
-| `App\Tenancy\TenantContext` | Scoped singleton (`$this->app->scoped()`) holding the current tenant. The **only** source of the current tenant. Reset per request and per job |
-| `App\Tenancy\ResolvedTenant` | Cached value object: id, public_id, slug, status, default locale, enabled locales, theme, `access_until` |
+| `App\Tenancy\TenantContext` | Scoped singleton (`$this->app->scoped()`) holding the current tenant. The **only** source of the current tenant. Reset per request and per job. It holds the `Tenant` model (decision 2026-11-15); whether a cached `ResolvedTenant` is needed is reassessed when public QR menu routing is built |
+| `App\Tenancy\ResolvedTenant` | Candidate cached value object (id, slug, status, locales, theme, `access_until`) for public resolution. **Not introduced yet**; reassessed in Phase 6 |
 | `App\Models\Concerns\BelongsToTenant` | Adds the global scope `where tenant_id = TenantContext::id()`, sets `tenant_id` on `creating`, keeps `tenant_id` out of `$fillable` |
 | `App\Tenancy\TenantResolverPipeline` | Runs `TenantResolver` implementations in order |
 | `ResolveTenantFromRequest` middleware | Public menu routes: runs the pipeline and sets the context, or returns 404 |
-| `ResolveTenantFromUser` middleware | Authenticated routes: takes the tenant from the session's selected membership, re-validated on every request |
+| `ResolveTenantFromMembership` middleware | Business panel (`/app/{tenant-slug}`): runs after Filament's tenant identification, re-verifies the user's active membership in that tenant on every request (including Livewire updates) and only then sets `TenantContext`. Otherwise 404 |
 | `App\Tenancy\Queue\TenantQueueListener` | Propagates and restores the tenant context for queued jobs |
 
 ### Fail-closed scope
@@ -67,12 +70,13 @@ Route model binding goes through the scope. A record that belongs to another ten
 | Subdomain | `{slug}.restano.app` | v1 |
 | Path | `restano.app/m/{slug}/…` | v1 |
 | Custom domain | `tenant_domains.domain` (verified) | Later. The table exists now; `DomainTenantResolver` is a reserved slot |
-| Authenticated area | Session-selected membership of the logged-in user | v1 |
+| Business panel | `restano.app/app/{tenant-slug}` — slug in the URL, **verified against the user's active membership** (Filament tenancy) | v1 |
+| `/account` | The logged-in user's membership (first active one until a selector exists) | v1 |
 | QR code | `restano.app/q/{code}` → `qr_codes.tenant_id` → redirect | v1 |
 
 Rules:
 
-- **A tenant ID sent by the client is never trusted.** Tenants are identified only by host, path slug, QR code or authenticated membership.
+- **A tenant ID sent by the client is never trusted.** Tenants are identified only by host, path slug, QR code or authenticated membership. A slug in a URL is only an identifier; in authenticated areas it is authorized against the membership before use.
 - Slugs are lowercase, match `^[a-z0-9](-?[a-z0-9])*$`, are 3–40 characters long, are globally unique, and are not on the reserved list in `config/tenancy.php`: `www, app, api, admin, dashboard, account, q, m, mail, smtp, static, cdn, assets, img, docs, help, support, status, blog, billing, pricing, login, register`.
 - A slug can change. Printed QR codes remain valid because `/q/{code}` computes its target at scan time.
 - Public menu URLs are built only by `MenuUrlGenerator`. It chooses the tenant's canonical form: subdomain in v1, a verified primary custom domain later. Adding custom domains changes only this class and adds one resolver.
@@ -85,7 +89,9 @@ Request
   ├─ Host = central domain ──────┬─ /q/{code}         → QrRedirectController (QrCodeResolver)
   │                              ├─ /m/{slug}/…       → PathTenantResolver ──────┐
   │                              ├─ Fortify routes    → central, no tenant       │
-  │                              ├─ /account          → ResolveTenantFromUser    │
+  │                              ├─ /admin/…          → admin panel, no tenant   │
+  │                              ├─ /app/{slug}/…     → canAccessTenant ─▶ ResolveTenantFromMembership
+  │                              ├─ /account          → user's membership        │
   │                              └─ marketing routes  → no tenant                │
   │                                                                              ▼
   ├─ Host = {slug}.central ─────── SubdomainTenantResolver ───────────▶ TenantContext::set()
@@ -95,7 +101,34 @@ Request
 
 - Lookups are cached as `qrmenu:host:{host}` and `qrmenu:slug:{slug}`, both holding a `ResolvedTenant`. With a warm cache, resolution needs zero queries. The entries are cleared when the slug, status, locales, theme or subscription changes (see [caching.md](caching.md)).
 - A suspended tenant resolves, but `PublicMenuService` renders the unavailable page. An unknown slug or host returns 404.
-- Marketing and auth routes are registered only for the central domain. Tenant subdomains serve only public menu routes.
+- Marketing, auth and panel routes are registered only for the central domain. Tenant subdomains serve only public menu routes.
+
+## Business panel tenancy (`/app/{tenant-slug}`)
+
+Decision (2026-11-15): the business panel uses **Filament's built-in tenancy URL strategy**, which gives each business a stable URL and a tenant switcher for users with several memberships. This replaces the earlier "session-selected membership" plan for the panel.
+
+Flow for every `/app/{tenant-slug}/…` request (and every Livewire update made from such a page):
+
+1. Filament authenticates the user and checks `User::canAccessPanel('app')`: the user must have at least one active membership in an active, non-deleted tenant.
+2. Filament loads the tenant by `slug` (soft-deleted tenants don't match) and calls `User::canAccessTenant($tenant)` (`isMemberOf`: active membership, any tenant status). Not a member → **404**, the tenant's existence isn't revealed.
+3. `ResolveTenantFromMembership` (Filament persistent tenant middleware) re-verifies the membership itself:
+   - not a member → **404**;
+   - member of a **suspended** tenant → **403** with an explanation (`tenancy.suspended`); the context is never set and no data is touched;
+   - otherwise `TenantContext::set()`.
+   Suspension never deletes or changes tenant data; members can still log in and see why access is blocked.
+4. From here on, `BelongsToTenant` scopes every tenant-owned query to the context. Filament's own tenant ownership scoping is treated as a convenience, **not** as the isolation layer.
+
+`User::getTenants()` (the switcher) lists the non-deleted tenants in which the user has an active membership, including suspended ones (so their members reach the 403 page rather than a 404). `User::membershipFor()` — used by policies — returns a membership only for an **active** tenant, so a suspended tenant grants no permissions even if a context were set. Panel registration and Filament's tenant registration are disabled; tenants are created only by `TenantRegistrationService`.
+
+### Livewire endpoints
+
+Livewire is used only by the panels, so its endpoints follow the panels:
+
+| Endpoint | Restriction |
+|---|---|
+| Update (`/livewire-{hash}/panels/update`) | Custom route bound to the central domain (`AppServiceProvider`). Livewire rejects its default host-agnostic update route with 404 once a custom one exists. On every update Filament's Livewire-persistent middleware re-runs `Authenticate` (`canAccessPanel`), `IdentifyTenant` (`canAccessTenant`) and `ResolveTenantFromMembership` |
+| Temporary upload / preview | `RestrictLivewireFileEndpoints`: central host (else 404) and an authenticated user who can access at least one panel (else 403); then Livewire's signed URL (401) and throttling |
+| JS assets | Static files, served on any host; contain no data |
 
 ## Allowed scope bypasses
 
@@ -105,9 +138,9 @@ Request
 |---|---|
 | Tenant resolvers | The tenant isn't known yet |
 | `QrCodeResolver` | The QR code identifies the tenant |
-| `ResolveTenantFromUser` / membership lookups | The tenant is derived from the user |
+| `ResolveTenantFromMembership` / membership lookups | The tenant is derived from the user's verified membership |
 | Commands and jobs implementing `TenantAgnostic` | Cross-tenant maintenance, e.g. subscription lifecycle |
-| `TenantRegistrationService` | Creates the tenant, then sets the context for the remaining inserts |
+| `TenantRegistrationService` | Creates the tenant, then sets the context for the remaining inserts and restores the previous context afterwards |
 
 ## Queue processing
 
@@ -138,6 +171,10 @@ Request
 | Cache leakage | Keys built only by `MenuCacheKeys`, always containing the tenant id |
 | File leakage | Tenant-prefixed paths, random names |
 | Auth cookies on tenant subdomains | `SESSION_DOMAIN` is the central host only (never `.restano.app`) |
+| Tenant slug in `/app` URL | Identifier only: `canAccessTenant()` + `ResolveTenantFromMembership` verify the active membership; otherwise 404 |
+| Panels on tenant hosts | `/admin`, `/app` and Livewire's update/upload/preview endpoints are bound to the central domain |
+| Suspended tenant | Explicit 403 for members, 404 for others; no context, no permissions, data intact |
+| Branch overreach | `location_user` composite FKs + `TenantMembership::canAccessLocation()` in policies |
 | Slug squatting / route collision | Reserved list and format rule |
 | QR enumeration | Random 10-character Crockford base32 codes; `/q/*` rate limited; inactive codes don't reveal the tenant |
 | Public data exposure | Allow-listed `MenuSnapshot` (see [menu-system.md](menu-system.md)) |
@@ -151,3 +188,7 @@ Request
 - A job dispatched under tenant A runs under tenant A, and the context is empty after it.
 - Subdomain and path resolve the same tenant. An unknown slug gives 404. A reserved slug is rejected at registration.
 - The session cookie isn't sent to tenant subdomains (configuration test).
+- `/app/{slug}` returns 404 for a user without an active membership in that tenant and for an inactive membership; members of a suspended tenant get 403; `TenantContext` stays empty in all three cases.
+- Livewire updates are refused on tenant hosts and re-check panel and tenant access on every request.
+- A member of tenant A sees only tenant A's locations in `/app/{a}`; branch staff see only assigned locations.
+- `/admin` and `/app` aren't served on tenant subdomains.

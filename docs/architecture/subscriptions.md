@@ -36,6 +36,8 @@ Tables are defined in [database.md](database.md#subscriptions).
 - `subscriptions`: a tenant's subscription history. **At most one live subscription per tenant**, enforced by a partial unique index on `tenant_id` where `ended_at IS NULL`.
 - `subscription_events`: an append-only audit trail of every transition.
 
+**Implemented so far (2026-11-15):** `plans`, `plan_translations`, `subscriptions` (without `plan_price_id`), `subscription_events`, and `SubscriptionService::startTrial()` used by registration. `PlanSeeder` seeds a placeholder `starter` plan (`config('subscriptions.default_plan')`). `?plan=` selection, prices, limits, the lifecycle command and `FeatureGate` come with Phase 3 / Phase 5.
+
 ## Lifecycle
 
 ```

@@ -23,6 +23,18 @@
 - QR codes are random and non-sequential; `/q/*` is rate limited.
 - The `lang` parameter is validated against the tenant's enabled locales before use.
 
+## Panels
+- `/admin` and `/app` are registered for the central domain only and never on tenant subdomains or custom domains.
+- `/admin` access requires an explicit `platform_role`; `/app` requires an active membership in an active tenant. Holding one never implies the other.
+- The `{tenant-slug}` in `/app/{tenant-slug}` is an identifier, not authorization: Filament checks `canAccessTenant()`, and `ResolveTenantFromMembership` re-verifies the membership before setting `TenantContext`. A tenant the user can't access returns 404.
+- Branch staff and managers act only on branches assigned to their membership; owners on all branches of their tenant.
+- Panel registration is disabled; accounts are created by `TenantRegistrationService` (business) or explicitly by a platform administrator / artisan command (platform roles).
+- Never secure a panel feature only by hiding its navigation item.
+- Livewire endpoints serve panels only: the update route is bound to the central domain (the default host-agnostic route is disabled), and temporary upload/preview require the central host plus a user with panel access (`RestrictLivewireFileEndpoints`), on top of Livewire's signed URLs and throttling.
+- Members of a suspended tenant get an explicit 403 in `/app` and `TenantContext` is never set; non-members always get 404.
+- Public registration never accepts `platform_role`, `tenant_id` or `role`; only the validated fields reach `TenantRegistrationService`.
+- There is a single login per panel (Filament). Fortify's own routes are ignored; do not add another `POST /login`.
+
 ## Sessions and domains
 - The session cookie is bound to the central domain only, never `.restano.app`, so tenant subdomains never receive auth cookies.
 - Slugs are validated against the reserved list in `config/tenancy.php` and the slug format rule.

@@ -4,6 +4,7 @@
 - Use Laravel Blade, Tailwind CSS and Alpine.js.
 - Use Vite for asset compilation.
 - Do not use React, Vue, Inertia, Livewire or Bootstrap.
+- **Exception — Filament panels:** Livewire is permitted only as a Filament dependency inside the `/admin` and `/app` panels. Do not write Livewire components or load Livewire/Filament assets in the marketing site, auth pages or QR menus.
 - Build reusable Blade components.
 - Use Blade layouts and partials.
 - Prioritize mobile-first responsive design.
@@ -16,8 +17,15 @@
 - Never hardcode menu products, tenant information or user-facing strings inside templates; use `__()` with `lang/tr` and `lang/en`.
 
 ## Bundles
-- Marketing pages load `resources/css/app.css` + `resources/js/app.js`.
+- Marketing and auth pages (`layouts/auth`) load `resources/css/app.css` + `resources/js/app.js`.
+- All npm/Vite commands run in the `node` Docker service (CLAUDE.md §9); never on the host.
 - Menu pages load `menu-base.css`, the active theme stylesheet and `menu.js` (Alpine only). Never load marketing assets on menu pages.
+
+## Filament panels
+- Use Filament's native design system and components. No custom panel themes or Vite builds for panels unless approved; no Filament plugins without approval.
+- Panel code lives in `app/Filament/Admin/` and `app/Filament/App/`; each panel discovers only its own directory, so navigation stays independent.
+- Panel labels and titles use `__()`; tenant content is read through models and `HasTranslations`.
+- Hiding navigation is never authorization: every page and resource must also be protected by `canAccess()` / policies.
 
 ## Menu themes
 - All QR menu themes use the same underlying data structure: `MenuSnapshot`, `LiveMenuState`, `ThemeSettings`.
