@@ -1,0 +1,227 @@
+# Database Architecture
+
+> Status: **Approved — v0.2**. PostgreSQL. Every change goes through a migration; this document must be updated with it.
+
+## Contents
+
+- [Conventions](#conventions)
+- [Entity relationship diagram](#entity-relationship-diagram)
+- [Schema](#schema)
+  - [Platform and tenancy](#platform-and-tenancy)
+  - [Locations](#locations)
+  - [Menus and content](#menus-and-content)
+  - [QR codes](#qr-codes)
+  - [Subscriptions](#subscriptions)
+- [Tenant integrity constraints](#tenant-integrity-constraints)
+- [Translations](#translations)
+- [Enums](#enums)
+- [Deletion and retention](#deletion-and-retention)
+
+## Conventions
+
+| Topic | Rule |
+|---|---|
+| Primary keys | `id bigint`. Entities referenced publicly get a `public_id` ULID |
+| Tenant-owned tables (🔒 below) | `tenant_id bigint NOT NULL`, `UNIQUE (tenant_id, id)`, `BelongsToTenant` model trait |
+| Timestamps | All tables have `created_at` / `updated_at` |
+| Money | `bigint` in minor units (kuruş); currency on the tenant or on the price row (`TRY` default) |
+| Fixed sets | PHP enums stored as `varchar` |
+| Translatable text | Only in `{entity}_translations` tables |
+| Ordering | `sort_order integer NOT NULL DEFAULT 0` |
+| JSON | `jsonb` only for genuinely unstructured data (`theme_settings.settings`, `subscription_events.meta`) |
+| Soft deletes | `tenants`, `locations`, `menus` |
+| Indexes | Composite indexes lead with `tenant_id` where queries are tenant-scoped |
+
+## Entity relationship diagram
+
+```
+                                   ┌──────────────┐
+                                   │    plans     │──1:*── plan_prices (interval, amount, currency)
+                                   └──────┬───────┘──1:*── plan_limits (feature, limit_value)
+                                          │1            ──1:*── plan_translations
+                                          │*
+ users ─*:*─ tenant_user ─*:1─ ┌──────────┴───────┐ 1:* subscription_events
+   (role)                      │     tenants      │──1:*── subscriptions
+                               │  (one business)  │──1:*── tenant_locales (tr, en …)
+                               └──┬─────┬─────┬───┘──1:*── tenant_translations
+                                  │1    │1    │1   ──1:*── theme_settings (per theme)
+                                  │     │     │    ──1:*── tenant_domains (later phase)
+             ┌────────────────────┘     │     └──────────────────┐
+             │*                         │*                       │*
+      ┌──────┴──────┐  *:*        ┌─────┴─────┐            ┌─────┴───────┐
+      │  locations  │──────────── │   menus   │            │ extra_groups│──1:*── extras
+      └──┬───┬───┬──┘ location_menu└─────┬─────┘            └─────┬───────┘
+         │   │   │   (sort, active)     │1                        │*
+         │   │   │        │1            │*                        │
+         │   │   │   location_menu_hours│                         │
+         │   │   │                ┌─────┴──────────┐              │
+         │   │   │                │menu_categories │              │
+         │   │   │                └─────┬──────────┘              │
+         │   │   │                      │1                        │
+         │   │   │                      │*                        │
+         │   │   │                ┌─────┴──────┐  *:* menu_item_extra_group
+         │   │   │                │ menu_items │───────────────────┘
+         │   │   │                └─┬──┬──┬────┘
+         │   │   │                  │  │  └──1:*── menu_item_variants
+         │   │   │                  │  └─────1:*── menu_item_allergens       (enum value)
+         │   │   │                  └────────1:*── menu_item_dietary_labels  (enum value)
+         │   │   └──1:*── location_opening_hours / location_special_hours
+         │   └──────1:*── location_item_states (sold-out per branch) ──*:1── menu_items
+         └──────────1:*── qr_codes ──*:0..1── menus
+
+ Every customer-facing entity also has a *_translations table (1:* by locale).
+```
+
+## Schema
+
+### Platform and tenancy
+
+| Table | Columns | Constraints / indexes |
+|---|---|---|
+| `tenants` | `public_id` ulid, `slug`, `status` (`TenantStatus`), `currency` char(3) default `TRY`, `default_locale` varchar(10), `theme` (`MenuTheme`), `logo_path`, `cover_path`, `deleted_at` | unique `slug`; unique `public_id` |
+| `tenant_translations` | `tenant_id` FK cascade, `locale`, `name`, `tagline` nullable, `description` nullable text | unique (`tenant_id`, `locale`) |
+| `tenant_locales` 🔒 | `locale`, `is_default`, `sort_order` | unique (`tenant_id`, `locale`); partial unique (`tenant_id`) where `is_default` |
+| `tenant_domains` 🔒 | `domain` (lowercase), `is_primary`, `verified_at` nullable | unique `domain`. Used in a later phase |
+| `users` | Laravel default (`name`, `email`, `password`, `email_verified_at`, `remember_token`) | unique `email` |
+| `tenant_user` | `tenant_id` FK, `user_id` FK, `role` (`TenantRole`) | unique (`tenant_id`, `user_id`); index `user_id` |
+| `theme_settings` 🔒 | `theme` (`MenuTheme`), `settings` jsonb | unique (`tenant_id`, `theme`) |
+
+### Locations
+
+| Table | Columns | Constraints / indexes |
+|---|---|---|
+| `locations` 🔒 | `slug`, `is_active`, `is_default`, `theme` nullable (override), `phone`, `email`, `whatsapp`, `address_line`, `district`, `city`, `postal_code`, `country_code` char(2) default `TR`, `latitude` / `longitude` numeric(9,6) nullable, `timezone` default `Europe/Istanbul`, `cover_path`, `sort_order`, `deleted_at` | unique (`tenant_id`, `slug`); partial unique (`tenant_id`) where `is_default` |
+| `location_translations` | `location_id` FK cascade, `locale`, `name`, `description` nullable | unique (`location_id`, `locale`) |
+| `location_opening_hours` 🔒 | `location_id`, `day_of_week` smallint (1–7, ISO), `opens_at` time, `closes_at` time | index (`location_id`, `day_of_week`). Several rows per day allowed (split shifts); `closes_at < opens_at` means open past midnight |
+| `location_special_hours` 🔒 | `location_id`, `date`, `is_closed`, `opens_at` / `closes_at` nullable | unique (`location_id`, `date`, `opens_at`). Covers holidays such as Bayram |
+| `location_item_states` 🔒 | `location_id`, `menu_item_id`, `is_sold_out` | unique (`location_id`, `menu_item_id`). A missing row means the item default applies |
+
+### Menus and content
+
+| Table | Columns | Constraints / indexes |
+|---|---|---|
+| `menus` 🔒 | `slug`, `type` (`MenuType`), `is_published`, `sort_order`, `deleted_at` | unique (`tenant_id`, `slug`) |
+| `menu_translations` | `menu_id`, `locale`, `name`, `description` nullable | unique (`menu_id`, `locale`) |
+| `location_menu` 🔒 | `location_id`, `menu_id`, `is_active`, `sort_order` | unique (`tenant_id`, `location_id`, `menu_id`) |
+| `location_menu_hours` 🔒 | `location_menu_id`, `day_of_week`, `starts_at`, `ends_at` | Optional. No rows means served all day. Only used for "now serving" |
+| `menu_categories` 🔒 | `menu_id`, `image_path`, `is_visible`, `sort_order` | index (`tenant_id`, `menu_id`, `sort_order`) |
+| `menu_category_translations` | `menu_category_id`, `locale`, `name`, `description` nullable | unique (`menu_category_id`, `locale`) |
+| `menu_items` 🔒 | `public_id` ulid, `menu_category_id`, `price` bigint nullable, `image_path`, `is_visible`, `is_available`, `is_featured`, `is_popular`, `calories` nullable, `preparation_minutes` nullable, `sort_order` | unique `public_id`; index (`tenant_id`, `menu_category_id`, `sort_order`); partial index (`tenant_id`) where `is_featured` |
+| `menu_item_translations` | `menu_item_id`, `locale`, `name`, `description` nullable | unique (`menu_item_id`, `locale`) |
+| `menu_item_variants` 🔒 | `public_id` ulid, `menu_item_id`, `price` bigint, `is_default`, `is_available`, `sort_order` | index (`menu_item_id`, `sort_order`) |
+| `menu_item_variant_translations` | `menu_item_variant_id`, `locale`, `name` | unique (…, `locale`) |
+| `extra_groups` 🔒 | `selection_type` (`ExtraSelectionType`), `min_select` default 0, `max_select` nullable, `is_required`, `sort_order` | Reusable across items |
+| `extra_group_translations` | `extra_group_id`, `locale`, `name` | unique (…, `locale`) |
+| `extras` 🔒 | `public_id` ulid, `extra_group_id`, `price_delta` bigint default 0, `is_available`, `sort_order` | index (`extra_group_id`, `sort_order`) |
+| `extra_translations` | `extra_id`, `locale`, `name` | unique (…, `locale`) |
+| `menu_item_extra_group` 🔒 | `menu_item_id`, `extra_group_id`, `sort_order` | unique (`menu_item_id`, `extra_group_id`) |
+| `menu_item_allergens` 🔒 | `menu_item_id`, `allergen` (`Allergen`) | unique (`menu_item_id`, `allergen`) |
+| `menu_item_dietary_labels` 🔒 | `menu_item_id`, `label` (`DietaryLabel`) | unique (`menu_item_id`, `label`) |
+
+### QR codes
+
+| Table | Columns | Constraints / indexes |
+|---|---|---|
+| `qr_codes` 🔒 | `code` (10-character random Crockford base32), `location_id`, `menu_id` nullable (deep link), `label`, `table_label` nullable (reserved for future table service), `is_active`, `last_scanned_at` nullable | unique `code` (global) |
+| `qr_scans` | **Not created in v1.** Added with analytics, fed by the `QrCodeScanned` event | |
+
+### Subscriptions
+
+| Table | Columns | Constraints / indexes |
+|---|---|---|
+| `plans` | `code`, `is_active`, `is_public`, `trial_days`, `sort_order` | unique `code` |
+| `plan_translations` | `plan_id`, `locale`, `name`, `description` | unique (`plan_id`, `locale`) |
+| `plan_prices` | `plan_id`, `interval` (`BillingInterval`), `amount` bigint, `currency` default `TRY`, `is_active` | unique (`plan_id`, `interval`, `currency`) |
+| `plan_limits` | `plan_id`, `feature` (`PlanFeature`), `limit_value` int nullable (null = unlimited; 0/1 for boolean features) | unique (`plan_id`, `feature`) |
+| `subscriptions` 🔒 | `plan_id`, `plan_price_id` nullable, `status` (`SubscriptionStatus`), `trial_ends_at`, `current_period_starts_at`, `current_period_ends_at`, `cancel_at_period_end`, `canceled_at`, `grace_ends_at`, `ended_at`, `provider` nullable, `provider_reference` nullable | partial unique (`tenant_id`) where `ended_at IS NULL`; index (`status`, `current_period_ends_at`) |
+| `subscription_events` 🔒 | `subscription_id`, `type` (`SubscriptionEventType`), `from_status`, `to_status`, `meta` jsonb, `occurred_at` | Append-only; index (`subscription_id`, `occurred_at`) |
+
+Subscription semantics are in [subscriptions.md](subscriptions.md).
+
+## Tenant integrity constraints
+
+The global scope stops cross-tenant **reads**. The database stops cross-tenant **writes**: for example, attaching tenant B's menu to tenant A's location, or putting tenant B's item into tenant A's category.
+
+Pattern:
+
+```sql
+-- parent
+ALTER TABLE menus ADD CONSTRAINT menus_tenant_id_id_unique UNIQUE (tenant_id, id);
+
+-- child
+FOREIGN KEY (tenant_id, menu_id) REFERENCES menus (tenant_id, id) ON DELETE CASCADE
+```
+
+In Laravel migrations:
+
+```php
+$table->foreign(['tenant_id', 'menu_id'])->references(['tenant_id', 'id'])->on('menus')->cascadeOnDelete();
+```
+
+Composite foreign keys:
+
+| Child | References |
+|---|---|
+| `tenant_locales`, `locations`, `menus`, `extra_groups`, `theme_settings`, `qr_codes`, `subscriptions`, `tenant_domains` | `tenants (id)` via `tenant_id` |
+| `location_opening_hours`, `location_special_hours` | `locations (tenant_id, id)` |
+| `location_menu` | `locations (tenant_id, id)`, `menus (tenant_id, id)` |
+| `location_menu_hours` | `location_menu (tenant_id, id)` |
+| `location_item_states` | `locations (tenant_id, id)`, `menu_items (tenant_id, id)` |
+| `menu_categories` | `menus (tenant_id, id)` |
+| `menu_items` | `menu_categories (tenant_id, id)` |
+| `menu_item_variants`, `menu_item_allergens`, `menu_item_dietary_labels` | `menu_items (tenant_id, id)` |
+| `extras` | `extra_groups (tenant_id, id)` |
+| `menu_item_extra_group` | `menu_items (tenant_id, id)`, `extra_groups (tenant_id, id)` |
+| `qr_codes` | `locations (tenant_id, id)`; `menus (tenant_id, id)`, nullable, `MATCH SIMPLE` so it's skipped when null |
+| `subscription_events` | `subscriptions (tenant_id, id)` |
+
+**Translation tables have no `tenant_id`.** Each row references exactly one parent through a plain FK with `ON DELETE CASCADE`. There is no second reference that could disagree with the parent's tenant, so isolation is inherited from the parent.
+
+**Rules a foreign key can't express** are enforced in services and covered by tests:
+- A `qr_codes.menu_id` must be attached to its `location_id` through `location_menu`. At redirect time it falls back to the location page if not.
+- A rendered item's category must belong to the menu being rendered.
+- At most one default variant per item.
+
+## Translations
+
+| Option considered | Decision |
+|---|---|
+| JSON column per field (e.g. `spatie/laravel-translatable`) | Rejected: goes against the relational-first rule, weak per-locale constraints, new dependency |
+| One polymorphic `translations` table | Rejected: no real FKs, no NOT NULL guarantees |
+| **One `{entity}_translations` table per entity** | **Chosen**: real FKs with cascade, unique per locale, typed columns, eager-loadable |
+
+- Base tables contain **no** translatable text columns. Each piece of text has a single source of truth.
+- Translatable entities: tenants, locations, menus, menu categories, menu items, variants, extra groups, extras, plans.
+- The in-house trait `App\Models\Concerns\HasTranslations` provides:
+  - `translations()` (hasMany)
+  - `translate(?string $locale)`, with fallback order: requested locale → tenant default locale → first available
+  - `scopeWithTranslations(array $locales)` to eager load only the needed locales
+- **Platform locales** are listed in `config/locales.php` (initially `tr`, `en`, with native names).
+- **Tenant locales** are stored in `tenant_locales`. `locale` values are validated against the config in Form Requests.
+- **Adding a language:** add a config entry, add `lang/{xx}/*.php` files, and let tenants enable it. No schema change is needed.
+- UI strings (labels, allergen and dietary names, the unavailable page) live in `lang/{locale}/`. They are never hard-coded.
+
+## Enums
+
+| Enum | Values |
+|---|---|
+| `TenantStatus` | `active`, `suspended` |
+| `TenantRole` | `owner`, `manager`, `staff` |
+| `MenuType` | `breakfast`, `lunch`, `dinner`, `beverages`, `desserts`, `all_day`, `other` |
+| `MenuTheme` | `classic`, `minimal`, `bistro`, `cafe`, `grid` |
+| `ExtraSelectionType` | `single`, `multiple` |
+| `Allergen` | The 14 EU / Turkish Food Codex allergens: `gluten`, `crustaceans`, `eggs`, `fish`, `peanuts`, `soybeans`, `milk`, `nuts`, `celery`, `mustard`, `sesame`, `sulphites`, `lupin`, `molluscs` |
+| `DietaryLabel` | `vegan`, `vegetarian`, `gluten_free`, `lactose_free`, `halal`, `spicy`, `organic`, `sugar_free` (extendable) |
+| `SubscriptionStatus` | `trialing`, `active`, `past_due`, `grace`, `expired` |
+| `SubscriptionEventType` | `trial_started`, `activated`, `renewed`, `payment_failed`, `cancel_requested`, `cancel_reverted`, `grace_started`, `expired`, `plan_changed`, `reactivated` |
+| `BillingInterval` | `monthly`, `yearly` |
+| `PlanFeature` | `max_locations`, `max_menus`, `max_items`, `max_languages`, `premium_themes`, `custom_domain`, `remove_branding`, `qr_analytics` |
+
+Display names for enums come from `lang/{locale}/…`.
+
+## Deletion and retention
+
+- Tenants, locations and menus use soft deletes.
+- Deleting a menu cascades to its categories and items only when it's force-deleted.
+- **No tenant data is ever deleted automatically.** Expired subscriptions keep all data. A purge may only run from an explicit, documented retention policy, which hasn't been defined yet.
+- Destructive schema changes require explicit approval.

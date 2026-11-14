@@ -1,379 +1,96 @@
-# CLAUDE.md — QR Menu SaaS Platform
+# CLAUDE.md — QR Menu SaaS Platform (Restano)
 
-## 1. Project Overview
+Multi-tenant SaaS for cafes, restaurants, bakeries and other hospitality businesses to publish digital menus reached through QR codes. Primary market: **Turkey** (default currency TRY, languages `tr` + `en`).
 
-This project is a multi-tenant SaaS platform for cafes, restaurants, coffee shops, bakeries and other hospitality businesses.
+This file holds the binding rules. The approved architecture (v0.2) is documented in detail in [docs/architecture/](docs/architecture/) — read the relevant document before working on an area:
 
-The platform allows businesses to create and publish digital menus accessible through QR codes.
+| Area | Document |
+|---|---|
+| System overview, request flows, directory structure, roadmap | [overview.md](docs/architecture/overview.md) |
+| Tenant identification, isolation, queues, security | [tenancy.md](docs/architecture/tenancy.md) |
+| Schema, relationships, integrity constraints, translations | [database.md](docs/architecture/database.md) |
+| Locations, menus, QR codes, public rendering | [menu-system.md](docs/architecture/menu-system.md) |
+| Theme system | [themes.md](docs/architecture/themes.md) |
+| Redis caching and invalidation | [caching.md](docs/architecture/caching.md) |
+| Plans, subscription lifecycle, grace period | [subscriptions.md](docs/architecture/subscriptions.md) |
 
-The system consists of:
+Area-specific rules live in [.claude/rules/](.claude/rules/) (backend, frontend, database, security).
 
-1. Public SaaS marketing website.
-2. User registration and authentication.
-3. Subscription and pricing pages.
-4. Customer-facing digital QR menus.
-5. Multiple customizable menu themes.
-6. Multi-tenant infrastructure.
+## 1. Scope
 
-IMPORTANT:
-The administration dashboard and internal management interfaces are outside the current development scope. Do not create admin dashboard pages unless explicitly requested.
+**In scope now:** public marketing website, pricing page, registration, login, forgot password, a minimal read-only `/account` page, public QR menu pages, stable QR redirects, five menu themes.
 
-Focus on building a scalable, maintainable and production-ready application.
+**Out of scope — do not build unless explicitly requested:**
+- Admin dashboard or tenant management dashboard (the architecture must allow adding one later).
+- Payment gateway integration (keep the provider-agnostic `PaymentGateway` contract only).
+- Online ordering, payment from the menu, waiter calling, table reservations (keep the design extensible for them).
+- Custom domains (table and resolver slot are reserved; implementation is a later phase).
 
 ## 2. Technology Stack
 
-The project MUST use the following technologies:
-
-### Backend
-- PHP 8.4+
-- Laravel 12
-- PostgreSQL
-- Redis
-- Laravel Eloquent ORM
-- Laravel Form Requests
-- Laravel Policies and Gates where appropriate
-- Laravel Queues when asynchronous processing is needed
-
-### Frontend
-- Laravel Blade
-- Tailwind CSS
-- Alpine.js
-- Vite
-- Vanilla JavaScript when appropriate
-
-### Architecture
-- Server-side rendering with Blade.
-- Modular and reusable components.
-- Multi-tenant architecture.
-- RESTful APIs only when genuinely needed.
-- Redis-based caching for frequently accessed menu data.
-
-### Technology Restrictions
-
-Do NOT introduce the following technologies unless explicitly requested:
-
-- React
-- Vue.js
-- Next.js
-- Nuxt.js
-- Inertia.js
-- Livewire
-- Bootstrap
-- jQuery
-
-Do not introduce unnecessary frontend frameworks or libraries.
-
-Do not replace the existing Laravel architecture with another architecture.
-
-Before adding any new Composer or NPM dependency, explain why it is needed and ask for approval.
-
-## 3. Development Principles
-
-Follow these principles in all development tasks:
-
-- Write clean, readable and maintainable code.
-- Follow SOLID principles where appropriate.
-- Follow Laravel conventions.
-- Avoid unnecessary abstractions.
-- Avoid overengineering.
-- Keep controllers thin.
-- Move complex business logic into dedicated service classes.
-- Use dependency injection.
-- Use PHP strict typing where appropriate.
-- Use PHP enums for fixed and meaningful sets of values.
-- Use database transactions for operations requiring atomicity.
-- Avoid duplicated business logic.
-- Prefer Laravel built-in features over custom implementations.
-- Keep classes focused on a single responsibility.
-
-Do not generate unnecessary files or classes.
-
-Do not modify unrelated parts of the application.
-
-## 4. Backend Architecture
-
-Use Laravel's standard application structure with clear separation of responsibilities.
-
-Recommended responsibilities:
-
-- Controllers: Handle HTTP requests and responses.
-- Models: Represent database entities and relationships.
-- Form Requests: Validate incoming data.
-- Services: Handle business logic.
-- Policies: Handle authorization.
-- Jobs: Handle asynchronous operations.
-- Events and Listeners: Handle decoupled application events.
-- Resources: Format API responses when APIs are needed.
-- Enums: Represent fixed application states and types.
-
-Avoid placing complex business logic directly inside controllers or Eloquent models.
-
-Use service classes when business logic becomes complex or reusable.
-
-Do not create a service class for every trivial operation.
-
-## 5. Multi-Tenant Architecture
-
-This is a multi-tenant SaaS platform.
-
-Tenant isolation is a critical requirement.
-
-Every tenant-owned resource must be associated with the correct tenant.
-
-Rules:
-
-- Never expose one tenant's data to another tenant.
-- Always resolve the current tenant using a centralized tenant resolution mechanism.
-- Never trust tenant IDs directly supplied by users.
-- Apply tenant ownership checks to database queries.
-- Ensure tenant isolation in background jobs.
-- Ensure tenant isolation in caching.
-- Ensure tenant isolation in file storage.
-- Ensure tenant isolation in authorization.
-
-The public QR menu must resolve the correct business using its configured domain, subdomain or public identifier.
-
-Do not duplicate tenant resolution logic across controllers.
-
-Before implementing the multitenancy system, establish and document the tenant identification strategy.
-
-## 6. Database Standards
-
-Use PostgreSQL as the primary database.
-
-Rules:
-
-- Use Laravel migrations for all schema changes.
-- Use foreign keys where appropriate.
-- Add indexes to frequently queried columns.
-- Use unique constraints for business-critical identifiers.
-- Use appropriate column types.
-- Avoid unnecessary JSON columns when relational structures are more appropriate.
-- Define Eloquent relationships explicitly.
-- Avoid N+1 query problems.
-- Use eager loading where appropriate.
-- Never modify production data directly through untracked SQL changes.
-
-Every schema modification must have a migration.
-
-Use database transactions for multi-step operations that must succeed or fail together.
-
-## 7. Frontend Architecture
-
-Use Blade, Tailwind CSS and Alpine.js.
-
-### Blade
-
-- Use reusable Blade components.
-- Use layouts for shared page structures.
-- Keep business logic out of Blade templates.
-- Use partials for reusable sections.
-- Keep templates organized by feature.
-
-### Tailwind CSS
-
-- Use Tailwind utility classes.
-- Maintain consistent spacing and typography.
-- Build responsive interfaces.
-- Avoid unnecessary custom CSS.
-- Use reusable design patterns.
-
-### Alpine.js
-
-Use Alpine.js for lightweight interactions:
-
-- Dropdowns.
-- Modals.
-- Mobile navigation.
-- Tabs.
-- Search interactions.
-- Product detail modals.
-- Language selectors.
-- Small interactive UI components.
-
-Do not use Alpine.js as a replacement for backend business logic.
-
-Avoid unnecessary JavaScript.
-
-## 8. Design and UI/UX Standards
-
-The platform must have a modern, premium and professional SaaS design.
-
-Design principles:
-
-- Mobile-first responsive design.
-- Clean and minimal interfaces.
-- Consistent typography.
-- Consistent spacing.
-- Reusable UI components.
-- Accessible color contrast.
-- Clear visual hierarchy.
-- Fast loading pages.
-- Smooth but subtle interactions.
-
-The marketing website and digital menu interfaces should have distinct design identities while sharing a consistent underlying design system.
-
-### QR Menu Specific Requirements
-
-QR menus are customer-facing pages and must prioritize mobile devices.
-
-Every menu theme must support the same underlying menu data structure.
-
-Themes should be presentation layers, not separate business logic implementations.
-
-A menu theme may customize:
-
-- Colors.
-- Typography.
-- Layout.
-- Product card styles.
-- Category navigation.
-- Header and cover image.
-- Product detail presentation.
-
-Do not duplicate backend functionality for individual themes.
-
-Do not hardcode business information or products inside theme templates.
-
-All menu content must come from the database.
-
-## 9. Redis and Caching
-
-Use Redis for frequently accessed data where beneficial.
-
-QR menu pages are high-priority caching candidates.
-
-Rules:
-
-- Use tenant-aware cache keys.
-- Use menu-aware cache keys.
-- Never share cached tenant data accidentally.
-- Define appropriate cache expiration strategies.
-- Invalidate relevant caches when menu data changes.
-- Avoid caching user-specific or authorization-sensitive data globally.
-- Avoid unnecessary database queries on public menu pages.
-
-Cache keys should follow a consistent naming convention.
-
-Example:
-
-qrmenu:tenant:{tenant_id}:menu:{menu_id}
-
-## 10. Security Standards
-
-Security must be considered in every development task.
-
-Rules:
-
-- Validate all user input.
-- Use Form Requests for complex validation.
-- Use CSRF protection.
-- Use Laravel authentication mechanisms.
-- Apply authorization checks.
-- Protect tenant-owned resources.
-- Prevent mass assignment vulnerabilities.
-- Never expose passwords, tokens or secrets.
-- Never commit .env files.
-- Never disable security middleware to bypass errors.
-- Use secure file upload validation.
-- Escape untrusted output.
-- Avoid raw SQL unless necessary.
-- Protect against SQL injection and XSS.
-
-Never trust client-side tenant identifiers or authorization decisions.
-
-## 11. Performance Standards
-
-Performance is important because QR menus will be accessed frequently by mobile devices.
-
-Rules:
-
-- Prefer server-side rendering.
-- Minimize JavaScript bundles.
-- Optimize images.
-- Use lazy loading for non-critical images.
-- Avoid unnecessary database queries.
-- Use eager loading.
-- Use Redis caching where appropriate.
-- Avoid loading unnecessary frontend dependencies.
-- Keep public menu pages lightweight.
-- Use pagination for large collections when appropriate.
-
-## 12. Testing Standards
-
-Use PHPUnit or the testing framework already configured in the project.
-
-Write tests for:
-
-- Authentication.
-- Registration.
-- Tenant isolation.
-- Subscription-related business logic.
-- Public QR menu access.
-- Menu visibility.
-- Menu category and product relationships.
-- Cache invalidation.
-- Authorization.
-
-Every new critical feature should include appropriate tests.
-
-Never claim that tests passed without actually running them.
-
-## 13. Git and Code Quality
-
-- Follow clear and descriptive naming conventions.
-- Keep methods small and focused.
-- Avoid commented-out production code.
-- Avoid unnecessary TODO comments.
-- Do not overwrite existing functionality without understanding its purpose.
-- Never delete existing files without a clear reason.
-- Never modify environment configuration without explaining the impact.
-
-Do not commit changes unless explicitly requested.
-
-## 14. Claude Development Workflow
-
-Before implementing a feature:
-
-1. Inspect the existing project structure.
-2. Read the relevant files.
-3. Understand the existing architecture.
-4. Identify dependencies and potential side effects.
-5. Propose an implementation plan for non-trivial tasks.
-6. Implement the feature in small, logical steps.
-7. Run relevant tests.
-8. Check for regressions.
-9. Summarize changed files and implementation decisions.
-
-Do not assume that a feature already exists.
-
-Do not generate the entire application in one step.
-
-Do not create migrations, models, controllers and views blindly without understanding their relationships.
-
-When requirements are ambiguous, ask for clarification instead of making major architectural assumptions.
-
-When a task conflicts with these rules, explain the conflict before proceeding.
-
-## 15. Current Development Priority
-
-The initial development should focus on:
-
-1. Project architecture and configuration.
-2. Database foundation.
-3. Multi-tenant infrastructure.
-4. Public SaaS website.
-5. Authentication.
-6. Pricing and subscription foundation.
-7. QR menu infrastructure.
-8. Menu theme system.
-9. Five initial menu themes.
-10. Performance and security improvements.
-
-Do not start implementing unrelated features without explicit instructions.
-
-## Final Rule
-
-Always prioritize maintainability, security, performance and architectural consistency.
-
-Build this application as a commercial SaaS product that can support many businesses and grow without requiring a complete architectural rewrite.
+- **Backend:** PHP 8.4+, Laravel 12, PostgreSQL, Redis (cache, queue, session on separate DBs), Eloquent, Form Requests, Policies/Gates, Queues, **Laravel Fortify** (headless auth with our own Blade views).
+- **Frontend:** Blade (SSR), Tailwind CSS 4, Alpine.js, Vite, vanilla JS when appropriate.
+- **Testing:** PHPUnit against a PostgreSQL test database.
+- **Forbidden unless explicitly requested:** React, Vue, Next, Nuxt, Inertia, Livewire, Bootstrap, jQuery, Laravel starter kits, tenancy packages (e.g. `stancl/tenancy`), translation packages (e.g. `spatie/laravel-translatable`).
+- **Any new Composer/NPM dependency requires explaining why and getting approval first.**
+
+## 3. Finalized Architecture Decisions
+
+1. **Modular monolith**, server-side rendered. Controllers thin → Form Requests → Services → Models. No repositories, no CQRS.
+2. **Tenancy:** single database, shared schema, `tenant_id` column. One tenant = one business. Built in-house: `TenantContext` (scoped singleton), fail-closed `BelongsToTenant` global scope, resolver pipeline middleware.
+3. **Tenant identification (v1):** central domain `restano.app`, subdomains `{slug}.restano.app`, path `restano.app/m/{slug}`. Authenticated requests resolve the tenant from the user's membership, never from request input. Custom domains later.
+4. **Business structure:** tenant → many `locations` (branches) ↔ many `menus` via the `location_menu` pivot. Menus belong to the tenant so they can be shared across branches. Content is shared; operational state (sold-out, hours) is per location.
+5. **Menu content:** menus → categories → items → variants; reusable extra groups → extras; allergens and dietary labels are PHP enums stored in pivot tables; featured/popular flags; availability per item and sold-out per location.
+6. **Translations:** one `{entity}_translations` table per translatable entity; base tables hold no translatable text. In-house `HasTranslations` trait with fallback (requested → tenant default → first available). Platform locales in `config/locales.php`; per-tenant locales in `tenant_locales`. UI strings in `lang/{locale}/`.
+7. **Integrity:** every tenant-owned table has `UNIQUE (tenant_id, id)`; tenant-owned children and pivots reference parents with **composite foreign keys** `(tenant_id, parent_id)` so cross-tenant links cannot be stored.
+8. **QR codes:** stable `restano.app/q/{code}` (random, non-sequential) → 302 to the current canonical menu URL computed at scan time by `MenuUrlGenerator`. `QrCodeScanned` event is the analytics hook.
+9. **Rendering:** `PublicMenuService` builds a cached, locale-resolved, allow-listed `MenuSnapshot` DTO; time-dependent state (open now, serving now) is computed per request in `LiveMenuState` and never cached.
+10. **Themes:** pure presentation. Selected per tenant with an optional location override. Themes receive only `MenuSnapshot`, `LiveMenuState`, `ThemeSettings`. Five themes: `classic`, `minimal`, `bistro`, `cafe`, `grid`.
+11. **Caching:** version-counter invalidation — a tenant content version and a per-location version, both embedded in snapshot keys. All keys built only by `MenuCacheKeys`, prefixed `qrmenu:`.
+12. **Queues:** `tenant_id` is injected into every job payload and the context is restored on `JobProcessing` (before unserialization) and always cleared afterwards.
+13. **Subscriptions:** provider-agnostic; monthly/annual prices in TRY (stored in kuruş), trial → active → grace → expired lifecycle, configurable grace period, plan limits via `PlanFeature` enum + `FeatureGate`. After grace the public menu shows a professional unavailable page. **Tenant data is never deleted automatically.**
+14. **Registration** (Fortify → `TenantRegistrationService`) creates in one transaction: user, tenant, tenant locales, owner membership, default location, default menu (attached), default theme settings, trial subscription, default QR code.
+
+## 4. Development Principles
+
+- Clean, readable, maintainable code; SOLID where it helps; Laravel conventions; PSR-12; `declare(strict_types=1);`.
+- Avoid overengineering and unnecessary abstractions; no service class for trivial operations.
+- Use PHP enums for fixed value sets; dependency injection; DB transactions for atomic operations.
+- Do not generate unnecessary files, and do not modify unrelated code.
+- Mobile-first, accessible, fast pages; premium SaaS look for marketing, distinct identity for menus, shared design system.
+
+## 5. Non-Negotiable Rules
+
+- **Tenant isolation:** never expose or link one tenant's data to another — in queries, routes, cache, files, jobs and authorization. Never trust client-supplied tenant IDs. Scope bypasses are allowed only in the documented places (see tenancy.md).
+- **All menu content comes from the database.** Never hardcode business info, products or user-facing strings in templates.
+- **Every schema change is a migration.** No destructive schema changes or production data changes without explicit approval.
+- **Security:** validate all input, CSRF on, escape output (`{{ }}` only for tenant content), authorize every action, never commit `.env` or secrets, never disable security middleware to bypass errors.
+- **Tests:** critical features ship with tests (tenant isolation, registration, auth, public menu access/visibility, cache invalidation, subscriptions, authorization). Never claim tests passed without running them.
+
+## 6. Workflow
+
+1. Inspect the existing structure and read the relevant files and architecture docs.
+2. Propose a plan for non-trivial work; ask when requirements are ambiguous instead of making major architectural assumptions.
+3. Implement in small, logical steps — never the whole application at once.
+4. Run tests and check for regressions.
+5. Summarize changed files and decisions.
+
+- If a task conflicts with these rules or the architecture docs, explain the conflict before proceeding.
+- When an architectural decision changes, update the relevant doc in `docs/architecture/` in the same change.
+- Do not commit unless explicitly requested. Never modify environment configuration without explaining the impact.
+
+## 7. Roadmap
+
+Work proceeds phase by phase with a review pause between phases (details in [overview.md](docs/architecture/overview.md#implementation-roadmap)):
+
+0. Environment (Sail: PHP 8.4, PostgreSQL, Redis; Fortify, Alpine; config) → 1. Tenancy core → 2. Database foundation → 3. Subscriptions → 4. Authentication → 5. Marketing site → 6. Public menu infrastructure + `classic` theme → 7. Remaining four themes → 8. Hardening.
+
+## 8. Open Decisions (working defaults until confirmed)
+
+- Plan names, prices and limits — placeholder seeds until defined.
+- Pricing shown KDV-inclusive or "+KDV" — display only.
+- Trial 14 days, grace 7 days.
+- Email verification requirement timing.
+- QR image generation library (`chillerlan/php-qrcode` proposed, **not approved**).
+- Per-location price overrides — deferred.
+- Marketing site locales: `tr` at `/`, `en` at `/en`.
