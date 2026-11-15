@@ -1,0 +1,1 @@
+<svg class="k-star" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="6" y="6" width="12" height="12"></rect><rect x="6" y="6" width="12" height="12" transform="rotate(45 12 12)"></rect><circle cx="12" cy="12" r="3"></circle></svg>

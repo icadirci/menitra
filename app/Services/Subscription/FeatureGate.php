@@ -10,6 +10,8 @@ use App\Exceptions\CrossTenantWriteException;
 use App\Exceptions\PlanLimitExceededException;
 use App\Models\Location;
 use App\Models\Menu;
+use App\Models\MenuItem;
+use App\Models\QrCode;
 use App\Models\Subscription;
 use App\Models\Tenant;
 use App\Tenancy\TenantContext;
@@ -79,11 +81,11 @@ class FeatureGate
     }
 
     /**
-     * Count features whose usage can be counted yet (their table exists).
+     * Count features have a countable usage.
      */
     public function tracksUsage(PlanFeature $feature): bool
     {
-        return in_array($feature, [PlanFeature::MaxLocations, PlanFeature::MaxMenus, PlanFeature::MaxLanguages], true);
+        return ! $feature->isBoolean();
     }
 
     /**
@@ -98,7 +100,8 @@ class FeatureGate
             PlanFeature::MaxLocations => Location::query()->count(),
             PlanFeature::MaxMenus => Menu::query()->count(),
             PlanFeature::MaxLanguages => $tenant->locales()->count(),
-            PlanFeature::MaxItems, PlanFeature::MaxQrCodes => throw new LogicException("Usage of [{$feature->value}] is counted once its table exists."),
+            PlanFeature::MaxItems => MenuItem::query()->count(),
+            PlanFeature::MaxQrCodes => QrCode::query()->count(),
             default => throw new LogicException("[{$feature->value}] is not a count feature."),
         };
     }

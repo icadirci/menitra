@@ -58,6 +58,14 @@ class LocationPolicy
     }
 
     /**
+     * Branch operations (sold-out state): every role on its accessible branches.
+     */
+    public function manageStock(User $user, Location $location): bool
+    {
+        return $this->view($user, $location);
+    }
+
+    /**
      * Choosing the default branch is tenant-wide: owners only.
      */
     public function setDefault(User $user, Location $location): bool

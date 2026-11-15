@@ -1,6 +1,6 @@
 # Menu Themes
 
-> Status: **Approved — v0.2**. Themes are presentation layers only. All themes consume the same data contract and share all backend logic.
+> Status: **Approved — v0.3** (2026-11-16: `classic` built in Phase 6; settings come from `defaults()` until `theme_settings` (B9); a theme without views falls back to `classic` until Phase 7). Themes are presentation layers only. All themes consume the same data contract and share all backend logic.
 
 ## Contents
 
@@ -119,6 +119,7 @@ To override a component, a theme places a variant in `themes/{key}/components/` 
   - `--menu-text`
   - `--menu-font-heading`
   - `--menu-font-body`
+  - `--menu-surface`, `--menu-muted`, `--menu-ornament` (cards, secondary text, decorative details)
 - Theme CSS uses these variables through Tailwind 4 (`@theme` / `var()`). There is one stylesheet per theme and no per-tenant CSS builds.
 - Fonts: a fixed, curated set of font pairs per theme, self-hosted, never loaded from arbitrary user input.
 - Colors are validated as hex values by `settingsRules()`. Contrast is checked against the background to meet accessibility requirements.

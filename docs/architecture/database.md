@@ -2,7 +2,7 @@
 
 > Status: **Approved — v0.4** (2026-11-15: `tenant_locales` without `is_default`, `location_item_states.sold_out_until`, `PlanFeature::max_qr_codes`). v0.3: platform roles, `TenantRole.branch_staff`, `location_user`.
 >
-> **Implemented so far:** `users.platform_role`, `tenants`, `tenant_translations`, `tenant_locales`, `tenant_user`, `locations`, `location_translations`, `location_opening_hours`, `location_special_hours`, `location_user`, `menus`, `menu_translations`, `location_menu`, `plans` (+ `is_featured`), `plan_translations`, `plan_prices`, `plan_limits`, `subscriptions` (+ `plan_price_id`), `subscription_events`, `faqs`, `faq_translations`, `testimonials`, `testimonial_translations`, `site_settings`, `site_setting_translations`. The rest of this document is the approved target schema. PostgreSQL. Every change goes through a migration; this document must be updated with it.
+> **Implemented so far:** `users.platform_role`, `tenants`, `tenant_translations`, `tenant_locales`, `tenant_user`, `locations`, `location_translations`, `location_opening_hours`, `location_special_hours`, `location_user`, `location_item_states`, `location_menu_hours`, `menu_categories` (+ translations), `menu_items` (+ translations), `menu_item_allergens`, `menu_item_dietary_labels`, `menu_item_variants` (+ translations), `extra_groups` (+ translations), `extras` (+ translations), `menu_item_extra_group`, `qr_codes`, `menus`, `menu_translations`, `location_menu`, `plans` (+ `is_featured`), `plan_translations`, `plan_prices`, `plan_limits`, `subscriptions` (+ `plan_price_id`), `subscription_events`, `faqs`, `faq_translations`, `testimonials`, `testimonial_translations`, `site_settings`, `site_setting_translations`. The rest of this document is the approved target schema. PostgreSQL. Every change goes through a migration; this document must be updated with it.
 
 ## Contents
 
@@ -112,9 +112,9 @@
 | `menu_category_translations` | `menu_category_id`, `locale`, `name`, `description` nullable | unique (`menu_category_id`, `locale`) |
 | `menu_items` 🔒 | `public_id` ulid, `menu_category_id`, `price` bigint nullable, `image_path`, `is_visible`, `is_available`, `is_featured`, `is_popular`, `calories` nullable, `preparation_minutes` nullable, `sort_order` | unique `public_id`; index (`tenant_id`, `menu_category_id`, `sort_order`); partial index (`tenant_id`) where `is_featured` |
 | `menu_item_translations` | `menu_item_id`, `locale`, `name`, `description` nullable | unique (`menu_item_id`, `locale`) |
-| `menu_item_variants` 🔒 | `public_id` ulid, `menu_item_id`, `price` bigint, `is_default`, `is_available`, `sort_order` | index (`menu_item_id`, `sort_order`) |
+| `menu_item_variants` 🔒 | `public_id` ulid, `menu_item_id`, `price` bigint, `is_default`, `is_available`, `sort_order` | index (`menu_item_id`, `sort_order`); partial unique (`menu_item_id`) where `is_default`; check `price >= 0` |
 | `menu_item_variant_translations` | `menu_item_variant_id`, `locale`, `name` | unique (…, `locale`) |
-| `extra_groups` 🔒 | `selection_type` (`ExtraSelectionType`), `min_select` default 0, `max_select` nullable, `is_required`, `sort_order` | Reusable across items |
+| `extra_groups` 🔒 | `selection_type` (`ExtraSelectionType`), `min_select` default 0, `max_select` nullable, `is_required`, `sort_order` | Reusable across items; check `max_select IS NULL OR max_select >= min_select` |
 | `extra_group_translations` | `extra_group_id`, `locale`, `name` | unique (…, `locale`) |
 | `extras` 🔒 | `public_id` ulid, `extra_group_id`, `price_delta` bigint default 0, `is_available`, `sort_order` | index (`extra_group_id`, `sort_order`) |
 | `extra_translations` | `extra_id`, `locale`, `name` | unique (…, `locale`) |
@@ -199,7 +199,8 @@ Composite foreign keys:
 **Rules a foreign key can't express** are enforced in services and covered by tests:
 - A `qr_codes.menu_id` must be attached to its `location_id` through `location_menu`. At redirect time it falls back to the location page if not.
 - A rendered item's category must belong to the menu being rendered.
-- At most one default variant per item.
+- At most one default variant per item (also a partial unique index; `MenuContentService` clears the previous default first).
+- Pivots that carry `tenant_id` and are written through relations use pivot models with `BelongsToTenant` (`LocationMenu`, `MenuItemExtraGroup`), which set `tenant_id` from the context; relations don't use `withPivotValue('tenant_id')`, so they stay eager-loadable.
 
 ## Translations
 

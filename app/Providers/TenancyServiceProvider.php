@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
+use App\Observers\MenuCacheObserver;
 use App\Services\Subscription\FeatureGate;
 use App\Tenancy\Queue\TenantQueueListener;
 use App\Tenancy\TenantContext;
@@ -31,6 +32,11 @@ class TenancyServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        // Public menu cache invalidation (docs/architecture/caching.md).
+        foreach (MenuCacheObserver::observed() as $model) {
+            $model::observe(MenuCacheObserver::class);
+        }
+
         Queue::createPayloadUsing(fn (): array => TenantQueueListener::payloadFor($this->app->make(TenantContext::class)));
 
         Event::listen(JobProcessing::class, [TenantQueueListener::class, 'restore']);

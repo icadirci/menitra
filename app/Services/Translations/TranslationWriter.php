@@ -84,7 +84,8 @@ final class TranslationWriter
         DB::transaction(function () use ($model, $rows): void {
             foreach ($rows as $locale => $values) {
                 if ($values === null) {
-                    $model->translations()->where('locale', $locale)->delete();
+                    // Through the model, so observers (cache invalidation) fire.
+                    $model->translations()->where('locale', $locale)->get()->each->delete();
 
                     continue;
                 }

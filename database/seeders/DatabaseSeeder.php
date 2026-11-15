@@ -2,14 +2,11 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
 {
-    use WithoutModelEvents;
-
+    // No WithoutModelEvents: DemoSeeder relies on model events (ULIDs, tenant_id, QR codes).
     /**
      * Seed the application's database.
      */
@@ -17,11 +14,9 @@ class DatabaseSeeder extends Seeder
     {
         $this->call([PlanSeeder::class, MarketingFaqSeeder::class]);
 
-        // User::factory(10)->create();
-
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-        ]);
+        // Showcase data for local development only (see DemoSeeder).
+        if (! app()->isProduction()) {
+            $this->call(DemoSeeder::class);
+        }
     }
 }

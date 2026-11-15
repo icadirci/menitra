@@ -65,9 +65,25 @@ class Location extends Model
     public function menus(): BelongsToMany
     {
         return $this->belongsToMany(Menu::class, 'location_menu')
-            ->withPivotValue('tenant_id', $this->tenant_id)
-            ->withPivot(['is_active', 'sort_order'])
+            // tenant_id is set by the LocationMenu pivot model (BelongsToTenant), so eager loading works.
+            ->using(LocationMenu::class)
+            ->withPivot(['id', 'is_active', 'sort_order'])
             ->withTimestamps();
+    }
+
+    public function locationMenus(): HasMany
+    {
+        return $this->hasMany(LocationMenu::class);
+    }
+
+    public function itemStates(): HasMany
+    {
+        return $this->hasMany(LocationItemState::class);
+    }
+
+    public function qrCodes(): HasMany
+    {
+        return $this->hasMany(QrCode::class);
     }
 
     public function openingHours(): HasMany

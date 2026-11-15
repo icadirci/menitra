@@ -47,4 +47,19 @@ return [
         'login', 'register',
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Public menu cache
+    |--------------------------------------------------------------------------
+    |
+    | TTLs (seconds) of the public menu cache entries (docs/architecture/caching.md).
+    | Snapshots are versioned, so the TTL only limits how long stale entries linger.
+    |
+    */
+
+    'cache' => [
+        'resolution_ttl' => 3600,
+        'snapshot_ttl' => 86400,
+    ],
+
 ];

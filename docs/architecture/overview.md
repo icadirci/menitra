@@ -207,10 +207,10 @@ Business          Business profile · Languages · Theme & appearance · Subscri
 | B1 | Panel foundation: navigation groups, `Money`, `TranslatableFields` + `TranslationWriter`, `media` disk + `HasTenantMedia`, `tenant_locales` + `TenantLocaleService`, `plan_limits` + `FeatureGate`, `TenantPolicy`, Languages page |
 | B2 | Business profile, subscription page (read-only). **Done 2026-11-15:** `EditBusinessProfile` (name/tagline/description per enabled locale, logo + cover; slug and currency read-only — a slug change is a support task for now) and `ViewSubscription` (plan, status, dates, `Subscription::accessUntil()`, limits with usage from `FeatureGate`), both owner-only |
 | B3 | Locations: resource, opening hours, special hours. **Done 2026-11-15:** `LocationResource` (list/create/view/edit; query limited to `accessibleLocations()`, so another branch is a 404), weekly hours as a repeater on the form, special days as a relation manager. Writes go through `LocationService` (plan limit on create and restore, translations, default-branch rules: exactly one default, which can't be deactivated or deleted; switching it is owner-only via `LocationPolicy::setDefault`) and `LocationHoursService` (server-side time, overlap and closed-day rules). Panel glue `App\Filament\App\Support\ServiceCall` maps service validation errors onto form fields and plan limits onto notifications. The location theme override comes with B9 |
-| B4 | Menus, location attachment (`LocationMenu` pivot model), categories |
-| B5 | Items, allergens, dietary labels |
-| B6 | Variants, extra groups |
-| B7 | Branch operations: stock status (`location_item_states`), menu serving hours |
+| B4 | Menus, location attachment (`LocationMenu` pivot model), categories. **Done 2026-11-16:** `MenuResource` (list limited by `Menu::scopeEditableBy()`, the manager content rule), `CategoriesRelationManager`, `LocationsRelationManager` (owner-only, with serving hours); `MenuService` (plan limit on create/restore), `MenuPolicy` |
+| B5 | Items, allergens, dietary labels. **Done 2026-11-16:** `MenuItemResource`, `MenuContentService` (`max_items` on create), `MenuItemPolicy` (follows the item's menu; the submitted category is re-authorized) |
+| B6 | Variants, extra groups. **Done 2026-11-16:** `VariantsRelationManager` (one default per item), `ExtraGroupResource` + `ExtrasRelationManager` (owner-only, `ExtraGroupService`) |
+| B7 | Branch operations: stock status (`location_item_states`), menu serving hours. **Done 2026-11-16:** `ManageStock` page for every role on its accessible branches (`LocationPolicy::manageStock`, `StockService`: for today / until a time / indefinitely); serving hours on the menu ↔ location attachment |
 | B8 | QR codes (`chillerlan/php-qrcode`, SVG + PNG) |
 | B9 | Theme & appearance (`theme_settings`) |
 | B10 | Dashboard widgets and onboarding checklist |
@@ -246,7 +246,8 @@ app/
   Filament/
     Admin/                   Pages/ (Dashboard, ManageSiteSettings), Resources/ (Plans, Faqs, Testimonials)
     App/                     Pages/ (Dashboard, ManageLocales, EditBusinessProfile, ViewSubscription, …),
-                             Resources/ (Locations, …), Widgets/, Support/ (ServiceCall),
+                             Resources/ (Locations, Menus, MenuItems, ExtraGroups), Widgets/,
+                             Support/ (ServiceCall, PanelContext), Pages/ManageStock,
                              Forms/ (TranslatableFields, MoneyInput, TenantImageUpload)
   Http/
     Controllers/
@@ -345,7 +346,7 @@ Each phase ends with tests run, a summary of changed files, and a review pause.
 | 3. Subscriptions | Remainder: plan prices, lifecycle command (`plan_limits`, `FeatureGate` and `PlanSeeder` limits moved to B1) | Lifecycle and grace tests pass |
 | 4. Authentication | Fortify (registration, password reset, email verification), Blade auth views (tr/en), `TenantRegistrationService`, `/account`; `GET /login` → `/app/login` | Registration atomicity and auth tests pass |
 | 5. Marketing site | `components/ui` design system, marketing layout and pages, pricing from DB, tr/en, SEO. **Status (2026-11-15):** design system, auth pages, marketing layout, home page (`/` tr, `/en` en; routes `marketing.{locale}.{page}`; content from `MarketingContent`) features page (`/ozellikler`, `/en/features`) pricing page (`/fiyatlar`, `/en/pricing`) and contact page (`/iletisim`, `/en/contact`, with `/admin` site settings) done. Design source: `docs/design/source/` (see [Design reference](#design-reference)) | Pages render in both locales |
-| 6. Public menu infrastructure | Snapshot builder, cache versions, `PublicMenuService`, routes, `/q/{code}`, unavailable page, `DemoTenantSeeder`, reference theme `classic` | Access, visibility, cache, query-count and QR tests pass |
+| 6. Public menu infrastructure | Snapshot builder, cache versions, `PublicMenuService`, routes, `/q/{code}`, unavailable page, `DemoTenantSeeder`, reference theme `classic`. **Done 2026-11-16:** pulled forward the resolver pipeline (Phase 1) and the `qr_codes` table (B8); demo data is `DemoSeeder` (platform users, `kahve-konagi`, suspended `eski-firin`, non-public `demo` plan); `classic` follows `MenuKonak` / `DetailKonak` with self-hosted Young Serif + Figtree | Access, visibility, cache, query-count and QR tests pass |
 | 7. Themes | `minimal`, `bistro`, `cafe`, `grid`; theme showcase | Theme architecture and zero-query tests pass for all five |
 | 8. Hardening | CSP and security headers, HTTP caching/ETag, image upload pipeline, rate limits, performance pass | Security checklist and performance budget met |
 

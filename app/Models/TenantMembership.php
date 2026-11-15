@@ -103,7 +103,29 @@ class TenantMembership extends Model
             );
     }
 
-    private function assignedLocationIds(): QueryBuilder
+    /**
+     * Menu content rule (CLAUDE.md §3.16): owners always; a manager only when
+     * the menu is attached to at least one location and every location it is
+     * attached to is assigned to them. Unattached menus are owner-only.
+     */
+    public function canEditMenu(Menu $menu): bool
+    {
+        if ((int) $menu->tenant_id !== (int) $this->tenant_id) {
+            return false;
+        }
+
+        if ($this->isOwner()) {
+            return true;
+        }
+
+        if ($this->role !== TenantRole::Manager) {
+            return false;
+        }
+
+        return Menu::query()->whereKey($menu->getKey())->editableBy($this)->exists();
+    }
+
+    public function assignedLocationIds(): QueryBuilder
     {
         return DB::table('location_user')
             ->select('location_id')

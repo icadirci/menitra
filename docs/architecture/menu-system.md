@@ -1,6 +1,6 @@
 # Menu System
 
-> Status: **Approved — v0.3** (2026-11-15: timed sold-out — `soldOutUntil` / `soldOutIndefinitely` in the snapshot, evaluated by `LiveMenuState`). v0.2: Covers locations, menus, menu content, QR codes, public URLs, locale handling and the rendering pipeline. The schema is in [database.md](database.md), themes in [themes.md](themes.md), caching in [caching.md](caching.md).
+> Status: **Approved — v0.4** (2026-11-16: implemented in Phase 6 — `menu` nullable for the location page, routing ids on summaries, minute in the ETag). v0.3 (2026-11-15: timed sold-out — `soldOutUntil` / `soldOutIndefinitely` in the snapshot, evaluated by `LiveMenuState`). v0.2: Covers locations, menus, menu content, QR codes, public URLs, locale handling and the rendering pipeline. The schema is in [database.md](database.md), themes in [themes.md](themes.md), caching in [caching.md](caching.md).
 
 ## Contents
 
@@ -86,7 +86,8 @@ Tenant (business)
   4. **302** redirect to `MenuUrlGenerator->for($location, $menu)`. It's 302 rather than 301 so browsers never cache the target.
   5. Dispatch `QrCodeScanned` after the response. There is no listener in v1. Analytics later adds a listener and a `qr_scans` table, with no QR reprint.
 - Because the target is computed at scan time, changing the slug, subdomain or a future custom domain never breaks printed codes.
-- Registration creates one default QR code for the default location. QR **image** generation is pending a library decision.
+- Registration creates one default QR code for the default location. QR **images** and the panel module come with B8 (`chillerlan/php-qrcode`).
+- A code is normalised before lookup (case-insensitive; `I`/`L` → `1`, `O` → `0`, `U` → `V`). `/q/*` is limited by `throttle:qr` (60/min per IP); `QrCodeScanned` is dispatched with `defer()` after the response.
 
 ## Rendering pipeline
 
@@ -120,7 +121,8 @@ MenuSnapshot
  ├─ location: LocationInfo         name, address, phone, whatsapp, email, mapUrl, timezone,
  │                                 weeklyHours[], specialHours[] (next 30 days)
  ├─ menus: MenuSummary[]           for the menu switcher (name, type, url, servingHours[])
- └─ menu: MenuData                 name, description, type
+ │                                 (`id` on MenuSummary / LocationSummary is a routing key, never rendered)
+ └─ menu: ?MenuData                name, description, type, featured: ItemData[]  (null on the location page)
       └─ categories: CategoryData[]   id, name, description, imageUrl
            └─ items: ItemData[]        publicId, name, description, imageUrl, price: ?Money,
                                        fromPrice: ?Money, isFeatured, isPopular,
@@ -166,7 +168,9 @@ The tenant's data is untouched.
 ## Performance
 
 - With a warm cache, a menu request makes **zero database queries**: the tenant comes from the resolution cache, the versions come from one Redis `MGET`, and the snapshot is a single cache hit.
-- HTTP: `ETag` built from `{snapshot version}.{locale}.{theme}`, with `Cache-Control: public, max-age=60`. A future CDN can serve unchanged menus.
+- HTTP: `ETag` built from `{snapshot version}.{locale}.{theme}.{UTC minute}`, with `Cache-Control: public, max-age=60`. The minute is included because live state (open now, timed sold-out) changes with the clock while the snapshot doesn't. A future CDN can serve unchanged menus.
+- Menu routes (`routes/menu.php`) are registered without the `web` middleware group: no session, no cookies, no CSRF. On tenant hosts any non-GET method is a 404 (not 405).
+- Item details open as an Alpine sheet over the rendered DOM (`menuPage` in `menu.js`), deep-linkable as `#i-{publicId}`; extras are display-only choices.
 - Images use `loading="lazy"` with explicit dimensions. Above-the-fold cover images are eager.
 - Assets on menu pages: `menu-base.css`, the theme stylesheet and `menu.js` (Alpine only). Search and the item modal run client-side over the already-rendered DOM, with no API calls.
 

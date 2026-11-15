@@ -42,6 +42,9 @@ class AppServiceProvider extends ServiceProvider
             $view->with('contact', app(MarketingContent::class)->contactDetails());
         });
 
+        // Public QR redirects (/q/{code}): generous per-IP limit against enumeration.
+        RateLimiter::for('qr', fn (Request $request) => Limit::perMinute(60)->by($request->ip()));
+
         RateLimiter::for('contact', function (Request $request) {
             $back = fn () => redirect()
                 ->to(MarketingUrl::to('contact', fragment: 'contact-form'))

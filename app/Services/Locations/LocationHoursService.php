@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace App\Services\Locations;
 
 use App\Models\Location;
+use App\Models\LocationMenu;
 use App\Models\LocationSpecialHour;
+use App\Services\Menu\MenuCache;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -27,6 +29,8 @@ final class LocationHoursService
 {
     private const string TIME_PATTERN = '/^([01]\d|2[0-3]):[0-5]\d(:[0-5]\d)?$/';
 
+    public function __construct(private readonly MenuCache $cache) {}
+
     /**
      * Replaces the weekly hours with the given rows.
      *
@@ -36,47 +40,7 @@ final class LocationHoursService
      */
     public function syncOpeningHours(Location $location, array $rows): void
     {
-        $clean = [];
-        $errors = [];
-
-        foreach (array_values($rows) as $index => $row) {
-            $row = is_array($row) ? $row : [];
-            $day = filter_var($row['day_of_week'] ?? null, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1, 'max_range' => 7]]);
-            $opens = $this->time($row['opens_at'] ?? null);
-            $closes = $this->time($row['closes_at'] ?? null);
-
-            if ($day === false) {
-                $errors["opening_hours.{$index}.day_of_week"] = __('panels.app.hours.errors.day');
-            }
-            if ($opens === null) {
-                $errors["opening_hours.{$index}.opens_at"] = __('panels.app.hours.errors.time');
-            }
-            if ($closes === null) {
-                $errors["opening_hours.{$index}.closes_at"] = __('panels.app.hours.errors.time');
-            }
-            if ($day === false || $opens === null || $closes === null) {
-                continue;
-            }
-            if ($opens === $closes) {
-                $errors["opening_hours.{$index}.closes_at"] = __('panels.app.hours.errors.same_time');
-
-                continue;
-            }
-
-            foreach ($clean as $otherIndex => $other) {
-                if ($other['day_of_week'] === $day && $this->overlaps($opens, $closes, $other['opens_at'], $other['closes_at'])) {
-                    $errors["opening_hours.{$index}.opens_at"] = __('panels.app.hours.errors.overlap');
-
-                    continue 2;
-                }
-            }
-
-            $clean[$index] = ['day_of_week' => $day, 'opens_at' => $opens, 'closes_at' => $closes];
-        }
-
-        if ($errors !== []) {
-            throw ValidationException::withMessages($errors);
-        }
+        $clean = $this->intervals($rows, 'opening_hours', 'opens_at', 'closes_at');
 
         DB::transaction(function () use ($location, $clean): void {
             $location->openingHours()->delete();
@@ -84,9 +48,90 @@ final class LocationHoursService
             foreach ($clean as $row) {
                 $location->openingHours()->create($row);
             }
+
+            // The bulk delete fires no model events.
+            $this->cache->bumpLocation((int) $location->tenant_id, (int) $location->getKey());
         });
 
         $location->unsetRelation('openingHours');
+    }
+
+    /**
+     * Replaces the serving hours of a menu at a location (none = all day).
+     *
+     * @param  array<int|string, mixed>  $rows  [['day_of_week' => 1, 'starts_at' => '07:00', 'ends_at' => '12:00'], …]
+     *
+     * @throws ValidationException
+     */
+    public function syncMenuHours(LocationMenu $locationMenu, array $rows): void
+    {
+        $clean = $this->intervals($rows, 'hours', 'starts_at', 'ends_at');
+
+        DB::transaction(function () use ($locationMenu, $clean): void {
+            $locationMenu->hours()->delete();
+
+            foreach ($clean as $row) {
+                $locationMenu->hours()->create($row);
+            }
+
+            $this->cache->bumpLocation((int) $locationMenu->tenant_id, (int) $locationMenu->location_id);
+        });
+    }
+
+    /**
+     * Validates weekly intervals: ISO day, valid times, start ≠ end, no overlap
+     * on the same day.
+     *
+     * @param  array<int|string, mixed>  $rows
+     * @return list<array<string, int|string>>
+     *
+     * @throws ValidationException
+     */
+    private function intervals(array $rows, string $prefix, string $startKey, string $endKey): array
+    {
+        $clean = [];
+        $errors = [];
+
+        foreach (array_values($rows) as $index => $row) {
+            $row = is_array($row) ? $row : [];
+            $day = filter_var($row['day_of_week'] ?? null, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1, 'max_range' => 7]]);
+            $start = $this->time($row[$startKey] ?? null);
+            $end = $this->time($row[$endKey] ?? null);
+
+            if ($day === false) {
+                $errors["{$prefix}.{$index}.day_of_week"] = __('panels.app.hours.errors.day');
+            }
+            if ($start === null) {
+                $errors["{$prefix}.{$index}.{$startKey}"] = __('panels.app.hours.errors.time');
+            }
+            if ($end === null) {
+                $errors["{$prefix}.{$index}.{$endKey}"] = __('panels.app.hours.errors.time');
+            }
+            if ($day === false || $start === null || $end === null) {
+                continue;
+            }
+            if ($start === $end) {
+                $errors["{$prefix}.{$index}.{$endKey}"] = __('panels.app.hours.errors.same_time');
+
+                continue;
+            }
+
+            foreach ($clean as $other) {
+                if ($other['day_of_week'] === $day && $this->overlaps($start, $end, $other[$startKey], $other[$endKey])) {
+                    $errors["{$prefix}.{$index}.{$startKey}"] = __('panels.app.hours.errors.overlap');
+
+                    continue 2;
+                }
+            }
+
+            $clean[] = ['day_of_week' => $day, $startKey => $start, $endKey => $end];
+        }
+
+        if ($errors !== []) {
+            throw ValidationException::withMessages($errors);
+        }
+
+        return $clean;
     }
 
     /**

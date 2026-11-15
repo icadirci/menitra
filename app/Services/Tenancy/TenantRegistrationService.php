@@ -23,7 +23,8 @@ use RuntimeException;
 /**
  * Public business registration. Creates, in one transaction, either all of:
  * user, tenant (+ name translation), owner membership, enabled locale,
- * default location, default menu attached to it, trial subscription — or
+ * default location, default menu attached to it, default QR code, trial
+ * subscription — or
  * nothing. Every new tenant therefore starts trialing on the default plan.
  *
  * The user never receives a platform role here: platform roles are granted
@@ -94,6 +95,9 @@ final class TenantRegistrationService
                     'name' => __('registration.default_menu_name', [], $locale),
                 ]);
                 $location->menus()->attach($menu);
+
+                // Default QR code (stable /q/{code}) for the default location.
+                $location->qrCodes()->create(['label' => $businessName]);
 
                 $this->subscriptions->startTrial($tenant, $plan);
             } finally {

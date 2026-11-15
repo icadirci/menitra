@@ -13,10 +13,10 @@ use App\Filament\App\Resources\Locations\Pages\EditLocation;
 use App\Filament\App\Resources\Locations\Pages\ListLocations;
 use App\Filament\App\Resources\Locations\Pages\ViewLocation;
 use App\Filament\App\Resources\Locations\RelationManagers\SpecialHoursRelationManager;
+use App\Filament\App\Support\PanelContext;
 use App\Filament\App\Support\ServiceCall;
 use App\Models\Location;
 use App\Models\TenantMembership;
-use App\Models\User;
 use App\Services\Locations\LocationService;
 use App\Tenancy\TenantContext;
 use BackedEnum;
@@ -363,10 +363,7 @@ class LocationResource extends Resource
 
     public static function membership(): ?TenantMembership
     {
-        $context = app(TenantContext::class);
-        $user = auth()->user();
-
-        return $context->check() && $user instanceof User ? $user->membershipFor($context->tenant()) : null;
+        return PanelContext::membership();
     }
 
     public static function getPages(): array

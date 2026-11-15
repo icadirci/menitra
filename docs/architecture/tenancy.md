@@ -49,9 +49,9 @@ PostgreSQL Row-Level Security is an optional fourth layer for a later phase.
 | Component | Responsibility |
 |---|---|
 | `App\Tenancy\TenantContext` | Scoped singleton (`$this->app->scoped()`) holding the current tenant. The **only** source of the current tenant. Reset per request and per job. It holds the `Tenant` model (decision 2026-11-15); whether a cached `ResolvedTenant` is needed is reassessed when public QR menu routing is built |
-| `App\Tenancy\ResolvedTenant` | Candidate cached value object (id, slug, status, locales, theme, `access_until`) for public resolution. **Not introduced yet**; reassessed in Phase 6 |
+| `App\Tenancy\ResolvedTenant` | Cached value object of public resolution (id, slug, status, default locale, enabled locales, theme, `access_until`, names, `premium_themes` / `remove_branding` flags). **Introduced in Phase 6** (built by `ResolvedTenantFactory`): public menu requests use it instead of `TenantContext`, which `PublicMenuService` sets only while a snapshot is rebuilt — so a warm request needs no query. Plan-limit changes in `/admin` reach it within the resolution TTL (1h) |
 | `App\Models\Concerns\BelongsToTenant` | Adds the global scope `where tenant_id = TenantContext::id()`, sets `tenant_id` on `creating`, keeps `tenant_id` out of `$fillable` |
-| `App\Tenancy\TenantResolverPipeline` | Runs `TenantResolver` implementations in order |
+| `App\Tenancy\Resolvers\TenantResolverPipeline` | Runs `SubdomainTenantResolver`, then `PathTenantResolver` (custom domains later) |
 | `ResolveTenantFromRequest` middleware | Public menu routes: runs the pipeline and sets the context, or returns 404 |
 | `ResolveTenantFromMembership` middleware | Business panel (`/app/{tenant-slug}`): runs after Filament's tenant identification, re-verifies the user's active membership in that tenant on every request (including Livewire updates) and only then sets `TenantContext`. Otherwise 404 |
 | `App\Tenancy\Queue\TenantQueueListener` | Propagates and restores the tenant context for queued jobs |
@@ -136,7 +136,7 @@ Livewire is used only by the panels, so its endpoints follow the panels:
 
 | Location | Reason |
 |---|---|
-| Tenant resolvers | The tenant isn't known yet |
+| Tenant resolvers (`ResolvedTenantFactory`) | The tenant isn't known yet |
 | `QrCodeResolver` | The QR code identifies the tenant |
 | `ResolveTenantFromMembership` / membership lookups | The tenant is derived from the user's verified membership |
 | Commands and jobs implementing `TenantAgnostic` | Cross-tenant maintenance, e.g. subscription lifecycle |

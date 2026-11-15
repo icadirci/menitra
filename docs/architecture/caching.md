@@ -50,7 +50,7 @@ Old entries are never deleted. Their **version changes** instead:
 3. The next request reads the new versions, misses, rebuilds and stores under the new key.
 4. Old keys become unreachable and expire through their TTL.
 
-Reading both versions takes **one round trip** (`Cache::many([...])`).
+Reading both versions takes **one round trip** (`Cache::many([...])`) once the location is known; the tenant version is read first to find the location in the cached tenant location index. A missing counter reads as 1. TTLs live in `config/tenancy.php` (`cache.resolution_ttl`, `cache.snapshot_ttl`).
 
 Why versions rather than deletes or tags:
 - There's no race between deleting and rebuilding.
@@ -61,14 +61,15 @@ Why versions rather than deletes or tags:
 
 ## Invalidation matrix
 
-Version bumps come from model observers (`MenuContentObserver`, `LocationStateObserver`, `TenantObserver`). They're registered with **`afterCommit`**, so a bump never happens before the data is committed. Pivot changes go through the pivot models (`LocationMenu`) or explicit service calls, so observers always fire.
+Version bumps come from one model observer, `App\Observers\MenuCacheObserver` (registered in `TenancyServiceProvider` for every model in the matrix, translations included). `MenuCache` defers every bump and resolution clear with `DB::afterCommit`, so a bump never happens before the data is committed (and never after a rollback). Bulk query-builder writes fire no model events: services that use them (`LocationHoursService`) bump explicitly, and `TranslationWriter` deletes through models. Pivot changes go through the pivot models (`LocationMenu`) or explicit service calls, so observers always fire.
 
 | Change | Bumps / clears | Effect |
 |---|---|---|
 | Menu, category, item, variant, extra group, extra, item–extra-group link, allergen, dietary label, or any of their translations | `tenant:{t}:version` | Every location of the tenant rebuilds |
 | `location_menu` (attach, detach, order, active), `location_menu_hours` | `tenant:{t}:location:{l}:version` | Only that branch |
 | `location_item_states` (sold-out, `sold_out_until`) | `tenant:{t}:location:{l}:version` | Only that branch. The *expiry* of a timed sold-out needs no bump: `LiveMenuState` compares `soldOutUntil` with the clock per request |
-| Location details, opening or special hours, location translations, location theme | `tenant:{t}:location:{l}:version` | Only that branch |
+| Opening or special hours | `tenant:{t}:location:{l}:version` | Only that branch |
+| Location details, location translations, location theme | `tenant:{t}:version` | Location names/addresses also appear in the tenant location index |
 | Location created, deleted or (de)activated | `tenant:{t}:version` | Tenant location index |
 | Tenant brand, translations, theme, theme settings, locales | `tenant:{t}:version` + `host:*`/`slug:*` entries for the tenant | |
 | Tenant slug change | old and new `slug:` / `host:` entries + `tenant:{t}:version` | |
