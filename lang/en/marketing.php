@@ -7,6 +7,8 @@ return [
     'meta' => [
         'home_title' => 'QR menus for cafés and restaurants',
         'home_description' => 'Turn your menu into a fast, photo-rich page guests open with a single scan. Update prices and sold-out items in seconds.',
+        'features_title' => 'Features — QR menus, multi-language menus and themes',
+        'features_description' => 'Permanent QR codes, fast phone-first menus, Turkish and English content, themes that fit your place; allergens, add-ons and sold-out status.',
     ],
 
     'skip_to_content' => 'Skip to content',
@@ -90,6 +92,91 @@ return [
             ['icon' => 'sliders', 'title' => 'Custom appearance', 'body' => 'Themes and colours that match your room.'],
             ['icon' => 'bolt', 'title' => 'Loads in a blink', 'body' => 'Lightweight pages that open fast on café Wi-Fi.'],
             ['icon' => 'sparkle', 'title' => 'Your branding', 'body' => 'Your logo and cover image.'],
+        ],
+    ],
+
+    // Features page (/en/features). Claims only what the product provides (docs/architecture).
+    'features_page' => [
+        'eyebrow' => 'Features',
+        'title' => 'Everything built around one thing: a menu guests enjoy.',
+        'lead' => 'Photos, prices, languages and your brand — in a page that opens quickly on any phone and changes the moment you do.',
+        'cta_primary' => 'Start free trial',
+        'cta_secondary' => 'See menu examples',
+
+        'qr' => [
+            'badge' => 'QR code menus',
+            'title' => 'Print one code. Change the menu forever.',
+            'body' => 'Your QR code is permanent. Edit dishes, prices and photos as often as you like — the code on the table always opens the latest menu.',
+            'points' => [
+                'Print-ready downloads in PNG and SVG',
+                'A separate code for each branch, or one that opens a specific menu',
+                'Printed codes keep working even if your menu address changes',
+            ],
+            'card_body' => 'Scan with your camera to see today’s menu',
+            'card_branch' => 'Kadıköy branch',
+            'card_label' => 'Sample QR code card',
+            'deep_link' => 'Breakfast menu',
+        ],
+
+        'mobile' => [
+            'badge' => 'Mobile-friendly · Fast loading',
+            'title' => 'Made for one hand and a busy table.',
+            'body' => 'Every menu is designed phone-first: big tap targets, categories you can swipe, search within the menu, and pages light enough for patchy café Wi-Fi.',
+            'points' => [
+                'Opens in the browser — no app, no sign-up',
+                'Photos load as guests scroll',
+                'Looks right on tablets and desktops too',
+            ],
+        ],
+
+        'languages' => [
+            'badge' => 'Multi-language menus',
+            'title' => 'Speak to guests in Turkish and English.',
+            'body' => 'Add translations next to each dish. The menu opens in your default language and guests switch to the other with one tap.',
+            'points' => [
+                'Turkish and English content from one panel',
+                'Text without a translation falls back to your default language, so nothing is left blank',
+                'Prices, allergens and dietary labels stay the same in every language',
+            ],
+            // Sample dish in each platform language (illustration; the same in every lang file).
+            'demo' => [
+                ['locale' => 'tr', 'name' => 'Türk Kahvesi', 'note' => 'Közde pişer, lokum ve su ile.', 'price' => '₺150'],
+                ['locale' => 'en', 'name' => 'Turkish coffee', 'note' => 'Brewed over embers, with lokum and water.', 'price' => '₺150'],
+            ],
+        ],
+
+        'branding' => [
+            'badge' => 'Customizable appearance · Your brand',
+            'title' => 'A menu that looks like your place, not like software.',
+            'body' => 'Start from a theme that suits your venue, then make it yours with your logo, cover photo, colours and fonts.',
+            'points' => [
+                'Five themes for cafés, bakeries and restaurants',
+                'Your brand colours and font pairings chosen for each theme',
+                'Use a different theme at any of your branches',
+            ],
+            'themes_label' => 'Themes',
+            'themes_note' => ':count themes · your colours',
+            'logo_title' => 'Your logo & cover photo',
+            'logo_body' => 'Shown at the top of every menu',
+        ],
+
+        'details' => [
+            'title' => 'And the details that make service smoother.',
+            'items' => [
+                ['icon' => 'layers', 'title' => 'Menus and categories', 'body' => 'Separate menus for breakfast, lunch or drinks, with categories in any order you like. Guests switch between them at the top of the menu.', 'tags' => ['Breakfast', 'Coffee', 'Desserts', 'Wine list']],
+                ['icon' => 'image', 'title' => 'Product images', 'body' => 'Add photos to dishes and categories. Images load as guests scroll, so the menu opens fast.', 'tags' => ['JPEG', 'PNG', 'WebP']],
+                ['icon' => 'tag', 'title' => 'Descriptions & prices', 'body' => 'Ingredients, portion options and add-ons, priced in Turkish lira. Dishes with options show their lowest price as a “from” price.', 'tags' => ['Portions', 'Add-ons', '₺']],
+                ['icon' => 'leaf', 'title' => 'Allergens & dietary labels', 'body' => 'Vegan, vegetarian and gluten-free labels and allergen notes that guests can spot at a glance.', 'tags' => ['Vegan', 'Vegetarian', 'Gluten-free']],
+                ['icon' => 'clock', 'title' => 'Sold out & serving hours', 'body' => 'Mark a dish sold out indefinitely or until a set time; each branch manages its own status. Give menus serving hours and the one being served right now is highlighted.', 'tags' => ['Sold out', 'Until a set time', 'Per branch']],
+                ['icon' => 'sparkle', 'title' => 'Featured & popular', 'body' => 'Highlight today’s specials and bestsellers with badges.', 'tags' => ['Featured', 'Popular']],
+            ],
+        ],
+
+        'cta' => [
+            'title' => 'See your own menu in Restano today.',
+            'lead' => ':days days free. No credit card needed.',
+            'primary' => 'Get started free',
+            'secondary' => 'View pricing',
         ],
     ],
 

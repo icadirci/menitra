@@ -5,7 +5,7 @@
 
     $columns = [
         __('marketing.footer.product') => [
-            ['label' => __('marketing.nav.features'), 'href' => MarketingUrl::to('home', fragment: 'features')],
+            ['label' => __('marketing.nav.features'), 'href' => MarketingUrl::to('features')],
             ['label' => __('marketing.nav.pricing'), 'href' => MarketingUrl::to('home', fragment: 'pricing')],
             ['label' => __('marketing.nav.examples'), 'href' => MarketingUrl::to('home', fragment: 'examples')],
         ],

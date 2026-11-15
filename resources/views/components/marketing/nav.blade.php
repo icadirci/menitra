@@ -3,9 +3,9 @@
 @php
     use App\Support\MarketingUrl;
 
-    // Sections of the home page until the dedicated pages exist (Phase 5, step 3).
+    // Dedicated pages carry 'page' (marked as current); the rest are home page sections until their pages exist.
     $links = [
-        ['label' => __('marketing.nav.features'), 'href' => MarketingUrl::to('home', fragment: 'features')],
+        ['label' => __('marketing.nav.features'), 'href' => MarketingUrl::to('features'), 'page' => 'features'],
         ['label' => __('marketing.nav.examples'), 'href' => MarketingUrl::to('home', fragment: 'examples')],
         ['label' => __('marketing.nav.pricing'), 'href' => MarketingUrl::to('home', fragment: 'pricing')],
         ['label' => __('marketing.nav.faq'), 'href' => MarketingUrl::to('home', fragment: 'faq')],
@@ -24,7 +24,15 @@
 
         <nav class="hidden items-center gap-1 md:flex" aria-label="{{ __('marketing.nav.label') }}">
             @foreach ($links as $link)
-                <a href="{{ $link['href'] }}" class="rounded-input px-3.5 py-2.5 text-[15px] font-medium text-graphite no-underline hover:bg-forest-100 hover:text-forest-900">{{ $link['label'] }}</a>
+                <a
+                    href="{{ $link['href'] }}"
+                    @if (($link['page'] ?? null) === $page) aria-current="page" @endif
+                    @class([
+                        'rounded-input px-3.5 py-2.5 text-[15px] font-medium no-underline hover:bg-forest-100 hover:text-forest-900',
+                        'bg-forest-100 text-forest-900' => ($link['page'] ?? null) === $page,
+                        'text-graphite' => ($link['page'] ?? null) !== $page,
+                    ])
+                >{{ $link['label'] }}</a>
             @endforeach
         </nav>
 
@@ -49,7 +57,15 @@
     <div id="mobile-nav" class="border-t border-line bg-paper md:hidden" x-show="open" x-cloak x-transition.opacity>
         <nav class="mx-auto flex max-w-[1200px] flex-col gap-1 px-5 py-4" aria-label="{{ __('marketing.nav.label') }}">
             @foreach ($links as $link)
-                <a href="{{ $link['href'] }}" class="flex min-h-12 items-center rounded-input px-3 text-base font-semibold text-ink no-underline hover:bg-forest-100" x-on:click="open = false">{{ $link['label'] }}</a>
+                <a
+                    href="{{ $link['href'] }}"
+                    @if (($link['page'] ?? null) === $page) aria-current="page" @endif
+                    @class([
+                        'flex min-h-12 items-center rounded-input px-3 text-base font-semibold text-ink no-underline hover:bg-forest-100',
+                        'bg-forest-100' => ($link['page'] ?? null) === $page,
+                    ])
+                    x-on:click="open = false"
+                >{{ $link['label'] }}</a>
             @endforeach
             <a href="{{ route('login') }}" class="flex min-h-12 items-center rounded-input px-3 text-base font-semibold text-ink no-underline hover:bg-forest-100">{{ __('marketing.nav.login') }}</a>
             <x-marketing.language-switcher :page="$page" class="mt-2 px-3" />

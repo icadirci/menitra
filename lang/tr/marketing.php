@@ -7,6 +7,8 @@ return [
     'meta' => [
         'home_title' => 'Kafe ve restoranlar için QR menü',
         'home_description' => 'Menünüzü misafirlerin tek bir okutmayla açtığı hızlı, fotoğraflı bir sayfaya dönüştürün. Fiyatları ve tükenen ürünleri saniyeler içinde güncelleyin.',
+        'features_title' => 'Özellikler — QR menü, çok dilli menüler ve temalar',
+        'features_description' => 'Kalıcı QR kodlar, telefon için tasarlanmış hızlı menüler, Türkçe ve İngilizce içerik, mekânınıza uyan temalar; alerjenler, ekstralar ve tükendi bilgisi.',
     ],
 
     'skip_to_content' => 'İçeriğe geç',
@@ -90,6 +92,91 @@ return [
             ['icon' => 'sliders', 'title' => 'Size özel görünüm', 'body' => 'Mekânınıza uyan temalar ve renkler.'],
             ['icon' => 'bolt', 'title' => 'Göz açıp kapayıncaya kadar', 'body' => 'Kafe Wi-Fi’ında bile hızlı açılan hafif sayfalar.'],
             ['icon' => 'sparkle', 'title' => 'Markanız', 'body' => 'Logonuz ve kapak görseliniz.'],
+        ],
+    ],
+
+    // Features page (/ozellikler). Claims only what the product provides (docs/architecture).
+    'features_page' => [
+        'eyebrow' => 'Özellikler',
+        'title' => 'Her şey tek bir amaç için: misafirin keyifle göz attığı bir menü.',
+        'lead' => 'Fotoğraflar, fiyatlar, diller ve markanız — her telefonda hızlı açılan ve siz değiştirdiğiniz an güncellenen bir sayfada.',
+        'cta_primary' => 'Ücretsiz denemeye başla',
+        'cta_secondary' => 'Menü örneklerini gör',
+
+        'qr' => [
+            'badge' => 'QR kod menüler',
+            'title' => 'Kodu bir kez basın. Menüyü dilediğiniz kadar değiştirin.',
+            'body' => 'QR kodunuz kalıcıdır. Ürünleri, fiyatları ve fotoğrafları istediğiniz sıklıkla düzenleyin; masadaki kod her zaman güncel menüyü açar.',
+            'points' => [
+                'Baskıya hazır PNG ve SVG indirme',
+                'Her şube için ayrı kod; isterseniz doğrudan belirli bir menüyü açan kod',
+                'Menü adresiniz değişse bile basılı kodlar çalışmaya devam eder',
+            ],
+            'card_body' => 'Güncel menüyü görmek için kameranızla okutun',
+            'card_branch' => 'Kadıköy şubesi',
+            'card_label' => 'Örnek QR kod kartı',
+            'deep_link' => 'Kahvaltı menüsü',
+        ],
+
+        'mobile' => [
+            'badge' => 'Mobil uyumlu · Hızlı açılış',
+            'title' => 'Tek el ve kalabalık bir masa için tasarlandı.',
+            'body' => 'Her menü önce telefon için tasarlanır: büyük dokunma alanları, kaydırılabilir kategoriler, menü içinde arama ve zayıf kafe Wi-Fi’ında bile hızlı açılan hafif sayfalar.',
+            'points' => [
+                'Tarayıcıda açılır — uygulama yok, üyelik yok',
+                'Fotoğraflar sayfa kaydırıldıkça yüklenir',
+                'Tablet ve masaüstünde de düzgün görünür',
+            ],
+        ],
+
+        'languages' => [
+            'badge' => 'Çok dilli menüler',
+            'title' => 'Misafirlerinize Türkçe ve İngilizce seslenin.',
+            'body' => 'Her ürünün çevirisini yanına ekleyin. Menü işletmenizin varsayılan dilinde açılır; misafir tek dokunuşla diğer dile geçer.',
+            'points' => [
+                'Türkçe ve İngilizce içerik, tek panelden',
+                'Çevirisi eksik bir metin varsayılan dilinizde görünür; menüde boşluk kalmaz',
+                'Fiyatlar, alerjenler ve diyet etiketleri her dilde aynı kalır',
+            ],
+            // Sample dish in each platform language (illustration; the same in every lang file).
+            'demo' => [
+                ['locale' => 'tr', 'name' => 'Türk Kahvesi', 'note' => 'Közde pişer, lokum ve su ile.', 'price' => '₺150'],
+                ['locale' => 'en', 'name' => 'Turkish coffee', 'note' => 'Brewed over embers, with lokum and water.', 'price' => '₺150'],
+            ],
+        ],
+
+        'branding' => [
+            'badge' => 'Size özel görünüm · Markanız',
+            'title' => 'Yazılıma değil, mekânınıza benzeyen bir menü.',
+            'body' => 'Mekânınıza uyan bir temayla başlayın; logonuz, kapak fotoğrafınız, renkleriniz ve yazı tiplerinizle onu kendinize göre düzenleyin.',
+            'points' => [
+                'Kafe, fırın ve restoranlar için beş tema',
+                'Marka renkleriniz ve her tema için seçilmiş yazı tipi çiftleri',
+                'İsterseniz şubelerinizde farklı tema kullanın',
+            ],
+            'themes_label' => 'Temalar',
+            'themes_note' => ':count tema · sizin renkleriniz',
+            'logo_title' => 'Logonuz ve kapak fotoğrafınız',
+            'logo_body' => 'Her menünün en üstünde',
+        ],
+
+        'details' => [
+            'title' => 'Servisi kolaylaştıran ayrıntılar da cabası.',
+            'items' => [
+                ['icon' => 'layers', 'title' => 'Menüler ve kategoriler', 'body' => 'Kahvaltı, öğle ya da içecekler için ayrı menüler; içlerinde dilediğiniz sırada kategoriler. Misafirler kategoriler arasında üstten geçer.', 'tags' => ['Kahvaltı', 'Kahve', 'Tatlılar', 'Şarap listesi']],
+                ['icon' => 'image', 'title' => 'Ürün fotoğrafları', 'body' => 'Ürünlere ve kategorilere fotoğraf ekleyin. Görseller sayfa kaydırıldıkça yüklenir, menü hızlı açılır.', 'tags' => ['JPEG', 'PNG', 'WebP']],
+                ['icon' => 'tag', 'title' => 'Açıklamalar ve fiyatlar', 'body' => 'İçerik, porsiyon seçenekleri ve ekstralar; fiyatlar Türk lirası ile. Seçenekli ürünlerde en düşük fiyat “başlayan fiyat” olarak görünür.', 'tags' => ['Porsiyonlar', 'Ekstralar', '₺']],
+                ['icon' => 'leaf', 'title' => 'Alerjen ve diyet etiketleri', 'body' => 'Vegan, vejetaryen ve glütensiz etiketleri ile alerjen bilgileri, misafirin bir bakışta görebileceği şekilde.', 'tags' => ['Vegan', 'Vejetaryen', 'Glütensiz']],
+                ['icon' => 'clock', 'title' => 'Tükendi ve servis saatleri', 'body' => 'Bir ürünü süresiz ya da belirli bir saate kadar tükendi olarak işaretleyin; her şube kendi durumunu yönetir. Servis saati tanımlanan menüde o an servis edilen menü öne çıkar.', 'tags' => ['Tükendi', 'Saate kadar', 'Şubeye özel']],
+                ['icon' => 'sparkle', 'title' => 'Öne çıkanlar ve popülerler', 'body' => 'Günün önerilerini ve çok satanları rozetlerle vurgulayın.', 'tags' => ['Öne çıkan', 'Popüler']],
+            ],
+        ],
+
+        'cta' => [
+            'title' => 'Kendi menünüzü bugün Restano’da görün.',
+            'lead' => ':days gün ücretsiz deneme. Kredi kartı gerekmez.',
+            'primary' => 'Ücretsiz başla',
+            'secondary' => 'Fiyatları gör',
         ],
     ],
 

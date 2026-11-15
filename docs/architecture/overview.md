@@ -222,12 +222,12 @@ Business          Business profile · Languages · Theme & appearance · Subscri
 - `layouts/marketing.blade.php` with header, footer and mobile navigation (Alpine).
 - Pages:
   - Home
-  - Features
+  - Features (`/ozellikler` · `/en/features`): copy in `marketing.features_page`; it claims only what this architecture provides — design mock-up claims without a backend counterpart (PDF/print templates, table codes, extra languages/RTL, custom domains, automatic image compression, plan-specific perks) are left out and guarded by `FeaturesPageTest`
   - Pricing (plans read from the DB, cached)
   - Themes showcase (live demo menus from `DemoTenantSeeder`, no hard-coded menu data)
   - Contact (Form Request, rate limited, queued mail)
   - Privacy and Terms
-- Locales: Turkish at `/`, English at `/en/…`, set by the `SetMarketingLocale` middleware. All strings come from `lang/{locale}/marketing.php`. App locale `tr`, fallback `en`; Laravel's own strings are translated in `lang/tr/{validation,passwords,pagination,auth}.php` and `lang/tr.json`.
+- Locales: Turkish at `/`, English at `/en/…`, set by the `SetMarketingLocale` middleware. Route names are `marketing.{locale}.{page}` with a locale-independent page name; page paths are localised in `routes/web.php` (`$marketingPaths`, e.g. `ozellikler` ↔ `features`), so links, canonical and hreflang always go through `MarketingUrl::to($page)`. Every localised page path is also listed in `tenancy.reserved_slugs` (enforced by `FeaturesPageTest`). The nav marks the current page with `aria-current="page"`; sections without their own page yet link to home page anchors. All strings come from `lang/{locale}/marketing.php`. App locale `tr`, fallback `en`; Laravel's own strings are translated in `lang/tr/{validation,passwords,pagination,auth}.php` and `lang/tr.json`.
 - SEO: per-page meta and Open Graph component, canonical URLs, hreflang between tr and en, `sitemap.xml`.
 - Assets: `app.css` and `app.js`, which are never loaded on menu pages.
 
@@ -343,7 +343,7 @@ Each phase ends with tests run, a summary of changed files, and a review pause.
 | 2. Database foundation | Migrations not already created by Phase B, with composite FKs, enums, models, factories | DB rejects cross-tenant inserts; relationship tests pass |
 | 3. Subscriptions | Remainder: plan prices, lifecycle command (`plan_limits`, `FeatureGate` and `PlanSeeder` limits moved to B1) | Lifecycle and grace tests pass |
 | 4. Authentication | Fortify (registration, password reset, email verification), Blade auth views (tr/en), `TenantRegistrationService`, `/account`; `GET /login` → `/app/login` | Registration atomicity and auth tests pass |
-| 5. Marketing site | `components/ui` design system, marketing layout and pages, pricing from DB, tr/en, SEO. **Status (2026-11-15):** design system, auth pages, marketing layout and home page done (`/` tr, `/en` en; routes `marketing.{locale}.{page}`; content from `MarketingContent`); features, pricing and contact pages next. Design source: `docs/design/source/` (see [Design reference](#design-reference)) | Pages render in both locales |
+| 5. Marketing site | `components/ui` design system, marketing layout and pages, pricing from DB, tr/en, SEO. **Status (2026-11-15):** design system, auth pages, marketing layout, home page (`/` tr, `/en` en; routes `marketing.{locale}.{page}`; content from `MarketingContent`) and features page (`/ozellikler`, `/en/features`) done; pricing and contact pages next. Design source: `docs/design/source/` (see [Design reference](#design-reference)) | Pages render in both locales |
 | 6. Public menu infrastructure | Snapshot builder, cache versions, `PublicMenuService`, routes, `/q/{code}`, unavailable page, `DemoTenantSeeder`, reference theme `classic` | Access, visibility, cache, query-count and QR tests pass |
 | 7. Themes | `minimal`, `bistro`, `cafe`, `grid`; theme showcase | Theme architecture and zero-query tests pass for all five |
 | 8. Hardening | CSP and security headers, HTTP caching/ETag, image upload pipeline, rate limits, performance pass | Security checklist and performance budget met |

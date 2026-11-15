@@ -99,7 +99,7 @@ Work proceeds phase by phase with a review pause between phases (details in [ove
 - S3-compatible media storage in production needs `league/flysystem-aws-s3-v3` (not installed; requires approval). The `media` disk config is ready for it.
 
 **Decided (2026-11-15):** QR images use the already-installed `chillerlan/php-qrcode` directly (SVG + PNG), no other QR package. Images are stored on the `media` disk (see [tenancy.md § File storage](docs/architecture/tenancy.md#file-storage)).
-- Marketing site locales: `tr` at `/`, `en` at `/en`.
+- Marketing site locales: `tr` at `/`, `en` at `/en`; page paths are localised (`/ozellikler` ↔ `/en/features`, see [overview.md § Public marketing website](docs/architecture/overview.md#public-marketing-website)).
 
 ## 9. Docker Execution Strategy
 

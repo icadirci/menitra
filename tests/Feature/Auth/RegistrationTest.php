@@ -175,6 +175,7 @@ class RegistrationTest extends TestCase
     public function test_reserved_slug_is_rejected(): void
     {
         $this->post('/register', $this->payload(['slug' => 'admin']))->assertSessionHasErrors('slug');
+        $this->post('/register', $this->payload(['slug' => 'ozellikler']))->assertSessionHasErrors('slug');
         $this->assertDatabaseCount('tenants', 0);
     }
 
