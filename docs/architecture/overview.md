@@ -110,7 +110,7 @@ GET restano.app/q/{code} → QrCodeResolver (cached) → 302 to MenuUrlGenerator
 **Registration**
 ```
 POST /register → Fortify CreateNewUser → TenantRegistrationService (one transaction)
-              → TenantRegistered (after commit) → queued welcome mail
+              → TenantRegistered (after commit) → queued welcome mail   [planned, not built yet]
 ```
 
 Details: [tenancy.md](tenancy.md), [menu-system.md](menu-system.md).
@@ -118,7 +118,7 @@ Details: [tenancy.md](tenancy.md), [menu-system.md](menu-system.md).
 ## Authentication
 
 - **Login is Filament's:** `/admin/login` and `/app/login`, both on the `web` guard and the same session. Fortify's own routes are ignored (`Fortify::ignoreRoutes()`); `routes/auth.php` declares only registration, password reset and email verification (Fortify controllers, standard route names, central domain). `GET /login` (named `login`) redirects to `/app/login`, so Laravel's auth redirects and the password-reset response land there. There is no `POST /login` or Fortify logout.
-- Fortify features enabled: `registration`, `resetPasswords`, `emailVerification` (when verification is enforced is an open decision). Their views are Blade templates in `resources/views/auth/` (tr/en). After registration, users go to `/app/{tenant-slug}`.
+- Fortify features enabled: `registration`, `resetPasswords`, `emailVerification` (a verified email is required for `/app` and `/account`, not for `/admin`). Their views are Blade templates in `resources/views/auth/` (tr/en). After registration, users go to `/app/{tenant-slug}`.
 - Panel registration (`->registration()`) and Filament password reset are disabled; registration and reset go through Fortify.
 - `App\Actions\Fortify\CreateNewUser` validates only the listed fields and delegates to `TenantRegistrationService::register()`. That method runs **one database transaction** that creates (implemented):
   1. User (never a platform role)
@@ -131,12 +131,17 @@ Details: [tenancy.md](tenancy.md), [menu-system.md](menu-system.md).
   8. The default QR code of the default location and the `theme_settings` row of `classic` with its defaults (B9)
 
   Plan selection: `/register?plan={code}` (see [subscriptions.md § Plan selection at registration](subscriptions.md#plan-selection-at-registration)).
-- After commit, `TenantRegistered` is fired.
+- After commit, `TenantRegistered` is fired. *Not built yet (2026-11-15): neither the event nor the welcome mail exists; registration currently sends only the verification email.*
 - Registration fields: name, email, password, business name, slug (auto-suggested, editable).
 - Rate limits: Filament login (5/min), registration (`registration`: 5/min per IP), password reset (`password-reset`: 5/min per email+IP, 20/min per IP), verification links and resends (6/min). The session is regenerated on login.
 - `User` implements `MustVerifyEmail`, so registration sends a verification email. **The business panel requires a verified email** (`EnsureEmailIsVerified` in the `app` panel's auth middleware, Livewire-persistent); unverified users are redirected to `/email/verify`. The admin panel doesn't require it. A central `POST /logout` (Fortify controller) lets an unverified user leave the verification page.
 - The session cookie is bound to the central domain only (see [tenancy.md](tenancy.md#security-controls)).
-- `/account` is minimal and read-only: plan, trial/grace status, public menu link and QR link. **It is not a dashboard.**
+- `/account` is minimal and read-only: plan, trial/grace status, public menu link and QR link. **It is not a dashboard.** Implemented 2026-11-15:
+  - Route `account` (`AccountController`) in `routes/auth.php`: central domain only, `auth` + `verified` (unverified users go to `/email/verify`), Blade on `layouts/account` with `app.css` + `app.js` only (no Livewire/Filament), `Cache-Control: no-store, private`, `noindex` (meta and `X-Robots-Tag`). Copy in `lang/{tr,en}/account.php`.
+  - **Tenant:** `ResolveAccountTenant` picks the user's first active membership (active tenants first, then the oldest membership) and sets `TenantContext` only after `membershipFor()` grants access. Nothing from the request (no parameter, no `?tenant=`) is used; a tenant selector is a later phase. Only memberships of suspended tenants → 403 page with `tenancy.suspended` and the contact link, no context, no data. No membership: platform users → `/admin`, everyone else → 403 "no business linked" page.
+  - **Content** (`AccountOverview` → `AccountSummary` DTO; subscription and online state from `BusinessDashboard`, so the online rule is `MenuAvailability`, the same as the public menu): business name, `/app/{slug}` link, menu online or not. Owners (`TenantPolicy::manageSettings`) also see plan, status (`trialing` / `active` / `past_due` / `grace` / `expired` / none), the next key date (trial / period / grace end, days left), `accessUntil()`, `ended_at`, past-due and cancel-at-period-end notes, a prominent grace warning, and — whenever the menu is offline (expired, no subscription, access already ended) — "menu closed, your data is kept" with the reactivation path: the contact page and the site settings' support details (no payment button). Owners get the tenant's public URL and the **default branch**; managers and branch staff get only the online state (no subscription details; "contact your owner" when offline) and **their assigned branches** (`accessibleLocations()`).
+  - **Links:** public URLs only from `MenuUrlGenerator`; per branch the default QR code (`Location::defaultQrCode()`) with its stable `/q/{code}` URL, an SVG preview and downloads at `GET /account/qr/{code}.{svg|png}` (`account.qr`, `AccountQrCodeController`): looked up through the tenant scope (another tenant's code → 404), `QrCodePolicy::view`, attachment, `no-store`.
+  - The marketing nav shows "My account" instead of "Log in" to signed-in users. No link from the panel (it would show the first membership, not the panel's tenant) or from the verification page (unverified users can't open `/account`). Marketing pages must stay uncached for shared caches while the nav depends on the session (Phase 8).
 
 ## Admin and business panels
 
@@ -258,11 +263,11 @@ app/
     Controllers/
       Marketing/             HomeController, PricingController, ThemeShowcaseController,
                              ContactController, LegalController
-      Account/               AccountController
+      Account/               AccountController, AccountQrCodeController
       PublicMenu/            LocationIndexController, LocationController, MenuController,
                              QrRedirectController
     Middleware/              ResolveTenantFromRequest, ResolveTenantFromMembership,
-                             ResolveMenuLocale, SetMarketingLocale
+                             ResolveMenuLocale, SetMarketingLocale, ResolveAccountTenant
     Requests/
   Models/
     Concerns/                BelongsToTenant, HasTranslations, HasTenantMedia
@@ -285,9 +290,11 @@ app/
                              LiveMenuState, MenuUrlGenerator, ThemeRenderer, QrCodeResolver
     QrCodes/                 QrCodeService (panel writes), QrCodeImage (SVG/PNG)
     Themes/                  ThemeService (theme choice, theme_settings, branch override)
+    Account/                 AccountOverview (/account read model) + AccountSummary DTOs
   Support/
     Menu/Data/               MenuSnapshot, TenantBrand, LocationInfo, MenuData, CategoryData,
                              ItemData, VariantData, ExtraGroupData, ExtraData, ThemeSettings
+    Menu/MenuAvailability.php  the single "menu is online" rule
     Media/                   TenantMediaPath
     Money.php, ColorContrast.php
   Tenancy/
@@ -349,8 +356,8 @@ Each phase ends with tests run, a summary of changed files, and a review pause.
 | B. Business panel | `/app` modules, steps B0–B10 ([Business panel](#business-panel-phase-b)). Pulls forward from Phases 1–3: `tenant_locales`, the menu content migrations as each step needs them, `plan_limits` + `FeatureGate` | Per step: authorization matrix, isolation and limit tests pass |
 | 1. Tenancy core | Remainder after Phases P and B: resolver pipeline, public middleware (queue propagation done 2026-11-15; `tenant_locales` moved to B1) | Isolation, scope and queue tests pass |
 | 2. Database foundation | Migrations not already created by Phase B, with composite FKs, enums, models, factories | DB rejects cross-tenant inserts; relationship tests pass |
-| 3. Subscriptions | Remainder: plan prices, lifecycle command (`plan_limits`, `FeatureGate` and `PlanSeeder` limits moved to B1). **Done 2026-11-15:** all `SubscriptionService` transitions (grace anchored to the missed boundary, idempotent, cache-clearing), hourly `subscriptions:process-lifecycle` (`TenantAgnostic`, one tenant-scoped job per tenant), `PaymentGateway` contract (no implementation), `/register?plan={code}` with pricing CTAs, dashboard/subscription page for grace and expired. `/account` and subscription management in `/admin` remain out of scope | Lifecycle and grace tests pass |
-| 4. Authentication | Fortify (registration, password reset, email verification), Blade auth views (tr/en), `TenantRegistrationService`, `/account`; `GET /login` → `/app/login` | Registration atomicity and auth tests pass |
+| 3. Subscriptions | Remainder: plan prices, lifecycle command (`plan_limits`, `FeatureGate` and `PlanSeeder` limits moved to B1). **Done 2026-11-15:** all `SubscriptionService` transitions (grace anchored to the missed boundary, idempotent, cache-clearing), hourly `subscriptions:process-lifecycle` (`TenantAgnostic`, one tenant-scoped job per tenant), `PaymentGateway` contract (no implementation), `/register?plan={code}` with pricing CTAs, dashboard/subscription page for grace and expired. `/account` followed in Phase 4; subscription management in `/admin` remains out of scope | Lifecycle and grace tests pass |
+| 4. Authentication | Fortify (registration, password reset, email verification), Blade auth views (tr/en), `TenantRegistrationService`, `/account`; `GET /login` → `/app/login`. **Done 2026-11-15:** registration, password reset, email verification and the read-only `/account` page ([Authentication](#authentication)); the shared online rule moved to `MenuAvailability` (public menu, dashboard, `/account`). Remaining: `TenantRegistered` + welcome mail (documented, not built) | Registration atomicity and auth tests pass |
 | 5. Marketing site | `components/ui` design system, marketing layout and pages, pricing from DB, tr/en, SEO. **Status (2026-11-15):** design system, auth pages, marketing layout, home page (`/` tr, `/en` en; routes `marketing.{locale}.{page}`; content from `MarketingContent`) features page (`/ozellikler`, `/en/features`) pricing page (`/fiyatlar`, `/en/pricing`) and contact page (`/iletisim`, `/en/contact`, with `/admin` site settings) done. Design source: `docs/design/source/` (see [Design reference](#design-reference)) | Pages render in both locales |
 | 6. Public menu infrastructure | Snapshot builder, cache versions, `PublicMenuService`, routes, `/q/{code}`, unavailable page, `DemoTenantSeeder`, reference theme `classic`. **Done 2026-11-16:** pulled forward the resolver pipeline (Phase 1) and the `qr_codes` table (B8); demo data is `DemoSeeder` (platform users, `kahve-konagi`, suspended `eski-firin`, non-public `demo` plan); `classic` follows `MenuKonak` / `DetailKonak` with self-hosted Young Serif + Figtree | Access, visibility, cache, query-count and QR tests pass |
 | 7. Themes | `minimal`, `bistro`, `cafe`, `grid`; theme showcase | Theme architecture and zero-query tests pass for all five |

@@ -39,7 +39,11 @@
 
         <div class="flex items-center gap-2">
             <x-marketing.language-switcher :page="$page" class="hidden lg:flex" />
-            <a href="{{ route('login') }}" class="hidden h-11 items-center rounded-input px-4 text-[15px] font-semibold text-ink no-underline hover:bg-white sm:inline-flex">{{ __('marketing.nav.login') }}</a>
+            @auth
+                <a href="{{ route('account') }}" class="hidden h-11 items-center rounded-input px-4 text-[15px] font-semibold text-ink no-underline hover:bg-white sm:inline-flex">{{ __('marketing.nav.account') }}</a>
+            @else
+                <a href="{{ route('login') }}" class="hidden h-11 items-center rounded-input px-4 text-[15px] font-semibold text-ink no-underline hover:bg-white sm:inline-flex">{{ __('marketing.nav.login') }}</a>
+            @endauth
             <x-ui.button :href="route('register')" size="sm" class="shadow-none">{{ __('marketing.nav.get_started') }}</x-ui.button>
             <button
                 type="button"
@@ -68,7 +72,11 @@
                     x-on:click="open = false"
                 >{{ $link['label'] }}</a>
             @endforeach
-            <a href="{{ route('login') }}" class="flex min-h-12 items-center rounded-input px-3 text-base font-semibold text-ink no-underline hover:bg-forest-100">{{ __('marketing.nav.login') }}</a>
+            @auth
+                <a href="{{ route('account') }}" class="flex min-h-12 items-center rounded-input px-3 text-base font-semibold text-ink no-underline hover:bg-forest-100">{{ __('marketing.nav.account') }}</a>
+            @else
+                <a href="{{ route('login') }}" class="flex min-h-12 items-center rounded-input px-3 text-base font-semibold text-ink no-underline hover:bg-forest-100">{{ __('marketing.nav.login') }}</a>
+            @endauth
             <x-marketing.language-switcher :page="$page" class="mt-2 px-3" />
         </nav>
     </div>

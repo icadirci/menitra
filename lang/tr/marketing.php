@@ -25,6 +25,7 @@ return [
         'contact' => 'İletişim',
         'faq' => 'SSS',
         'login' => 'Giriş yap',
+        'account' => 'Hesabım',
         'get_started' => 'Hemen başla',
         'open_menu' => 'Menüyü aç',
         'close_menu' => 'Menüyü kapat',

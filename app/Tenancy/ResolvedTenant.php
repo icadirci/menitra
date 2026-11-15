@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tenancy;
 
-use Carbon\CarbonImmutable;
+use App\Support\Menu\MenuAvailability;
 
 /**
  * Cached result of public tenant resolution (qrmenu:host:* / qrmenu:slug:*).
@@ -34,9 +34,7 @@ final readonly class ResolvedTenant
 
     public function isOnline(?int $now = null): bool
     {
-        return $this->status === 'active'
-            && $this->accessUntil !== null
-            && ($now ?? CarbonImmutable::now()->getTimestamp()) <= $this->accessUntil;
+        return MenuAvailability::isOnline($this->status === 'active', $this->accessUntil, $now);
     }
 
     public function name(string $locale): string

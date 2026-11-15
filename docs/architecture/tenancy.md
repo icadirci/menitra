@@ -71,7 +71,7 @@ Route model binding goes through the scope. A record that belongs to another ten
 | Path | `restano.app/m/{slug}/…` | v1 |
 | Custom domain | `tenant_domains.domain` (verified) | Later. The table exists now; `DomainTenantResolver` is a reserved slot |
 | Business panel | `restano.app/app/{tenant-slug}` — slug in the URL, **verified against the user's active membership** (Filament tenancy) | v1 |
-| `/account` | The logged-in user's membership (first active one until a selector exists) | v1 |
+| `/account` | The logged-in user's membership (first active one until a selector exists): `ResolveAccountTenant` prefers active tenants, then the oldest membership, and sets `TenantContext` only after `membershipFor()` grants access. Request input is never used. Suspended-only → 403 page, no context; no membership → `/admin` for platform users, otherwise a 403 page | v1 (done 2026-11-15) |
 | QR code | `restano.app/q/{code}` → `qr_codes.tenant_id` → redirect | v1 |
 
 Rules:
@@ -91,7 +91,7 @@ Request
   │                              ├─ Fortify routes    → central, no tenant       │
   │                              ├─ /admin/…          → admin panel, no tenant   │
   │                              ├─ /app/{slug}/…     → canAccessTenant ─▶ ResolveTenantFromMembership
-  │                              ├─ /account          → user's membership        │
+  │                              ├─ /account          → ResolveAccountTenant     │
   │                              └─ marketing routes  → no tenant                │
   │                                                                              ▼
   ├─ Host = {slug}.central ─────── SubdomainTenantResolver ───────────▶ TenantContext::set()
@@ -185,6 +185,7 @@ Livewire is used only by the panels, so its endpoints follow the panels:
 | Cache leakage | Keys built only by `MenuCacheKeys`, always containing the tenant id |
 | File leakage | Tenant-prefixed paths, random names |
 | Auth cookies on tenant subdomains | `SESSION_DOMAIN` is the central host only (never `.restano.app`) |
+| `/account` tenant | Derived only from the user's active membership (`ResolveAccountTenant`); no tenant parameter exists and `?tenant=` is ignored; QR downloads are looked up through the tenant scope (404) and checked with `QrCodePolicy::view` |
 | Tenant slug in `/app` URL | Identifier only: `canAccessTenant()` + `ResolveTenantFromMembership` verify the active membership; otherwise 404 |
 | Panels on tenant hosts | `/admin`, `/app` and Livewire's update/upload/preview endpoints are bound to the central domain |
 | Suspended tenant | Explicit 403 for members, 404 for others; no context, no permissions, data intact |

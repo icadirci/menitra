@@ -13,8 +13,8 @@ use App\Models\QrCode;
 use App\Models\Subscription;
 use App\Models\Tenant;
 use App\Models\ThemeSetting;
+use App\Support\Menu\MenuAvailability;
 use App\Tenancy\TenantContext;
-use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -66,16 +66,12 @@ class BusinessDashboard
     }
 
     /**
-     * Same rule as the public menu (subscriptions.md § Public menu access):
-     * active tenant and now ≤ access_until.
+     * Same rule as the public menu (MenuAvailability): active tenant and
+     * now ≤ access_until.
      */
     public function isMenuOnline(): bool
     {
-        $accessUntil = $this->liveSubscription()?->accessUntil();
-
-        return $this->tenant()->isActive()
-            && $accessUntil !== null
-            && CarbonImmutable::now()->lessThanOrEqualTo($accessUntil);
+        return MenuAvailability::isOnline($this->tenant()->isActive(), $this->liveSubscription()?->accessUntil());
     }
 
     /**

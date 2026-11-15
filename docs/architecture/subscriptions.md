@@ -60,7 +60,7 @@ Tables are defined in [database.md](database.md#subscriptions).
 | `trialing` | Free trial until `trial_ends_at` | Online |
 | `active` | Paid until `current_period_ends_at` | Online |
 | `past_due` | Renewal payment failed, period not yet over | Online |
-| `grace` | Trial or period ended without payment; online until `grace_ends_at` | Online, plus an `/account` warning |
+| `grace` | Trial or period ended without payment; online until `grace_ends_at` | Online, plus a warning on `/account` and the `/app` dashboard (owners) |
 | `expired` | Grace passed; `ended_at` set | **Offline: unavailable page** |
 
 Rules:
@@ -105,7 +105,8 @@ menu is online  ⇔  tenant.status = active  AND  access_until ≠ null  AND  no
 
 - `access_until` is implemented by `Subscription::accessUntil()` (also shown on the read-only subscription page in `/app`). It is computed when the tenant is resolved and stored in the cached `ResolvedTenant`. Requests compare it to the current time with **no query**, so expiry takes effect on time even before the scheduled job runs.
 - After access ends, the public menu renders the professional unavailable page (503, `no-store`, `noindex`); see [menu-system.md](menu-system.md#access-rules-and-the-unavailable-page). QR redirects lead to the same page.
-- The tenant can still log in and see `/account` with the reactivation path. *Note (2026-11-15): `/account` isn't built yet and subscription management in `/admin` is out of scope; until then the `/app` dashboard (`SubscriptionStatusWidget`) and the subscription page show the grace warning and the expired state (owners only), and reactivation goes through support (`resubscribe()` is ready for the payment phase).*
+- The tenant can still log in and see `/account` with the reactivation path. *Implemented 2026-11-15 (see [overview.md § Authentication](overview.md#authentication)):* owners see plan, status, the next key date, `access_until` and whether the menu is online; a prominent warning during `grace`; and whenever the menu is offline (expired, no subscription, or `access_until` already passed before the lifecycle job ran) "menu closed, your data is kept" with the reactivation path — the contact page and the site settings' support details, no payment button until the payment phase (`resubscribe()` is ready for it). Managers and branch staff see only whether the menu is online. The `/app` dashboard (`SubscriptionStatusWidget`) and the subscription page show the same information to owners. Subscription management in `/admin` remains out of scope.
+- The online rule exists once, in `App\Support\Menu\MenuAvailability::isOnline()`; `ResolvedTenant::isOnline()` (public menu, QR) and `BusinessDashboard::isMenuOnline()` (dashboard, `/account`) both delegate to it.
 
 ## Scheduled processing
 

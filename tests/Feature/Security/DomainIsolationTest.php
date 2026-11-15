@@ -35,6 +35,7 @@ class DomainIsolationTest extends TestCase
             'admin dashboard' => ['/admin'],
             'business login' => ['/app/login'],
             'business panel' => ['/app'],
+            'account' => ['/account'],
         ];
     }
 

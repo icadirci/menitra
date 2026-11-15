@@ -2,6 +2,9 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\Account\AccountController;
+use App\Http\Controllers\Account\AccountQrCodeController;
+use App\Http\Middleware\ResolveAccountTenant;
 use Illuminate\Routing\RedirectController;
 use Illuminate\Support\Facades\Route;
 use Laravel\Fortify\Http\Controllers\AuthenticatedSessionController;
@@ -61,5 +64,14 @@ Route::domain(config('tenancy.central_domain'))->group(function (): void {
             ->name('verification.send');
 
         Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
+    });
+
+    // Minimal read-only account page. The tenant comes only from the user's
+    // verified membership (ResolveAccountTenant), never from the request.
+    Route::middleware(['auth', 'verified', ResolveAccountTenant::class])->group(function (): void {
+        Route::get('/account', AccountController::class)->name('account');
+        Route::get('/account/qr/{code}.{format}', AccountQrCodeController::class)
+            ->where(['code' => '[0-9A-Za-z]{10}', 'format' => 'svg|png'])
+            ->name('account.qr');
     });
 });

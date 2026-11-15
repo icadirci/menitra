@@ -25,6 +25,7 @@ return [
         'contact' => 'Contact',
         'faq' => 'FAQ',
         'login' => 'Log in',
+        'account' => 'My account',
         'get_started' => 'Get started',
         'open_menu' => 'Open menu',
         'close_menu' => 'Close menu',

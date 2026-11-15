@@ -34,6 +34,7 @@
 - Panel registration is disabled; accounts are created by `TenantRegistrationService` (business) or explicitly by a platform administrator / artisan command (platform roles).
 - Never secure a panel feature only by hiding its navigation item.
 - Livewire endpoints serve panels only: the update route is bound to the central domain (the default host-agnostic route is disabled), and temporary upload/preview require the central host plus a user with panel access (`RestrictLivewireFileEndpoints`), on top of Livewire's signed URLs and throttling.
+- `/account` (central domain, `auth` + `verified`, `no-store`, `noindex`, Blade only): the tenant comes only from the user's active membership (`ResolveAccountTenant`, context set after `membershipFor()`); request input never selects it. Subscription details are owner-only (`TenantPolicy::manageSettings`); other roles see only whether the menu is online and their own branches. QR downloads (`/account/qr/{code}.{svg|png}`) go through the tenant scope and `QrCodePolicy::view`.
 - Members of a suspended tenant get an explicit 403 in `/app` and `TenantContext` is never set; non-members always get 404.
 - Tenant-wide settings pages (profile, languages, theme, subscription) are owner-only through `TenantPolicy::manageSettings`, checked in `canAccess()` and again in every action.
 - Public registration never accepts `platform_role`, `tenant_id` or `role`; only the validated fields reach `TenantRegistrationService`.
