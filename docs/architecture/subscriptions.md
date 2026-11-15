@@ -36,7 +36,7 @@ Tables are defined in [database.md](database.md#subscriptions).
 - `subscriptions`: a tenant's subscription history. **At most one live subscription per tenant**, enforced by a partial unique index on `tenant_id` where `ended_at IS NULL`.
 - `subscription_events`: an append-only audit trail of every transition.
 
-**Implemented so far (2026-11-15):** `plans`, `plan_translations`, `plan_limits`, `subscriptions` (without `plan_price_id`), `subscription_events`, `SubscriptionService::startTrial()` used by registration, and `FeatureGate` (Phase B1). `PlanSeeder` idempotently seeds a placeholder `starter` plan (`config('subscriptions.default_plan')`) with **development placeholder limits** — they are not a pricing decision. `?plan=` selection, prices and the lifecycle command come with Phase 3 / Phase 5.
+**Implemented so far (2026-11-15):** `plans`, `plan_translations`, `plan_limits`, `subscriptions` (without `plan_price_id`), `subscription_events`, `SubscriptionService::startTrial()` used by registration, and `FeatureGate` (Phase B1). `PlanSeeder` idempotently seeds a placeholder `starter` plan (`config('subscriptions.default_plan')`) with **development placeholder limits** — they are not a pricing decision. **Added 2026-11-15:** `plan_prices` (monthly/yearly in kuruş), `plans.is_featured`, `subscriptions.plan_price_id` (nullable, unused until checkout exists), and the `/admin` Plan resource (super admins) saving through `PlanService` (code immutable, every `PlanFeature` gets a limit row, cleared prices are deactivated, one featured plan). `?plan=` selection and the lifecycle command come with Phase 3 / Phase 5.
 
 **New tenants:** registration always creates a `trialing` subscription for the default plan in the same transaction (`SubscriptionService::startTrial()`, with a `trial_started` event), so a new tenant's plan limits apply immediately. Registration fails as a whole if the default plan is missing.
 
@@ -144,7 +144,7 @@ menu is online  ⇔  tenant.status = active  AND  access_until ≠ null  AND  no
 
 ## Pricing page
 
-- Active, public plans with their prices and limits are read through a small query service and cached as `qrmenu:plans:{locale}`.
+- Active, public plans with an active monthly price are read through `MarketingContent::plans()` (DTO `PricingPlan`: localised name/description, monthly and yearly `Money`, yearly-per-month and saving % computed from stored prices). Caching as `qrmenu:plans:{locale}` is deferred until `MenuCacheKeys` exists (Phase 6); the queries are eager-loaded and small.
 - Monthly/annual toggle (Alpine). The annual saving is computed from stored prices, never hard-coded.
 - Amounts are formatted with `NumberFormatter` (`tr_TR`), e.g. `₺1.299,00`. The English page uses the `en` locale with TRY.
 - Whether prices are shown KDV-inclusive or "+KDV" is an open decision; it affects display only.

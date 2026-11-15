@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Enums\BillingInterval;
 use App\Models\Concerns\HasTranslations;
 use App\Models\Translations\PlanTranslation;
 use Database\Factories\PlanFactory;
@@ -25,6 +26,7 @@ class Plan extends Model
         'code',
         'is_active',
         'is_public',
+        'is_featured',
         'trial_days',
         'sort_order',
     ];
@@ -34,6 +36,7 @@ class Plan extends Model
         return [
             'is_active' => 'boolean',
             'is_public' => 'boolean',
+            'is_featured' => 'boolean',
             'trial_days' => 'integer',
         ];
     }
@@ -46,6 +49,20 @@ class Plan extends Model
     public function limits(): HasMany
     {
         return $this->hasMany(PlanLimit::class);
+    }
+
+    public function prices(): HasMany
+    {
+        return $this->hasMany(PlanPrice::class);
+    }
+
+    public function priceFor(BillingInterval $interval, ?string $currency = null): ?PlanPrice
+    {
+        $currency ??= config('subscriptions.currency');
+
+        return $this->prices->first(fn (PlanPrice $price): bool => $price->is_active
+            && $price->interval === $interval
+            && $price->currency === $currency);
     }
 
     public function trialDays(): int

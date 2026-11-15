@@ -26,6 +26,7 @@
 ## Panels
 - `/admin` and `/app` are registered for the central domain only and never on tenant subdomains or custom domains.
 - `/admin` access requires an explicit `platform_role`; `/app` requires an active membership in an active tenant. Holding one never implies the other.
+- `/admin` resources are authorized by their policies, not by panel access alone: plans (prices, limits) are super-admin only and never deleted; marketing FAQ and testimonials allow any platform role. Platform content is public by design, but only published / public records with allow-listed fields reach the marketing pages (`MarketingContent`).
 - The `{tenant-slug}` in `/app/{tenant-slug}` is an identifier, not authorization: Filament checks `canAccessTenant()`, and `ResolveTenantFromMembership` re-verifies the membership before setting `TenantContext`. A tenant the user can't access returns 404.
 - Branch staff and managers act only on branches assigned to their membership; owners on all branches of their tenant.
 - Panel registration is disabled; accounts are created by `TenantRegistrationService` (business) or explicitly by a platform administrator / artisan command (platform roles).

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services\Translations;
 
 use App\Exceptions\CrossTenantWriteException;
+use App\Models\Concerns\BelongsToTenant;
 use App\Models\Concerns\HasTranslations;
 use App\Models\Tenant;
 use App\Tenancy\TenantContext;
@@ -38,15 +39,44 @@ final class TranslationWriter
      */
     public function sync(Model $model, array $input, array $required = ['name']): void
     {
-        if (! in_array(HasTranslations::class, class_uses_recursive($model), true)) {
-            throw new InvalidArgumentException($model::class.' does not use HasTranslations.');
-        }
+        $this->assertTranslatable($model);
 
         $tenant = $this->context->tenant();
         $this->assertOwnedByCurrentTenant($model, $tenant);
 
-        $enabled = $tenant->enabledLocales();
-        $default = $tenant->default_locale;
+        $this->write($model, $input, $tenant->enabledLocales(), $tenant->default_locale, $required);
+    }
+
+    /**
+     * Same rules for platform-level records (plans, marketing FAQ and
+     * testimonials): the locale set is config('locales.supported') and the
+     * default is config('locales.default'). Tenant-owned models are refused.
+     *
+     * @param  array<string, mixed>  $input
+     * @param  list<string>  $required
+     *
+     * @throws ValidationException
+     */
+    public function syncPlatform(Model $model, array $input, array $required = ['name']): void
+    {
+        $this->assertTranslatable($model);
+
+        if ($model instanceof Tenant || in_array(BelongsToTenant::class, class_uses_recursive($model), true)) {
+            throw new InvalidArgumentException($model::class.' is tenant-owned; use sync().');
+        }
+
+        $this->write($model, $input, array_keys(config('locales.supported')), config('locales.default'), $required);
+    }
+
+    /**
+     * @param  array<string, mixed>  $input
+     * @param  list<string>  $enabled
+     * @param  list<string>  $required
+     *
+     * @throws ValidationException
+     */
+    private function write(Model $model, array $input, array $enabled, string $default, array $required): void
+    {
         $fields = array_values(array_diff($model->translations()->getRelated()->getFillable(), ['locale']));
 
         $rows = $this->normalise($input, $enabled, $default, $fields, $required);
@@ -64,6 +94,13 @@ final class TranslationWriter
         });
 
         $model->unsetRelation('translations');
+    }
+
+    private function assertTranslatable(Model $model): void
+    {
+        if (! in_array(HasTranslations::class, class_uses_recursive($model), true)) {
+            throw new InvalidArgumentException($model::class.' does not use HasTranslations.');
+        }
     }
 
     /**

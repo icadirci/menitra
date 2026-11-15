@@ -1,5 +1,8 @@
 <?php
 
+use App\Http\Controllers\Marketing\HomeController;
+use App\Http\Middleware\SetMarketingLocale;
+use App\Support\MarketingUrl;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -10,12 +13,20 @@ use Illuminate\Support\Facades\Route;
 | Registered for the central domain only. Tenant subdomains have no route
 | here, so e.g. {slug}.restano.app/ returns 404 until public menus exist.
 |
+| One route group per platform locale: the default locale (tr) at /, the
+| others under /{locale} (e.g. /en). Names: marketing.{locale}.{page}.
+|
 */
 
 Route::domain(config('tenancy.central_domain'))->group(function (): void {
-    Route::get('/', function () {
-        return view('welcome');
-    });
+    foreach (array_keys(config('locales.supported')) as $locale) {
+        Route::prefix(MarketingUrl::prefix($locale))
+            ->middleware(SetMarketingLocale::class.':'.$locale)
+            ->name("marketing.{$locale}.")
+            ->group(function (): void {
+                Route::get('/', HomeController::class)->name('home');
+            });
+    }
 });
 
 require __DIR__.'/auth.php';

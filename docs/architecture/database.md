@@ -2,7 +2,7 @@
 
 > Status: **Approved — v0.4** (2026-11-15: `tenant_locales` without `is_default`, `location_item_states.sold_out_until`, `PlanFeature::max_qr_codes`). v0.3: platform roles, `TenantRole.branch_staff`, `location_user`.
 >
-> **Implemented so far:** `users.platform_role`, `tenants`, `tenant_translations`, `tenant_locales`, `tenant_user`, `locations`, `location_translations`, `location_user`, `menus`, `menu_translations`, `location_menu`, `plans`, `plan_translations`, `plan_limits`, `subscriptions`, `subscription_events`. The rest of this document is the approved target schema. PostgreSQL. Every change goes through a migration; this document must be updated with it.
+> **Implemented so far:** `users.platform_role`, `tenants`, `tenant_translations`, `tenant_locales`, `tenant_user`, `locations`, `location_translations`, `location_user`, `menus`, `menu_translations`, `location_menu`, `plans` (+ `is_featured`), `plan_translations`, `plan_prices`, `plan_limits`, `subscriptions` (+ `plan_price_id`), `subscription_events`, `faqs`, `faq_translations`, `testimonials`, `testimonial_translations`. The rest of this document is the approved target schema. PostgreSQL. Every change goes through a migration; this document must be updated with it.
 
 ## Contents
 
@@ -133,14 +133,25 @@
 
 | Table | Columns | Constraints / indexes |
 |---|---|---|
-| `plans` | `code`, `is_active`, `is_public`, `trial_days`, `sort_order` | unique `code` |
+| `plans` | `code`, `is_active`, `is_public`, `is_featured` ("most popular", at most one — enforced by `PlanService`), `trial_days`, `sort_order` | unique `code` |
 | `plan_translations` | `plan_id`, `locale`, `name`, `description` | unique (`plan_id`, `locale`) |
-| `plan_prices` | `plan_id`, `interval` (`BillingInterval`), `amount` bigint, `currency` default `TRY`, `is_active` | unique (`plan_id`, `interval`, `currency`) |
+| `plan_prices` | `plan_id` FK cascade, `interval` (`BillingInterval`: `monthly`, `yearly`), `amount` bigint (kuruş), `currency` char(3) default `TRY`, `is_active` | unique (`plan_id`, `interval`, `currency`); check `amount >= 0`. Rows are deactivated, never deleted, when a price is removed |
 | `plan_limits` | `plan_id` FK cascade, `feature` (`PlanFeature`), `limit_value` int nullable (null = unlimited; 0/1 for boolean features) | unique (`plan_id`, `feature`); check `limit_value IS NULL OR limit_value >= 0`. A missing row means the feature isn't included |
-| `subscriptions` 🔒 | `plan_id`, `plan_price_id` nullable (added together with `plan_prices`; not created yet), `status` (`SubscriptionStatus`), `trial_ends_at`, `current_period_starts_at`, `current_period_ends_at`, `cancel_at_period_end`, `canceled_at`, `grace_ends_at`, `ended_at`, `provider` nullable, `provider_reference` nullable | partial unique (`tenant_id`) where `ended_at IS NULL`; index (`status`, `current_period_ends_at`) |
+| `subscriptions` 🔒 | `plan_id`, `plan_price_id` nullable FK restrict (null during trials), `status` (`SubscriptionStatus`), `trial_ends_at`, `current_period_starts_at`, `current_period_ends_at`, `cancel_at_period_end`, `canceled_at`, `grace_ends_at`, `ended_at`, `provider` nullable, `provider_reference` nullable | partial unique (`tenant_id`) where `ended_at IS NULL`; index (`status`, `current_period_ends_at`) |
 | `subscription_events` 🔒 | `subscription_id`, `type` (`SubscriptionEventType`), `from_status`, `to_status`, `meta` jsonb, `occurred_at` | Append-only; index (`subscription_id`, `occurred_at`) |
 
 Subscription semantics are in [subscriptions.md](subscriptions.md).
+
+### Marketing content
+
+Platform-level (no `tenant_id`), managed in `/admin`, read only by `App\Services\Marketing\MarketingContent`.
+
+| Table | Columns | Constraints / indexes |
+|---|---|---|
+| `faqs` | `placement` (`FaqPlacement`: `home`, `pricing`), `is_published`, `sort_order` | index (`placement`, `is_published`, `sort_order`) |
+| `faq_translations` | `faq_id` FK cascade, `locale`, `question`, `answer` text | unique (`faq_id`, `locale`) |
+| `testimonials` | `author_name` (not translated), `is_published`, `sort_order` | index (`is_published`, `sort_order`) |
+| `testimonial_translations` | `testimonial_id` FK cascade, `locale`, `quote` text, `author_role` nullable | unique (`testimonial_id`, `locale`) |
 
 ## Tenant integrity constraints
 
@@ -197,7 +208,7 @@ Composite foreign keys:
 | **One `{entity}_translations` table per entity** | **Chosen**: real FKs with cascade, unique per locale, typed columns, eager-loadable |
 
 - Base tables contain **no** translatable text columns. Each piece of text has a single source of truth.
-- Translatable entities: tenants, locations, menus, menu categories, menu items, variants, extra groups, extras, plans.
+- Translatable entities: tenants, locations, menus, menu categories, menu items, variants, extra groups, extras, plans, marketing FAQ, testimonials. Platform-level ones (plans, FAQ, testimonials) use the platform locales (`config('locales.supported')`, default `config('locales.default')`) and are written by `TranslationWriter::syncPlatform()`.
 - The in-house trait `App\Models\Concerns\HasTranslations` provides:
   - `translations()` (hasMany)
   - `translate(?string $locale)`, with fallback order: requested locale → tenant default locale → first available

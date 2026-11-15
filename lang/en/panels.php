@@ -9,6 +9,63 @@ return [
         'dashboard' => [
             'title' => 'Platform dashboard',
         ],
+        'navigation' => [
+            'subscriptions' => 'Subscriptions',
+            'website' => 'Website',
+        ],
+        'fields' => [
+            'is_published' => 'Published',
+        ],
+        'plans' => [
+            'singular' => 'Plan',
+            'plural' => 'Plans',
+            'sections' => [
+                'general' => 'General',
+                'prices' => 'Prices',
+                'prices_help' => 'Whether prices are shown VAT-inclusive is not decided yet. A price left empty is not sold and is hidden on the pricing page.',
+                'limits' => 'Limits',
+                'limits_help' => 'Count limits: empty = unlimited, 0 = not included.',
+            ],
+            'fields' => [
+                'code' => 'Code',
+                'code_help' => 'Permanent identifier (e.g. starter). Cannot be changed after creation.',
+                'name' => 'Plan name',
+                'description' => 'Short description',
+                'description_help' => 'Shown under the name on the pricing card.',
+                'trial_days' => 'Trial length (days)',
+                'trial_days_help' => 'Empty = platform default.',
+                'sort_order' => 'Order',
+                'is_active' => 'Active',
+                'is_active_help' => 'New subscriptions cannot start on inactive plans.',
+                'is_public' => 'Show on pricing page',
+                'is_public_help' => 'Hidden plans are assigned manually only.',
+                'is_featured' => 'Most popular',
+                'is_featured_help' => 'Only one plan can be marked.',
+            ],
+        ],
+        'faqs' => [
+            'singular' => 'FAQ',
+            'plural' => 'FAQ',
+            'placements' => [
+                'home' => 'Home page',
+                'pricing' => 'Pricing page',
+            ],
+            'fields' => [
+                'placement' => 'Shown on',
+                'question' => 'Question',
+                'answer' => 'Answer',
+            ],
+        ],
+        'testimonials' => [
+            'singular' => 'Testimonial',
+            'plural' => 'Testimonials',
+            'fields' => [
+                'author_name' => 'Name',
+                'quote' => 'Quote',
+                'author_role' => 'Role and business',
+                'author_role_help' => 'E.g. Owner, Kiln Coffee',
+            ],
+        ],
     ],
 
     'app' => [

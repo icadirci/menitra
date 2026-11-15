@@ -81,9 +81,13 @@ final readonly class Money
      * Localised display string, e.g. "₺85,00" (tr) or "TRY 85.00" style (en).
      * The float is used for display only, never for storage or arithmetic.
      */
-    public function format(?string $locale = null): string
+    public function format(?string $locale = null, bool $omitZeroFraction = false): string
     {
         $formatter = new NumberFormatter($locale ?? app()->getLocale(), NumberFormatter::CURRENCY);
+
+        if ($omitZeroFraction && $this->minor % 100 === 0) {
+            $formatter->setAttribute(NumberFormatter::FRACTION_DIGITS, 0);
+        }
 
         return (string) $formatter->formatCurrency($this->minor / 100, $this->currency);
     }

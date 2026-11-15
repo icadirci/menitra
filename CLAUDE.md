@@ -22,7 +22,7 @@ Area-specific rules live in [.claude/rules/](.claude/rules/) (backend, frontend,
 **In scope now:** public marketing website, pricing page, registration, forgot password, email verification, a minimal read-only `/account` page, public QR menu pages, stable QR redirects, five menu themes, the **Filament panel infrastructure** (`/admin` for the platform and `/app/{tenant-slug}` for businesses, each with login and an initial dashboard), and the **business management modules in `/app`** (Phase B, built step by step: business settings and languages, locations, menus and content, branch operations, QR codes, themes, dashboard — see [overview.md § Business panel](docs/architecture/overview.md#business-panel-phase-b)).
 
 **Out of scope — do not build unless explicitly requested:**
-- CRUD modules (Filament resources) in `/admin` (platform management). Only the admin panel infrastructure and its initial dashboard exist.
+- CRUD modules (Filament resources) in `/admin` (platform management) beyond the ones listed here. Exists: the admin panel infrastructure, its initial dashboard, and the **marketing site content resources** requested on 2026-11-15 — plans (prices, limits, translations; super admins only), marketing FAQ and testimonials (any platform role). Tenant/user management in `/admin` is still out of scope.
 - Team management in `/app`: invitations, staff CRUD, membership and branch-assignment screens (later phase; memberships are created by registration, artisan or seeders).
 - Payment gateway integration (keep the provider-agnostic `PaymentGateway` contract only).
 - Online ordering, payment from the menu, waiter calling, table reservations (keep the design extensible for them).

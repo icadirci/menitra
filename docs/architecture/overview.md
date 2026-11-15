@@ -26,7 +26,7 @@ A multi-tenant SaaS platform for cafes, restaurants, bakeries and other hospital
 
 | In scope (current) | Out of scope (later, architecture must allow it) |
 |---|---|
-| Public marketing website, pricing page | CRUD modules in `/admin` (platform management) |
+| Public marketing website, pricing page; `/admin` resources for its content: plans and prices, FAQ, testimonials | Other CRUD modules in `/admin` (tenants, users, subscriptions) |
 | Registration, forgot password, email verification, minimal `/account` page | Payment gateway integration (iyzico / PayTR) |
 | Filament panel infrastructure: `/admin`, `/app/{tenant-slug}`, login, initial dashboards, roles | Team management in `/app` (invitations, staff CRUD, branch-assignment screens) |
 | Business management modules in `/app` ([Phase B](#business-panel-phase-b)) | |
@@ -148,14 +148,15 @@ Two independent Filament 5 panels, registered only on the central domain (`confi
 | Login | `/admin/login` | `/app/login` |
 | Who | Users with `platform_role` (`super_admin`, `platform_staff`) | Users with an active membership in an active tenant (`owner`, `manager`, `branch_staff`) |
 | Code | `app/Filament/Admin/{Pages,Resources,Widgets}` | `app/Filament/App/{Pages,Resources,Widgets}` |
-| Look | Filament defaults, own brand name and primary colour | Filament defaults, own brand name and primary colour |
+| Look | Filament defaults; Restano logo, Forest primary, Stone gray | Filament defaults; Restano logo, Forest primary, Stone gray |
+| Resources | Plans (`PlanPolicy`: super admins only; saved by `PlanService`; never deleted), FAQ and testimonials (`FaqPolicy`, `TestimonialPolicy`: any platform role) | Phase B modules |
 
 Authorization layers:
 
 1. **Panel:** `User::canAccessPanel()` — `admin` needs `platform_role`; `app` needs an active membership. Access to both panels requires both grants.
 2. **Tenant (app):** `User::canAccessTenant()` + `ResolveTenantFromMembership`, see [tenancy.md](tenancy.md#business-panel-tenancy-apptenant-slug).
 3. **Branch (app):** `TenantMembership::canAccessLocation()` / `accessibleLocations()`; owners reach every location of the tenant, managers and branch staff only their `location_user` assignments.
-4. **Action:** policies (e.g. `LocationPolicy`, `TenantPolicy`) combine role and branch access. Every page and resource also checks `canAccess()` / policies; hiding navigation is never authorization.
+4. **Action:** policies (e.g. `LocationPolicy`, `TenantPolicy`; in `/admin` `PlanPolicy`, `FaqPolicy`, `TestimonialPolicy`, which check only the platform role) combine role and branch access. Every page and resource also checks `canAccess()` / policies; hiding navigation is never authorization.
 5. **Plan:** `FeatureGate`, evaluated inside the backend service that creates the resource (never only in the UI). See [subscriptions.md](subscriptions.md#plan-features-and-limits).
 
 Business action matrix (each row is implemented with its module in Phase B):
@@ -342,7 +343,7 @@ Each phase ends with tests run, a summary of changed files, and a review pause.
 | 2. Database foundation | Migrations not already created by Phase B, with composite FKs, enums, models, factories | DB rejects cross-tenant inserts; relationship tests pass |
 | 3. Subscriptions | Remainder: plan prices, lifecycle command (`plan_limits`, `FeatureGate` and `PlanSeeder` limits moved to B1) | Lifecycle and grace tests pass |
 | 4. Authentication | Fortify (registration, password reset, email verification), Blade auth views (tr/en), `TenantRegistrationService`, `/account`; `GET /login` → `/app/login` | Registration atomicity and auth tests pass |
-| 5. Marketing site | `components/ui` design system, marketing layout and pages, pricing from DB, tr/en, SEO. Design source: `docs/design/source/` (see [Design reference](#design-reference)) | Pages render in both locales |
+| 5. Marketing site | `components/ui` design system, marketing layout and pages, pricing from DB, tr/en, SEO. **Status (2026-11-15):** design system, auth pages, marketing layout and home page done (`/` tr, `/en` en; routes `marketing.{locale}.{page}`; content from `MarketingContent`); features, pricing and contact pages next. Design source: `docs/design/source/` (see [Design reference](#design-reference)) | Pages render in both locales |
 | 6. Public menu infrastructure | Snapshot builder, cache versions, `PublicMenuService`, routes, `/q/{code}`, unavailable page, `DemoTenantSeeder`, reference theme `classic` | Access, visibility, cache, query-count and QR tests pass |
 | 7. Themes | `minimal`, `bistro`, `cafe`, `grid`; theme showcase | Theme architecture and zero-query tests pass for all five |
 | 8. Hardening | CSP and security headers, HTTP caching/ETag, image upload pipeline, rate limits, performance pass | Security checklist and performance budget met |

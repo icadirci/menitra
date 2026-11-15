@@ -21,6 +21,11 @@ return [
         'not_included' => ':feature mevcut paketinize veya abonelik durumunuza dahil değil.',
     ],
 
+    'intervals' => [
+        'monthly' => 'Aylık',
+        'yearly' => 'Yıllık',
+    ],
+
     'usage' => ':used / :limit',
     'unlimited' => 'Sınırsız',
 

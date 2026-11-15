@@ -21,6 +21,11 @@ return [
         'not_included' => ':feature is not included in your current plan or subscription status.',
     ],
 
+    'intervals' => [
+        'monthly' => 'Monthly',
+        'yearly' => 'Yearly',
+    ],
+
     'usage' => ':used / :limit',
     'unlimited' => 'Unlimited',
 
