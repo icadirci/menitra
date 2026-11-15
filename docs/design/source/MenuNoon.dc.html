@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>noon. café — Menu</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&amp;family=DM+Mono:wght@400;500&amp;display=swap">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 390px; min-height: 2900px; background: #FFFFFF; color: #111111; font-family: 'DM Sans', system-ui, sans-serif; font-size: 14px; line-height: 1.5; -webkit-font-smoothing: antialiased">
+
+<!-- Cover strip -->
+<div style="position: relative; height: 150px; background: #F2F1EE; display: flex; align-items: center; justify-content: center; gap: 0; overflow: hidden">
+<div aria-hidden="true" style="width: 150px; flex: none"><dc-import name="Dish" kind="latte" bg="transparent" ratio="1 / 1" pad="4%" hint-size="150px,150px"></dc-import></div>
+<div aria-hidden="true" style="width: 150px; flex: none"><dc-import name="Dish" kind="toast" bg="transparent" ratio="1 / 1" pad="4%" hint-size="150px,150px"></dc-import></div>
+<label style="position: absolute; top: 12px; right: 12px; display: inline-flex; align-items: center; gap: 4px; height: 36px; padding: 0 4px 0 10px; border-radius: 8px; background: #FFFFFF; border: 1px solid #E5E5E2; font-size: 13px; font-weight: 500"><span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Language</span><select style="border: 0; background: transparent; font: 500 13px 'DM Sans', sans-serif; color: #111111; height: 34px; padding-right: 4px"><option>English</option><option>Español</option></select></label>
+</div>
+
+<!-- Header -->
+<header style="padding: 22px 20px 18px; display: flex; flex-direction: column; gap: 12px; border-bottom: 1px solid #EDEDEA">
+<div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px">
+<div style="display: flex; align-items: center; gap: 12px">
+<span aria-hidden="true" style="width: 44px; height: 44px; border-radius: 10px; background: #111111; color: #FFFFFF; display: inline-flex; align-items: center; justify-content: center; font-weight: 700; font-size: 20px; letter-spacing: -0.06em">n.</span>
+<div><h1 style="margin: 0; font-size: 26px; font-weight: 700; letter-spacing: -0.05em; line-height: 1">noon.</h1><span style="font-size: 13px; color: #6B6B68">Coffee &amp; simple food</span></div>
+</div>
+<span style="padding: 4px 10px; border-radius: 999px; background: #EEF6F0; color: #1D6B3A; font-size: 12px; font-weight: 600">Open · til 4pm</span>
+</div>
+<p style="margin: 0; color: #4A4A47">Good coffee, honest food, no fuss. Everything made here, every morning.</p>
+<div style="display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: #6B6B68">
+<span>Daily 8:00–16:00</span>
+<span>211 Bedford Ave, Brooklyn, NY</span>
+</div>
+<div style="display: flex; gap: 16px; font-size: 13px; font-weight: 600">
+<a href="https://instagram.com" style="color: #111111; padding: 10px 0">Instagram ↗</a>
+<a href="https://maps.google.com" style="color: #111111; padding: 10px 0">Map ↗</a>
+<a href="https://example.com" style="color: #111111; padding: 10px 0">Website ↗</a>
+</div>
+</header>
+
+<!-- Search + tabs -->
+<div style="padding: 14px 20px 0; display: flex; flex-direction: column; gap: 10px; background: #FFFFFF">
+<label style="display: flex; align-items: center; gap: 8px; height: 44px; padding: 0 12px; border-radius: 10px; background: #F4F4F2"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6B6B68" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14zM20 20l-4-4"></path></svg><span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Search</span><input type="search" placeholder="Search" style="flex: 1; min-width: 0; border: 0; background: transparent; font: 400 15px 'DM Sans', sans-serif; color: #111111; outline: none"></label>
+<nav aria-label="Categories" style="display: flex; gap: 20px; overflow-x: auto; margin: 0 -20px; padding: 0 20px; border-bottom: 1px solid #EDEDEA">
+<sc-for list="{{cats}}" as="c" hint-placeholder-count="5">
+<button type="button" aria-current="{{c.current}}" style="{{c.style}}" onClick="{{c.onClick}}">{{c.label}}</button>
+</sc-for>
+</nav>
+</div>
+
+<!-- Featured -->
+<section style="padding: 20px 20px 6px">
+<h2 style="margin: 0 0 12px; font-size: 12px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #6B6B68">Popular right now</h2>
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px">
+<a href="DetailNoon.dc.html" style="display: flex; flex-direction: column; gap: 8px; text-decoration: none; color: #111111">
+<div style="border-radius: 12px; overflow: hidden"><dc-import name="Dish" kind="latte" bg="#F2F1EE" ratio="4 / 3" pad="8%" hint-size="170px,128px"></dc-import></div>
+<div style="display: flex; justify-content: space-between; gap: 8px"><span style="font-weight: 600">Oat latte</span><span style="font-family: 'DM Mono', monospace; font-size: 13px">6.00</span></div>
+</a>
+<a href="DetailNoon.dc.html" style="display: flex; flex-direction: column; gap: 8px; text-decoration: none; color: #111111">
+<div style="border-radius: 12px; overflow: hidden"><dc-import name="Dish" kind="toast" bg="#F2F1EE" ratio="4 / 3" pad="8%" hint-size="170px,128px"></dc-import></div>
+<div style="display: flex; justify-content: space-between; gap: 8px"><span style="font-weight: 600">Avocado toast</span><span style="font-family: 'DM Mono', monospace; font-size: 13px">12.00</span></div>
+</a>
+</div>
+</section>
+
+<!-- Lists -->
+<sc-for list="{{sections}}" as="s" hint-placeholder-count="4">
+<section style="padding: 22px 20px 0">
+<h2 style="margin: 0; padding-bottom: 6px; font-size: 17px; font-weight: 700; letter-spacing: -0.02em">{{s.title}}</h2>
+<sc-for list="{{s.items}}" as="it" hint-placeholder-count="4">
+<a href="DetailNoon.dc.html" style="{{it.rowStyle}}">
+<div style="width: 52px; height: 52px; flex: none; border-radius: 10px; overflow: hidden"><dc-import name="Dish" kind="{{it.dish}}" bg="#F2F1EE" ratio="1 / 1" pad="6%" hint-size="52px,52px"></dc-import></div>
+<div style="flex: 1; min-width: 0">
+<div style="display: flex; align-items: center; gap: 6px"><span style="font-weight: 600; font-size: 15px">{{it.name}}</span><sc-if value="{{it.badge}}" hint-placeholder-val="{{ false }}"><span style="width: 6px; height: 6px; border-radius: 999px; background: #E4572E" title="Popular"></span><span style="font-size: 11px; font-weight: 600; color: #B5401C">{{it.badge}}</span></sc-if></div>
+<div style="font-size: 13px; color: #6B6B68; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{it.desc}}</div>
+<div style="display: flex; gap: 6px; margin-top: 2px">
+<sc-for list="{{it.diet}}" as="d" hint-placeholder-count="1"><span style="font-size: 11px; font-weight: 600; color: #1D6B3A">{{d}}</span></sc-for>
+<sc-if value="{{it.soldOut}}" hint-placeholder-val="{{ false }}"><span style="font-size: 11px; font-weight: 600; color: #6B6B68">Sold out</span></sc-if>
+</div>
+</div>
+<span style="font-family: 'DM Mono', monospace; font-size: 14px; color: #111111">{{it.price}}</span>
+</a>
+</sc-for>
+</section>
+</sc-for>
+
+<footer style="margin-top: 28px; padding: 20px 20px 40px; border-top: 1px solid #EDEDEA; display: flex; flex-direction: column; gap: 8px; font-size: 12px; color: #6B6B68">
+<span><strong style="color: #1D6B3A">VG</strong> vegan · <strong style="color: #1D6B3A">V</strong> vegetarian · <strong style="color: #1D6B3A">GF</strong> gluten-free</span>
+<span>Prices in USD, tax included. Oat, almond and soy milk +0.75.</span>
+<span>masa</span>
+</footer>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":2900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var self = this;
+    var active = (this.state && this.state.cat) || 'Coffee';
+    var cats = ['Coffee', 'Tea', 'Breakfast', 'Lunch', 'Sweets'].map(function (l) {
+      var on = l === active;
+      return { label: l, current: on ? 'true' : 'false', onClick: function () { self.setState({ cat: l }); }, style: 'flex: none; height: 44px; padding: 0; border: 0; background: transparent; cursor: pointer; font: 600 14px DM Sans, sans-serif; ' + (on ? 'color: #111111; box-shadow: inset 0 -2px 0 #111111' : 'color: #8A8A86') };
+    });
+    function it(o) {
+      o.diet = o.diet || []; o.badge = o.badge || ''; o.soldOut = !!o.soldOut;
+      o.rowStyle = 'display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid #F0F0ED; text-decoration: none; color: #111111' + (o.soldOut ? '; opacity: .5' : '');
+      return o;
+    }
+    return {
+      cats: cats,
+      sections: [
+        { title: 'Coffee', items: [
+          it({ name: 'Drip coffee', desc: 'Rotating roaster, bottomless refills', price: '3.50', dish: 'espresso', diet: ['VG'] }),
+          it({ name: 'Americano', desc: 'Double shot, hot water', price: '4.00', dish: 'espresso', diet: ['VG'] }),
+          it({ name: 'Latte', desc: 'Double shot, steamed milk', price: '5.25', dish: 'latte', badge: 'Popular', diet: ['V'] }),
+          it({ name: 'Cappuccino', desc: 'Equal espresso, milk and foam', price: '5.00', dish: 'latte', diet: ['V'] }),
+          it({ name: 'Iced latte', desc: 'Over ice, any milk', price: '5.75', dish: 'coldbrew', diet: ['V'] })
+        ] },
+        { title: 'Tea', items: [
+          it({ name: 'Matcha latte', desc: 'Ceremonial grade, lightly sweet', price: '6.00', dish: 'matcha', diet: ['V'] }),
+          it({ name: 'Loose-leaf tea', desc: 'Earl grey, sencha or chamomile', price: '4.00', dish: 'tea', diet: ['VG'] })
+        ] },
+        { title: 'Breakfast', items: [
+          it({ name: 'Avocado toast', desc: 'Sourdough, lemon, chilli, sea salt', price: '12.00', dish: 'toast', badge: 'Popular', diet: ['VG'] }),
+          it({ name: 'Butter croissant', desc: 'Baked in-house every morning', price: '4.25', dish: 'croissant', diet: ['V'] }),
+          it({ name: 'Granola bowl', desc: 'Greek yoghurt, berries, honey', price: '9.50', dish: 'salad', diet: ['V', 'GF'] })
+        ] },
+        { title: 'Lunch', items: [
+          it({ name: 'Green bowl', desc: 'Quinoa, greens, tahini, pickled onion', price: '14.00', dish: 'salad', diet: ['VG', 'GF'] }),
+          it({ name: 'Lemon ricotta pasta', desc: 'Bucatini, peas, mint, pecorino', price: '15.00', dish: 'pasta', diet: ['V'] }),
+          it({ name: 'Tomato soup', desc: 'Roasted tomato, basil, focaccia', price: '8.00', dish: 'soup', diet: ['VG'], soldOut: true })
+        ] },
+        { title: 'Sweets', items: [
+          it({ name: 'Cheesecake', desc: 'New York style, cherry compote', price: '7.00', dish: 'cake', diet: ['V'] }),
+          it({ name: 'Morning bun', desc: 'Orange zest, cinnamon sugar', price: '4.75', dish: 'croissant', diet: ['V'] })
+        ] }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

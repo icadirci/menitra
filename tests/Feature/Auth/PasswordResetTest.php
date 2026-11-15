@@ -25,7 +25,12 @@ class PasswordResetTest extends TestCase
         Notification::fake();
         $user = User::factory()->create(['email' => 'owner@example.com']);
 
-        $this->post('/forgot-password', ['email' => 'owner@example.com'])->assertSessionHas('status');
+        $this->from('/forgot-password')
+            ->followingRedirects()
+            ->post('/forgot-password', ['email' => 'owner@example.com'])
+            ->assertOk()
+            ->assertSee(__('auth.forgot.sent_title'))
+            ->assertDontSee(__('auth.forgot.submit'));
 
         $token = null;
         Notification::assertSentTo($user, ResetPassword::class, function (ResetPassword $notification) use (&$token): bool {

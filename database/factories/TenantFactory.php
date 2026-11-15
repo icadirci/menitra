@@ -8,6 +8,7 @@ use App\Enums\MenuTheme;
 use App\Enums\TenantStatus;
 use App\Models\Tenant;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 /**
@@ -32,6 +33,16 @@ class TenantFactory extends Factory
             $tenant->translations()->create([
                 'locale' => $tenant->default_locale,
                 'name' => fake()->company(),
+            ]);
+
+            // Same invariant as registration: the default locale is enabled.
+            // Written directly so factories work whatever TenantContext holds.
+            DB::table('tenant_locales')->insertOrIgnore([
+                'tenant_id' => $tenant->getKey(),
+                'locale' => $tenant->default_locale,
+                'sort_order' => 0,
+                'created_at' => now(),
+                'updated_at' => now(),
             ]);
         });
     }

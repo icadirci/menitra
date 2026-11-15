@@ -19,10 +19,11 @@ Area-specific rules live in [.claude/rules/](.claude/rules/) (backend, frontend,
 
 ## 1. Scope
 
-**In scope now:** public marketing website, pricing page, registration, forgot password, email verification, a minimal read-only `/account` page, public QR menu pages, stable QR redirects, five menu themes, and the **Filament panel infrastructure**: `/admin` for the platform and `/app/{tenant-slug}` for businesses, each with login and an initial dashboard.
+**In scope now:** public marketing website, pricing page, registration, forgot password, email verification, a minimal read-only `/account` page, public QR menu pages, stable QR redirects, five menu themes, the **Filament panel infrastructure** (`/admin` for the platform and `/app/{tenant-slug}` for businesses, each with login and an initial dashboard), and the **business management modules in `/app`** (Phase B, built step by step: business settings and languages, locations, menus and content, branch operations, QR codes, themes, dashboard — see [overview.md § Business panel](docs/architecture/overview.md#business-panel-phase-b)).
 
 **Out of scope — do not build unless explicitly requested:**
-- CRUD modules (Filament resources) in either panel: platform management in `/admin`, business management in `/app`. Only the panel infrastructure and initial dashboards exist.
+- CRUD modules (Filament resources) in `/admin` (platform management). Only the admin panel infrastructure and its initial dashboard exist.
+- Team management in `/app`: invitations, staff CRUD, membership and branch-assignment screens (later phase; memberships are created by registration, artisan or seeders).
 - Payment gateway integration (keep the provider-agnostic `PaymentGateway` contract only).
 - Online ordering, payment from the menu, waiter calling, table reservations (keep the design extensible for them).
 - Custom domains (table and resolver slot are reserved; implementation is a later phase).
@@ -50,10 +51,10 @@ Area-specific rules live in [.claude/rules/](.claude/rules/) (backend, frontend,
 10. **Themes:** pure presentation. Selected per tenant with an optional location override. Themes receive only `MenuSnapshot`, `LiveMenuState`, `ThemeSettings`. Five themes: `classic`, `minimal`, `bistro`, `cafe`, `grid`.
 11. **Caching:** version-counter invalidation — a tenant content version and a per-location version, both embedded in snapshot keys. All keys built only by `MenuCacheKeys`, prefixed `qrmenu:`.
 12. **Queues:** `tenant_id` is injected into every job payload and the context is restored on `JobProcessing` (before unserialization) and always cleared afterwards (`TenantQueueListener`). Jobs never inherit a context; a missing, deleted or suspended tenant fails the job without running it.
-13. **Subscriptions:** provider-agnostic; monthly/annual prices in TRY (stored in kuruş), trial → active → grace → expired lifecycle, configurable grace period, plan limits via `PlanFeature` enum + `FeatureGate`. After grace the public menu shows a professional unavailable page. **Tenant data is never deleted automatically.**
+13. **Subscriptions:** provider-agnostic; monthly/annual prices in TRY (stored in kuruş), trial → active → grace → expired lifecycle, configurable grace period, plan limits via `PlanFeature` enum (incl. `max_qr_codes`) + `FeatureGate`, always enforced in backend services. Plan limits apply while the live subscription is `trialing`, `active`, `past_due` or `grace`; with no live subscription (expired or none) the tenant cannot **create** new limited resources, but viewing, editing and deleting existing records is never blocked for that reason. After grace the public menu shows a professional unavailable page. **Tenant data is never deleted automatically.**
 14. **Registration** (Fortify → `TenantRegistrationService`) creates in one transaction: user, tenant (+ name translation), owner membership, default location, default menu (attached), trial subscription (+ `trial_started` event). Tenant locales, default theme settings and the default QR code are added to the same transaction when those tables exist. Public registration can never grant a platform role.
 15. **Panels (Filament 5):** `admin` panel at `/admin` (platform owners and staff) and `app` panel at `/app/{tenant-slug}` (business users, Filament tenancy + tenant switcher). Both use Filament's own login (`/admin/login`, `/app/login`) on the shared `web` guard and session; panel registration is disabled. Both are registered for the central domain only, and so are Livewire's update, upload and preview endpoints. Fortify's own routes are ignored: only registration, password reset and email verification are exposed (`routes/auth.php`); `GET /login` redirects to `/app/login`. Members of a suspended business get an explicit 403 in `/app`; their data is untouched. `/app` requires a verified email (unverified users go to `/email/verify`); `/admin` doesn't. A central `POST /logout` exists for the verification page. Panels are presentation: they call the same services and policies as the rest of the app.
-16. **Roles:** platform roles in a nullable `users.platform_role` (`PlatformRole`: `super_admin`, `platform_staff`). Business roles on the membership `tenant_user.role` (`TenantRole`: `owner`, `manager`, `branch_staff`). Branch access through `location_user` (membership ↔ location, composite FKs). Owners reach every branch of their tenant; managers and branch staff only their assigned branches. No roles/permissions package. Access to both panels requires both grants explicitly.
+16. **Roles:** platform roles in a nullable `users.platform_role` (`PlatformRole`: `super_admin`, `platform_staff`). Business roles on the membership `tenant_user.role` (`TenantRole`: `owner`, `manager`, `branch_staff`). Branch access through `location_user` (membership ↔ location, composite FKs). Owners reach every branch of their tenant; managers and branch staff only their assigned branches. No roles/permissions package. Access to both panels requires both grants explicitly. **Menu content** (menus, categories, items, variants) is editable by owners, and by a manager only when the menu is attached to at least one location and **every** location it is attached to is assigned to that manager; unattached menus are owner-only. Attaching/detaching menus to locations, extra groups and tenant-wide settings (profile, languages, theme, subscription) are owner-only.
 
 ## 4. Development Principles
 
@@ -87,15 +88,17 @@ Area-specific rules live in [.claude/rules/](.claude/rules/) (backend, frontend,
 
 Work proceeds phase by phase with a review pause between phases (details in [overview.md](docs/architecture/overview.md#implementation-roadmap)):
 
-0. Environment (Docker Compose: PHP 8.5, PostgreSQL, Redis — see §9) → P. Panels (Filament install, `admin` + `app` panels, platform roles, `TenantContext`, memberships, locations, branch authorization) → 1. Tenancy core (remainder) → 2. Database foundation → 3. Subscriptions → 4. Authentication (Fortify registration, reset, verification) → 5. Marketing site → 6. Public menu infrastructure + `classic` theme → 7. Remaining four themes → 8. Hardening.
+0. Environment (Docker Compose: PHP 8.5, PostgreSQL, Redis — see §9) → P. Panels (Filament install, `admin` + `app` panels, platform roles, `TenantContext`, memberships, locations, branch authorization) → **B. Business panel** (`/app` modules, steps B0–B10; pulls the needed parts of Phases 1–3 forward: `tenant_locales`, content migrations, `plan_limits` + `FeatureGate`) → 1. Tenancy core (remainder) → 2. Database foundation (remainder) → 3. Subscriptions (remainder) → 4. Authentication (Fortify registration, reset, verification) → 5. Marketing site → 6. Public menu infrastructure + `classic` theme → 7. Remaining four themes → 8. Hardening.
 
 ## 8. Open Decisions (working defaults until confirmed)
 
-- Plan names, prices and limits — placeholder seeds until defined.
+- Plan names, prices and limits — placeholder seeds until defined. The `starter` limits in `PlanSeeder` are **development placeholders**, not a pricing decision.
 - Pricing shown KDV-inclusive or "+KDV" — display only.
 - Trial 14 days, grace 7 days.
-- QR image generation library (`chillerlan/php-qrcode` is installed as a mandatory Filament dependency; using it directly for QR images still needs a decision).
 - Per-location price overrides — deferred.
+- S3-compatible media storage in production needs `league/flysystem-aws-s3-v3` (not installed; requires approval). The `media` disk config is ready for it.
+
+**Decided (2026-11-15):** QR images use the already-installed `chillerlan/php-qrcode` directly (SVG + PNG), no other QR package. Images are stored on the `media` disk (see [tenancy.md § File storage](docs/architecture/tenancy.md#file-storage)).
 - Marketing site locales: `tr` at `/`, `en` at `/en`.
 
 ## 9. Docker Execution Strategy

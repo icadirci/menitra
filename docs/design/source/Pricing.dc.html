@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Masa — Pricing</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&amp;family=Inter:wght@400;500;600;700&amp;display=swap">
+<style>
+body{margin:0;background:#F6F5F1}
+a{color:#1F4D3B}a:hover{color:#163A2C}
+@media (max-width: 760px){.m-links{display:none !important}.m-burger{display:inline-flex !important}.m-hide{display:none !important}}
+details>summary{list-style:none;cursor:pointer}
+details>summary::-webkit-details-marker{display:none}
+details[open] .faq-plus{transform:rotate(45deg)}
+</style>
+</helmet>
+<div style="background: #F6F5F1; color: #15191A; font-family: Inter, system-ui, sans-serif; font-size: 16px; line-height: 1.55; -webkit-font-smoothing: antialiased">
+<dc-import name="Nav" active="pricing" hint-size="100%,76px"></dc-import>
+<main>
+
+<section style="padding: clamp(56px, 8vw, 96px) 24px 40px; text-align: center">
+<div style="max-width: 820px; margin: 0 auto; display: flex; flex-direction: column; align-items: center; gap: 20px">
+<span style="font-size: 13px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: #1F4D3B">Pricing</span>
+<h1 style="margin: 0; font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; font-size: clamp(40px, 5.6vw, 68px); line-height: 1; letter-spacing: -0.045em; text-wrap: balance">Less than the cost of reprinting one menu.</h1>
+<p style="margin: 0; max-width: 560px; color: #4C514E; font-size: 18px">Every plan starts with a 14-day free trial. No credit card, no setup fee, cancel any time.</p>
+<div role="radiogroup" aria-label="Billing period" style="margin-top: 8px; display: inline-flex; align-items: center; gap: 4px; padding: 5px; border-radius: 999px; background: #FFFFFF; border: 1px solid #E3E1D9">
+<button type="button" role="radio" aria-checked="{{monthlyOn}}" style="{{monthlyStyle}}" onClick="{{setMonthly}}">Monthly</button>
+<button type="button" role="radio" aria-checked="{{yearlyOn}}" style="{{yearlyStyle}}" onClick="{{setYearly}}">Yearly<span style="padding: 3px 8px; border-radius: 999px; background: #E7A33E; color: #15191A; font-size: 12px; font-weight: 700">2 months free</span></button>
+</div>
+</div>
+</section>
+
+<section style="padding: 16px 24px clamp(56px, 7vw, 96px)">
+<div style="max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr)); gap: 20px; align-items: stretch">
+<sc-for list="{{plans}}" as="p" hint-placeholder-count="3">
+<article style="{{p.cardStyle}}">
+<div style="display: flex; justify-content: space-between; align-items: center; gap: 12px">
+<h2 style="margin: 0; font-family: 'Bricolage Grotesque', sans-serif; font-size: 26px; font-weight: 700; letter-spacing: -0.02em">{{p.name}}</h2>
+<sc-if value="{{p.featured}}" hint-placeholder-val="{{ false }}"><span style="padding: 5px 12px; border-radius: 999px; background: #E7A33E; color: #15191A; font-size: 12px; font-weight: 700">Recommended</span></sc-if>
+</div>
+<p style="margin: 0; font-size: 15px; opacity: .8; min-height: 48px">{{p.blurb}}</p>
+<div style="display: flex; flex-direction: column; gap: 4px">
+<div style="display: flex; align-items: baseline; gap: 6px"><span style="font-family: 'Bricolage Grotesque', sans-serif; font-size: 60px; font-weight: 700; letter-spacing: -0.045em; line-height: 1">{{p.price}}</span><span style="opacity: .7">{{p.per}}</span></div>
+<span style="font-size: 14px; opacity: .7">{{p.note}}</span>
+</div>
+<a href="Register.dc.html" style="{{p.btnStyle}}">Start 14-day free trial</a>
+<div style="height: 1px; background: {{p.rule}}"></div>
+<span style="font-size: 13px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; opacity: .7">{{p.includesLabel}}</span>
+<ul style="margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 12px; font-size: 15px">
+<sc-for list="{{p.points}}" as="pt" hint-placeholder-count="6">
+<li style="display: flex; gap: 10px; align-items: flex-start"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="{{p.check}}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none; margin-top: 2px"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg><span>{{pt}}</span></li>
+</sc-for>
+</ul>
+</article>
+</sc-for>
+</div>
+</section>
+
+<!-- Comparison -->
+<section style="padding: clamp(56px, 7vw, 96px) 24px; background: #FFFFFF; border-top: 1px solid #E3E1D9; border-bottom: 1px solid #E3E1D9">
+<div style="max-width: 1200px; margin: 0 auto; display: flex; flex-direction: column; gap: 32px">
+<h2 style="margin: 0; font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; font-size: clamp(30px, 3.4vw, 44px); line-height: 1.06; letter-spacing: -0.03em">Compare plans</h2>
+<div style="overflow-x: auto; border-radius: 20px; border: 1px solid #E3E1D9">
+<div role="table" aria-label="Plan comparison" style="min-width: 720px; font-size: 15px">
+<div role="row" style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; background: #F6F5F1">
+<span role="columnheader" style="padding: 18px 20px; font-weight: 600; color: #575C59">Feature</span>
+<span role="columnheader" style="text-align: center; padding: 18px 12px; font-family: 'Bricolage Grotesque', sans-serif; font-size: 18px; font-weight: 700">Starter</span>
+<span role="columnheader" style="text-align: center; padding: 18px 12px; font-family: 'Bricolage Grotesque', sans-serif; font-size: 18px; font-weight: 700; background: #E4EEE8; color: #1F4D3B">Professional</span>
+<span role="columnheader" style="text-align: center; padding: 18px 12px; font-family: 'Bricolage Grotesque', sans-serif; font-size: 18px; font-weight: 700">Business</span>
+</div>
+<sc-for list="{{groups}}" as="g" hint-placeholder-count="4">
+<div role="rowgroup">
+<div role="row" style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; border-top: 1px solid #E3E1D9"><span role="rowheader" style="grid-column: 1 / -1; padding: 22px 20px 10px; font-size: 13px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #1F4D3B">{{g.title}}</span></div>
+<sc-for list="{{g.rows}}" as="r" hint-placeholder-count="4">
+<div role="row" style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; border-top: 1px solid #F0EEE8">
+<span role="rowheader" style="padding: 14px 20px; font-weight: 500">{{r.label}}</span>
+<sc-for list="{{r.cells}}" as="c" hint-placeholder-count="3">
+<span role="cell" style="{{c.style}}">
+<sc-if value="{{c.yes}}" hint-placeholder-val="{{ true }}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1F4D3B" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Included"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></sc-if>
+<sc-if value="{{c.no}}" hint-placeholder-val="{{ false }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#A9ADAA" stroke-width="2" stroke-linecap="round" role="img" aria-label="Not included"><path d="M6 12h12"></path></svg></sc-if>
+<sc-if value="{{c.text}}" hint-placeholder-val="{{ false }}"><span>{{c.text}}</span></sc-if>
+</span>
+</sc-for>
+</div>
+</sc-for>
+</div>
+</sc-for>
+</div>
+</div>
+</div>
+</section>
+
+<!-- Billing FAQ -->
+<section style="padding: clamp(56px, 7vw, 96px) 24px">
+<div style="max-width: 1200px; margin: 0 auto; display: flex; flex-wrap: wrap; gap: 48px">
+<div style="flex: 1 1 300px; display: flex; flex-direction: column; gap: 14px">
+<h2 style="margin: 0; font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; font-size: clamp(30px, 3.4vw, 44px); line-height: 1.06; letter-spacing: -0.03em">Billing questions</h2>
+<p style="margin: 0; color: #575C59">Need more than 5 venues? <a href="Contact.dc.html" style="font-weight: 600">Contact us</a> for a custom plan.</p>
+</div>
+<div style="flex: 2 1 560px; min-width: 0; display: flex; flex-direction: column; gap: 12px">
+<sc-for list="{{faqs}}" as="f" hint-placeholder-count="4">
+<details style="border-radius: 18px; background: #FFFFFF; border: 1px solid #E3E1D9">
+<summary style="display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 22px 24px; font-weight: 600; font-size: 17px">{{f.q}}<span class="faq-plus" style="flex: none; width: 32px; height: 32px; border-radius: 999px; background: #F1EFE9; display: inline-flex; align-items: center; justify-content: center; transition: transform .2s"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#15191A" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg></span></summary>
+<p style="margin: 0; padding: 0 24px 24px; color: #575C59; max-width: 640px">{{f.a}}</p>
+</details>
+</sc-for>
+</div>
+</div>
+</section>
+</main>
+<dc-import name="Footer" hint-size="100%,420px"></dc-import>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":3300}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var self = this;
+    var yearly = !!(this.state && this.state.yearly);
+    var seg = 'display: inline-flex; align-items: center; gap: 8px; height: 44px; padding: 0 20px; border-radius: 999px; border: 0; cursor: pointer; font: 600 15px Inter, sans-serif; ';
+    var plans = [
+      { name: 'Starter', blurb: 'For a single café putting its menu online for the first time.', m: 9, y: 90, featured: false, includesLabel: 'Includes', points: ['1 venue, 1 menu', 'Up to 80 dishes with photos', '2 languages', '3 menu layouts', 'Your logo on the menu', 'QR code downloads'] },
+      { name: 'Professional', blurb: 'For venues that want the menu to look and feel like their brand.', m: 19, y: 190, featured: true, includesLabel: 'Everything in Starter, plus', points: ['Unlimited menus and dishes', '6 languages', 'All 12 layouts, custom colours & fonts', 'Cover photo, no Masa badge', 'Featured row & popular badges', 'Print templates & priority support'] },
+      { name: 'Business', blurb: 'For groups running several venues, menus and teams.', m: 39, y: 390, featured: false, includesLabel: 'Everything in Professional, plus', points: ['Up to 5 venues', 'Unlimited languages', 'Custom domain (menu.yourcafe.com)', 'Separate QR codes per table or area', '5 team members', 'Personal onboarding call'] }
+    ].map(function (p) {
+      var base = 'display: flex; flex-direction: column; gap: 20px; padding: 36px 32px; border-radius: 28px; box-sizing: border-box; ';
+      p.cardStyle = p.featured ? base + 'background: #15191A; color: #F6F5F1; box-shadow: 0 40px 70px -36px rgba(21,25,26,.7); outline: 3px solid #E7A33E; outline-offset: -3px' : base + 'background: #FFFFFF; color: #15191A; border: 1px solid #E3E1D9';
+      var btn = 'display: inline-flex; justify-content: center; align-items: center; height: 54px; border-radius: 14px; font-weight: 600; text-decoration: none; ';
+      p.btnStyle = p.featured ? btn + 'background: #E7A33E; color: #15191A' : btn + 'background: #1F4D3B; color: #FFFFFF';
+      p.rule = p.featured ? 'rgba(246,245,241,.16)' : '#E3E1D9';
+      p.check = p.featured ? '#E7A33E' : '#1F4D3B';
+      if (yearly) {
+        p.price = '$' + p.y; p.per = '/ year';
+        p.note = '≈ $' + (p.y / 12).toFixed(2) + ' per month, billed yearly';
+      } else {
+        p.price = '$' + p.m; p.per = '/ month';
+        p.note = 'Billed monthly · or $' + p.y + ' per year';
+      }
+      return p;
+    });
+    function row(label, a, b, c) {
+      return { label: label, cells: [a, b, c].map(function (v, i) {
+        var bg = i === 1 ? 'background: #F4F8F5; ' : '';
+        return { yes: v === true, no: v === false, text: (typeof v === 'string') ? v : '', style: bg + 'display: flex; align-items: center; justify-content: center; text-align: center; padding: 14px 12px; color: #3A3F3C' };
+      }) };
+    }
+    return {
+      monthlyOn: yearly ? 'false' : 'true',
+      yearlyOn: yearly ? 'true' : 'false',
+      monthlyStyle: seg + (yearly ? 'background: transparent; color: #575C59' : 'background: #15191A; color: #FFFFFF'),
+      yearlyStyle: seg + (yearly ? 'background: #15191A; color: #FFFFFF' : 'background: transparent; color: #575C59'),
+      setMonthly: function () { self.setState({ yearly: false }); },
+      setYearly: function () { self.setState({ yearly: true }); },
+      plans: plans,
+      groups: [
+        { title: 'Your menu', rows: [row('Venues', '1', '1', 'Up to 5'), row('Menus', '1', 'Unlimited', 'Unlimited'), row('Dishes', 'Up to 80', 'Unlimited', 'Unlimited'), row('Categories & product photos', true, true, true), row('Languages', '2', '6', 'Unlimited')] },
+        { title: 'Design & branding', rows: [row('Menu layouts', '3', '12', '12'), row('Your logo', true, true, true), row('Cover photo', false, true, true), row('Custom colours & fonts', false, true, true), row('Remove Masa badge', false, true, true), row('Custom domain', false, false, true)] },
+        { title: 'Guest experience', rows: [row('Search & category navigation', true, true, true), row('Dietary labels & allergens', true, true, true), row('Sold-out & availability', true, true, true), row('Featured row & popular badges', false, true, true)] },
+        { title: 'QR codes & support', rows: [row('QR code downloads (PNG, SVG, PDF)', true, true, true), row('Print templates', false, true, true), row('QR codes per table or area', false, false, true), row('Team members', '1', '2', '5'), row('Support', 'Email', 'Priority email', 'Priority + onboarding call')] }
+      ],
+      faqs: [
+        { q: 'How does the free trial work?', a: 'You get every feature of the plan you choose for 14 days. No credit card is needed to start, and nothing is charged unless you subscribe.' },
+        { q: 'Can I change plans later?', a: 'Yes. Upgrade or downgrade whenever you like; the new price applies from your next billing date.' },
+        { q: 'How do I pay?', a: 'By credit or debit card (Visa, Mastercard, American Express). You receive an invoice by email for every payment.' },
+        { q: 'What happens if I cancel?', a: 'Your menu stays online until the end of the period you have paid for. After that it goes offline — your QR code will work again if you resubscribe.' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

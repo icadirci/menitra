@@ -1,8 +1,8 @@
 # Database Architecture
 
-> Status: **Approved — v0.3** (2026-11-15: platform roles, `TenantRole.branch_staff`, `location_user`).
+> Status: **Approved — v0.4** (2026-11-15: `tenant_locales` without `is_default`, `location_item_states.sold_out_until`, `PlanFeature::max_qr_codes`). v0.3: platform roles, `TenantRole.branch_staff`, `location_user`.
 >
-> **Implemented so far:** `users.platform_role`, `tenants`, `tenant_translations`, `tenant_user`, `locations`, `location_translations`, `location_user`, `menus`, `menu_translations`, `location_menu`, `plans`, `plan_translations`, `subscriptions`, `subscription_events`. The rest of this document is the approved target schema. PostgreSQL. Every change goes through a migration; this document must be updated with it.
+> **Implemented so far:** `users.platform_role`, `tenants`, `tenant_translations`, `tenant_locales`, `tenant_user`, `locations`, `location_translations`, `location_user`, `menus`, `menu_translations`, `location_menu`, `plans`, `plan_translations`, `plan_limits`, `subscriptions`, `subscription_events`. The rest of this document is the approved target schema. PostgreSQL. Every change goes through a migration; this document must be updated with it.
 
 ## Contents
 
@@ -81,9 +81,9 @@
 
 | Table | Columns | Constraints / indexes |
 |---|---|---|
-| `tenants` | `public_id` ulid, `slug`, `status` (`TenantStatus`), `currency` char(3) default `TRY`, `default_locale` varchar(10), `theme` (`MenuTheme`), `logo_path`, `cover_path`, `deleted_at` | unique `slug`; unique `public_id` |
+| `tenants` | `public_id` ulid, `slug`, `status` (`TenantStatus`), `currency` char(3) default `TRY`, `default_locale` varchar(10), `theme` (`MenuTheme`), `logo_path`, `cover_path`, `deleted_at` | unique `slug`; unique `public_id`. **`default_locale` is the single source of truth for the tenant's default language**; it is always one of the tenant's `tenant_locales` (enforced by `TenantLocaleService`, covered by tests) |
 | `tenant_translations` | `tenant_id` FK cascade, `locale`, `name`, `tagline` nullable, `description` nullable text | unique (`tenant_id`, `locale`) |
-| `tenant_locales` 🔒 | `locale`, `is_default`, `sort_order` | unique (`tenant_id`, `locale`); partial unique (`tenant_id`) where `is_default` |
+| `tenant_locales` 🔒 | `locale`, `sort_order` | unique (`tenant_id`, `locale`); unique (`tenant_id`, `id`). The set of enabled locales and their order. **No `is_default` column** (decision 2026-11-15): the default is `tenants.default_locale`, so the two can never disagree. Disabling a locale never deletes translations. The creating migration backfilled one row per existing tenant from its `default_locale` |
 | `tenant_domains` 🔒 | `domain` (lowercase), `is_primary`, `verified_at` nullable | unique `domain`. Used in a later phase |
 | `users` | Laravel default (`name`, `email`, `password`, `email_verified_at`, `remember_token`), `platform_role` nullable (`PlatformRole`) | unique `email`. `platform_role` is null for business users and never mass-assignable |
 | `tenant_user` (membership) | `id`, `tenant_id` FK cascade, `user_id` FK cascade, `role` (`TenantRole`), `is_active` boolean default true | unique (`tenant_id`, `user_id`); **unique (`tenant_id`, `id`)** (target of `location_user`); index `user_id`. Not globally tenant-scoped: it is always read from the user side (`$user->memberships()`) |
@@ -98,7 +98,7 @@
 | `location_translations` | `location_id` FK cascade, `locale`, `name`, `description` nullable | unique (`location_id`, `locale`) |
 | `location_opening_hours` 🔒 | `location_id`, `day_of_week` smallint (1–7, ISO), `opens_at` time, `closes_at` time | index (`location_id`, `day_of_week`). Several rows per day allowed (split shifts); `closes_at < opens_at` means open past midnight |
 | `location_special_hours` 🔒 | `location_id`, `date`, `is_closed`, `opens_at` / `closes_at` nullable | unique (`location_id`, `date`, `opens_at`). Covers holidays such as Bayram |
-| `location_item_states` 🔒 | `location_id`, `menu_item_id`, `is_sold_out` | unique (`location_id`, `menu_item_id`). A missing row means the item default applies |
+| `location_item_states` 🔒 | `location_id`, `menu_item_id`, `is_sold_out` boolean, `sold_out_until` timestamp nullable (UTC, like every timestamp: the app timezone is UTC) | unique (`location_id`, `menu_item_id`). A missing row means the item default applies. Semantics: `is_sold_out = false` → on sale; `is_sold_out = true` and `sold_out_until IS NULL` → sold out until someone turns it back on; `is_sold_out = true` and `sold_out_until` in the future → sold out until then, on sale again automatically afterwards. Comparisons are in UTC at read time; **no scheduler** resets rows, and an expired row is simply treated as on sale |
 
 ### Menus and content
 
@@ -136,7 +136,7 @@
 | `plans` | `code`, `is_active`, `is_public`, `trial_days`, `sort_order` | unique `code` |
 | `plan_translations` | `plan_id`, `locale`, `name`, `description` | unique (`plan_id`, `locale`) |
 | `plan_prices` | `plan_id`, `interval` (`BillingInterval`), `amount` bigint, `currency` default `TRY`, `is_active` | unique (`plan_id`, `interval`, `currency`) |
-| `plan_limits` | `plan_id`, `feature` (`PlanFeature`), `limit_value` int nullable (null = unlimited; 0/1 for boolean features) | unique (`plan_id`, `feature`) |
+| `plan_limits` | `plan_id` FK cascade, `feature` (`PlanFeature`), `limit_value` int nullable (null = unlimited; 0/1 for boolean features) | unique (`plan_id`, `feature`); check `limit_value IS NULL OR limit_value >= 0`. A missing row means the feature isn't included |
 | `subscriptions` 🔒 | `plan_id`, `plan_price_id` nullable (added together with `plan_prices`; not created yet), `status` (`SubscriptionStatus`), `trial_ends_at`, `current_period_starts_at`, `current_period_ends_at`, `cancel_at_period_end`, `canceled_at`, `grace_ends_at`, `ended_at`, `provider` nullable, `provider_reference` nullable | partial unique (`tenant_id`) where `ended_at IS NULL`; index (`status`, `current_period_ends_at`) |
 | `subscription_events` 🔒 | `subscription_id`, `type` (`SubscriptionEventType`), `from_status`, `to_status`, `meta` jsonb, `occurred_at` | Append-only; index (`subscription_id`, `occurred_at`) |
 
@@ -203,7 +203,8 @@ Composite foreign keys:
   - `translate(?string $locale)`, with fallback order: requested locale → tenant default locale → first available
   - `scopeWithTranslations(array $locales)` to eager load only the needed locales
 - **Platform locales** are listed in `config/locales.php` (initially `tr`, `en`, with native names).
-- **Tenant locales** are stored in `tenant_locales`. `locale` values are validated against the config in Form Requests.
+- **Tenant locales** are stored in `tenant_locales` (enabled set + order); the default is `tenants.default_locale`. `locale` values are validated against the config in `TenantLocaleService` (and in Form Requests where a request carries them). `Tenant::enabledLocales()` returns the default first, then by `sort_order`.
+- Translation writes from the panel go through `App\Services\Translations\TranslationWriter`: only enabled locales are accepted, the default locale's required fields must be filled, and rows of locales that aren't enabled are never touched.
 - **Adding a language:** add a config entry, add `lang/{xx}/*.php` files, and let tenants enable it. No schema change is needed.
 - UI strings (labels, allergen and dietary names, the unavailable page) live in `lang/{locale}/`. They are never hard-coded.
 
@@ -222,7 +223,7 @@ Composite foreign keys:
 | `SubscriptionStatus` | `trialing`, `active`, `past_due`, `grace`, `expired` |
 | `SubscriptionEventType` | `trial_started`, `activated`, `renewed`, `payment_failed`, `cancel_requested`, `cancel_reverted`, `grace_started`, `expired`, `plan_changed`, `reactivated` |
 | `BillingInterval` | `monthly`, `yearly` |
-| `PlanFeature` | `max_locations`, `max_menus`, `max_items`, `max_languages`, `premium_themes`, `custom_domain`, `remove_branding`, `qr_analytics` |
+| `PlanFeature` | `max_locations`, `max_menus`, `max_items`, `max_languages`, `max_qr_codes`, `premium_themes`, `custom_domain`, `remove_branding`, `qr_analytics` |
 
 Display names for enums come from `lang/{locale}/…`.
 

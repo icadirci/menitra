@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Masa — Design system</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&amp;family=Inter:wght@400;500;600;700&amp;family=Manrope:wght@700;800&amp;family=Cormorant+Garamond:ital,wght@1,500&amp;family=DM+Sans:wght@700&amp;family=Fraunces:wght@700&amp;family=Young+Serif&amp;display=swap">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 1440px; min-height: 3300px; box-sizing: border-box; padding: 72px; background: #F6F5F1; color: #15191A; font-family: Inter, system-ui, sans-serif; font-size: 15px; line-height: 1.5; display: flex; flex-direction: column; gap: 64px; -webkit-font-smoothing: antialiased">
+
+<!-- Header -->
+<header style="display: flex; justify-content: space-between; align-items: flex-end; gap: 40px; padding-bottom: 40px; border-bottom: 1px solid #E3E1D9">
+<div style="display: flex; flex-direction: column; gap: 20px">
+<div style="display: flex; align-items: center; gap: 16px"><svg width="64" height="64" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="9" fill="#1F4D3B"></rect><rect x="7" y="7" width="7" height="7" rx="2" fill="#F6F5F1"></rect><rect x="18" y="7" width="7" height="7" rx="2" fill="#F6F5F1"></rect><rect x="7" y="18" width="7" height="7" rx="2" fill="#F6F5F1"></rect><circle cx="21.5" cy="21.5" r="3.6" fill="#E7A33E"></circle></svg><span style="font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; font-size: 64px; letter-spacing: -0.05em; line-height: 1">masa</span></div>
+<h1 style="margin: 0; font-family: 'Bricolage Grotesque', sans-serif; font-size: 40px; font-weight: 700; letter-spacing: -0.035em; line-height: 1.05; max-width: 720px">Design system — marketing site &amp; QR menu platform</h1>
+</div>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; max-width: 640px">
+<div style="display: flex; flex-direction: column; gap: 6px"><span style="font-weight: 600">Calm, not loud</span><span style="font-size: 14px; color: #575C59">One accent, lots of paper. The food is the colour.</span></div>
+<div style="display: flex; flex-direction: column; gap: 6px"><span style="font-weight: 600">Thumb-first</span><span style="font-size: 14px; color: #575C59">44 px targets, swipeable rows, one action per screen.</span></div>
+<div style="display: flex; flex-direction: column; gap: 6px"><span style="font-weight: 600">Brand-neutral menus</span><span style="font-size: 14px; color: #575C59">Masa styles the shell; each venue owns its menu.</span></div>
+</div>
+</header>
+
+<!-- Colors -->
+<section style="display: flex; flex-direction: column; gap: 24px">
+<h2 style="margin: 0; font-family: 'Bricolage Grotesque', sans-serif; font-size: 28px; font-weight: 700; letter-spacing: -0.02em">Colour</h2>
+<div style="display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 16px">
+<sc-for list="{{colors}}" as="c" hint-placeholder-count="12">
+<div style="display: flex; flex-direction: column; border-radius: 18px; overflow: hidden; background: #FFFFFF; border: 1px solid #E3E1D9">
+<div style="height: 96px; background: {{c.hex}}; display: flex; align-items: flex-end; padding: 10px 12px; box-sizing: border-box"><span style="font-size: 12px; font-weight: 600; color: {{c.on}}">Aa</span></div>
+<div style="padding: 12px; display: flex; flex-direction: column; gap: 2px"><span style="font-weight: 600; font-size: 14px">{{c.name}}</span><span style="font-family: ui-monospace, Menlo, monospace; font-size: 12px; color: #575C59">{{c.hex}}</span><span style="font-size: 12px; color: #6B6F6C">{{c.use}}</span></div>
+</div>
+</sc-for>
+</div>
+</section>
+
+<!-- Type -->
+<section style="display: grid; grid-template-columns: 1.4fr 1fr; gap: 48px">
+<div style="display: flex; flex-direction: column; gap: 24px">
+<h2 style="margin: 0; font-family: 'Bricolage Grotesque', sans-serif; font-size: 28px; font-weight: 700; letter-spacing: -0.02em">Typography</h2>
+<div style="display: flex; flex-direction: column; border-radius: 22px; background: #FFFFFF; border: 1px solid #E3E1D9; overflow: hidden">
+<sc-for list="{{type}}" as="t" hint-placeholder-count="9">
+<div style="display: flex; align-items: baseline; gap: 24px; padding: 16px 24px; border-bottom: 1px solid #F0EEE8">
+<span style="width: 120px; flex: none; font-size: 12px; color: #575C59; font-family: ui-monospace, Menlo, monospace">{{t.token}}</span>
+<span style="{{t.style}}">{{t.sample}}</span>
+<span style="margin-left: auto; flex: none; font-size: 12px; color: #6B6F6C; font-family: ui-monospace, Menlo, monospace">{{t.spec}}</span>
+</div>
+</sc-for>
+</div>
+</div>
+<div style="display: flex; flex-direction: column; gap: 24px">
+<h2 style="margin: 0; font-family: 'Bricolage Grotesque', sans-serif; font-size: 28px; font-weight: 700; letter-spacing: -0.02em">Typefaces</h2>
+<div style="padding: 28px; border-radius: 22px; background: #15191A; color: #F6F5F1; display: flex; flex-direction: column; gap: 6px"><span style="font-family: 'Bricolage Grotesque', sans-serif; font-size: 96px; font-weight: 700; letter-spacing: -0.05em; line-height: 1">Aa</span><span style="font-weight: 600; font-size: 17px">Bricolage Grotesque</span><span style="font-size: 14px; color: #B4B9B5">Display &amp; headings · 600–700 · tight tracking (−2% to −4.5%)</span></div>
+<div style="padding: 28px; border-radius: 22px; background: #FFFFFF; border: 1px solid #E3E1D9; display: flex; flex-direction: column; gap: 6px"><span style="font-family: Inter, sans-serif; font-size: 96px; font-weight: 500; letter-spacing: -0.04em; line-height: 1">Aa</span><span style="font-weight: 600; font-size: 17px">Inter</span><span style="font-size: 14px; color: #575C59">UI &amp; body · 400–600 · supports Turkish, Latin Extended</span></div>
+</div>
+</section>
+
+<!-- Buttons + forms -->
+<section style="display: grid; grid-template-columns: 1fr 1fr; gap: 48px">
+<div style="display: flex; flex-direction: column; gap: 24px">
+<h2 style="margin: 0; font-family: 'Bricolage Grotesque', sans-serif; font-size: 28px; font-weight: 700; letter-spacing: -0.02em">Buttons</h2>
+<div style="padding: 28px; border-radius: 22px; background: #FFFFFF; border: 1px solid #E3E1D9; display: flex; flex-direction: column; gap: 22px">
+<div style="display: flex; flex-wrap: wrap; gap: 12px; align-items: center">
+<button type="button" style="height: 56px; padding: 0 28px; border-radius: 14px; border: 0; background: #1F4D3B; color: #FFFFFF; font: 600 16px Inter, sans-serif">Primary</button>
+<button type="button" style="height: 56px; padding: 0 28px; border-radius: 14px; border: 1px solid #DAD8CF; background: #FFFFFF; color: #15191A; font: 600 16px Inter, sans-serif">Secondary</button>
+<button type="button" style="height: 56px; padding: 0 28px; border-radius: 14px; border: 0; background: #E7A33E; color: #15191A; font: 700 16px Inter, sans-serif">Accent</button>
+<button type="button" style="height: 56px; padding: 0 20px; border-radius: 14px; border: 0; background: transparent; color: #1F4D3B; font: 600 16px Inter, sans-serif">Ghost →</button>
+<button type="button" disabled style="height: 56px; padding: 0 28px; border-radius: 14px; border: 1px solid #E3E1D9; background: #F1EFE9; color: #6B6F6C; font: 600 16px Inter, sans-serif">Disabled</button>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 12px; align-items: center">
+<button type="button" style="height: 56px; padding: 0 24px; border-radius: 14px; border: 0; background: #1F4D3B; color: #FFFFFF; font: 600 16px Inter, sans-serif">Large · 56</button>
+<button type="button" style="height: 48px; padding: 0 20px; border-radius: 12px; border: 0; background: #1F4D3B; color: #FFFFFF; font: 600 15px Inter, sans-serif">Medium · 48</button>
+<button type="button" style="height: 44px; padding: 0 16px; border-radius: 12px; border: 0; background: #1F4D3B; color: #FFFFFF; font: 600 14px Inter, sans-serif">Small · 44</button>
+<button type="button" aria-label="Menu" style="width: 44px; height: 44px; border-radius: 12px; border: 1px solid #DAD8CF; background: #FFFFFF; display: inline-flex; align-items: center; justify-content: center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#15191A" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"></path></svg></button>
+</div>
+<span style="font-size: 13px; color: #575C59">Minimum touch target 44 px. One primary button per view; repeat it, don't compete with it.</span>
+</div>
+<h2 style="margin: 16px 0 0; font-family: 'Bricolage Grotesque', sans-serif; font-size: 28px; font-weight: 700; letter-spacing: -0.02em">Navigation &amp; chips</h2>
+<div style="padding: 24px; border-radius: 22px; background: #FFFFFF; border: 1px solid #E3E1D9; display: flex; flex-direction: column; gap: 18px">
+<div style="display: flex; gap: 4px"><span style="height: 40px; padding: 0 14px; border-radius: 10px; background: #E4EEE8; color: #1F4D3B; font-weight: 500; display: inline-flex; align-items: center">Features</span><span style="height: 40px; padding: 0 14px; border-radius: 10px; color: #3A3F3C; font-weight: 500; display: inline-flex; align-items: center">Pricing</span><span style="height: 40px; padding: 0 14px; border-radius: 10px; color: #3A3F3C; font-weight: 500; display: inline-flex; align-items: center">Menu examples</span><span style="height: 40px; padding: 0 14px; border-radius: 10px; color: #3A3F3C; font-weight: 500; display: inline-flex; align-items: center">Contact</span></div>
+<div style="display: flex; gap: 8px"><span style="height: 40px; padding: 0 16px; border-radius: 999px; background: #15191A; color: #FFFFFF; font-weight: 600; font-size: 14px; display: inline-flex; align-items: center">All</span><span style="height: 40px; padding: 0 16px; border-radius: 999px; border: 1px solid #D6D4CB; font-weight: 600; font-size: 14px; display: inline-flex; align-items: center">Coffee</span><span style="height: 40px; padding: 0 16px; border-radius: 999px; border: 1px solid #D6D4CB; font-weight: 600; font-size: 14px; display: inline-flex; align-items: center">Desserts</span><span style="height: 40px; padding: 0 12px; border-radius: 999px; background: #F1EFE9; font-weight: 600; font-size: 13px; display: inline-flex; align-items: center; gap: 6px">EN ▾</span></div>
+<div style="display: flex; gap: 8px; flex-wrap: wrap"><span style="padding: 4px 10px; border-radius: 999px; background: #E7A33E; color: #15191A; font-size: 12px; font-weight: 700">Popular</span><span style="padding: 4px 10px; border-radius: 999px; background: #E4EEE8; color: #1F4D3B; font-size: 12px; font-weight: 700">New</span><span style="padding: 4px 10px; border-radius: 999px; background: #F3E7E4; color: #8A2E1B; font-size: 12px; font-weight: 700">Sold out</span><span style="padding: 3px 8px; border-radius: 6px; border: 1px solid #C9C6BC; font-size: 11px; font-weight: 700">VG</span><span style="padding: 3px 8px; border-radius: 6px; border: 1px solid #C9C6BC; font-size: 11px; font-weight: 700">V</span><span style="padding: 3px 8px; border-radius: 6px; border: 1px solid #C9C6BC; font-size: 11px; font-weight: 700">GF</span></div>
+</div>
+</div>
+<div style="display: flex; flex-direction: column; gap: 24px">
+<h2 style="margin: 0; font-family: 'Bricolage Grotesque', sans-serif; font-size: 28px; font-weight: 700; letter-spacing: -0.02em">Form components</h2>
+<div style="padding: 28px; border-radius: 22px; background: #FFFFFF; border: 1px solid #E3E1D9; display: flex; flex-direction: column; gap: 18px">
+<div style="display: flex; flex-direction: column; gap: 7px"><label for="ds-a" style="font-size: 14px; font-weight: 600">Default</label><input id="ds-a" type="text" placeholder="Business name" style="height: 50px; padding: 0 14px; border-radius: 12px; border: 1px solid #D6D4CB; font: 400 16px Inter, sans-serif"></div>
+<div style="display: flex; flex-direction: column; gap: 7px"><label for="ds-b" style="font-size: 14px; font-weight: 600">Focus</label><input id="ds-b" type="text" placeholder="Kiln Coffee" style="height: 50px; padding: 0 14px; border-radius: 12px; border: 1px solid #1F4D3B; box-shadow: 0 0 0 4px rgba(31,77,59,.12); font: 400 16px Inter, sans-serif"></div>
+<div style="display: flex; flex-direction: column; gap: 7px"><label for="ds-c" style="font-size: 14px; font-weight: 600">Error</label><input id="ds-c" type="email" placeholder="elif@kiln" aria-invalid="true" aria-describedby="ds-c-err" style="height: 50px; padding: 0 14px; border-radius: 12px; border: 1px solid #A8321F; box-shadow: 0 0 0 4px rgba(168,50,31,.10); font: 400 16px Inter, sans-serif"><span id="ds-c-err" style="font-size: 13px; color: #A8321F">Enter a full email address, like name@cafe.com</span></div>
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px">
+<div style="display: flex; flex-direction: column; gap: 7px"><label for="ds-d" style="font-size: 14px; font-weight: 600">Select</label><select id="ds-d" style="height: 50px; padding: 0 12px; border-radius: 12px; border: 1px solid #D6D4CB; background: #FFFFFF; font: 400 16px Inter, sans-serif"><option>Plans &amp; pricing</option></select></div>
+<div style="display: flex; flex-direction: column; gap: 7px"><span style="font-size: 14px; font-weight: 600">Segmented</span><div style="display: flex; padding: 4px; border-radius: 999px; background: #F1EFE9"><span style="flex: 1; height: 42px; border-radius: 999px; background: #15191A; color: #FFFFFF; font-weight: 600; font-size: 14px; display: inline-flex; align-items: center; justify-content: center">Monthly</span><span style="flex: 1; height: 42px; border-radius: 999px; color: #575C59; font-weight: 600; font-size: 14px; display: inline-flex; align-items: center; justify-content: center">Yearly</span></div></div>
+</div>
+<label for="ds-e" style="display: flex; gap: 10px; align-items: center; font-size: 14px"><input id="ds-e" type="checkbox" checked style="width: 20px; height: 20px; margin: 0; accent-color: #1F4D3B">Checkbox — I agree to the Terms of Service</label>
+</div>
+<h2 style="margin: 16px 0 0; font-family: 'Bricolage Grotesque', sans-serif; font-size: 28px; font-weight: 700; letter-spacing: -0.02em">Cards</h2>
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px">
+<div style="padding: 22px; border-radius: 20px; background: #FFFFFF; border: 1px solid #E3E1D9; display: flex; flex-direction: column; gap: 12px"><span style="width: 44px; height: 44px; border-radius: 12px; background: #E4EEE8; display: inline-flex; align-items: center; justify-content: center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1F4D3B" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2L4 14h7l-1 8 9-12h-7l1-8z"></path></svg></span><span style="font-weight: 600">Feature card</span><span style="font-size: 13px; color: #575C59">Radius 20 · border Line · no shadow</span></div>
+<div style="padding: 22px; border-radius: 20px; background: #15191A; color: #F6F5F1; display: flex; flex-direction: column; gap: 8px; box-shadow: 0 30px 60px -30px rgba(21,25,26,.6)"><span style="font-weight: 600">Highlight card</span><span style="font-family: 'Bricolage Grotesque', sans-serif; font-size: 36px; font-weight: 700; letter-spacing: -0.04em">$19</span><span style="font-size: 13px; color: #B4B9B5">Ink surface · shadow lg · saffron accent</span></div>
+<div style="grid-column: 1 / -1; display: flex; gap: 14px; align-items: center; padding: 14px; border-radius: 20px; background: #FFFFFF; border: 1px solid #E3E1D9"><div style="flex: 1"><span style="display: block; font-weight: 600">Menu product card</span><span style="font-size: 13px; color: #575C59">Name · description · price · labels, image right. Each venue theme restyles it.</span></div><div style="width: 80px; flex: none; border-radius: 14px; overflow: hidden"><dc-import name="Dish" kind="latte" bg="#E9DCCB" ratio="1 / 1" pad="6%" hint-size="80px,80px"></dc-import></div></div>
+</div>
+</div>
+</section>
+
+<!-- Icons -->
+<section style="display: flex; flex-direction: column; gap: 24px">
+<div style="display: flex; justify-content: space-between; align-items: baseline"><h2 style="margin: 0; font-family: 'Bricolage Grotesque', sans-serif; font-size: 28px; font-weight: 700; letter-spacing: -0.02em">Icons</h2><span style="font-size: 14px; color: #575C59">24 px grid · 1.7–2 px stroke · round caps &amp; joins</span></div>
+<div style="display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 12px">
+<sc-for list="{{icons}}" as="i" hint-placeholder-count="24">
+<div style="display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 18px 6px 12px; border-radius: 16px; background: #FFFFFF; border: 1px solid #E3E1D9"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#15191A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{i.d}}"></path></svg><span style="font-size: 11.5px; color: #575C59">{{i.n}}</span></div>
+</sc-for>
+</div>
+</section>
+
+<!-- Spacing / radius / breakpoints -->
+<section style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 32px">
+<div style="display: flex; flex-direction: column; gap: 20px">
+<h2 style="margin: 0; font-family: 'Bricolage Grotesque', sans-serif; font-size: 28px; font-weight: 700; letter-spacing: -0.02em">Spacing</h2>
+<div style="padding: 24px; border-radius: 22px; background: #FFFFFF; border: 1px solid #E3E1D9; display: flex; flex-direction: column; gap: 10px">
+<sc-for list="{{space}}" as="s" hint-placeholder-count="10">
+<div style="display: flex; align-items: center; gap: 14px"><span style="width: 48px; font-family: ui-monospace, Menlo, monospace; font-size: 12px; color: #575C59">{{s.t}}</span><span style="height: 12px; width: {{s.w}}; border-radius: 3px; background: #1F4D3B"></span><span style="font-size: 12px; color: #6B6F6C">{{s.v}}</span></div>
+</sc-for>
+</div>
+</div>
+<div style="display: flex; flex-direction: column; gap: 20px">
+<h2 style="margin: 0; font-family: 'Bricolage Grotesque', sans-serif; font-size: 28px; font-weight: 700; letter-spacing: -0.02em">Radius &amp; elevation</h2>
+<div style="padding: 24px; border-radius: 22px; background: #FFFFFF; border: 1px solid #E3E1D9; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px">
+<sc-for list="{{radii}}" as="r" hint-placeholder-count="6">
+<div style="display: flex; flex-direction: column; align-items: center; gap: 8px"><span style="width: 72px; height: 72px; background: #E4EEE8; border: 1.5px solid #1F4D3B; border-radius: {{r.v}}"></span><span style="font-size: 12px; color: #575C59; text-align: center">{{r.n}}</span></div>
+</sc-for>
+<div style="grid-column: 1 / -1; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; padding-top: 12px">
+<div style="height: 64px; border-radius: 14px; background: #FFFFFF; box-shadow: 0 1px 2px rgba(21,25,26,.08), 0 0 0 1px #EFEDE6; display: flex; align-items: center; justify-content: center; font-size: 12px; color: #575C59">shadow-sm</div>
+<div style="height: 64px; border-radius: 14px; background: #FFFFFF; box-shadow: 0 12px 30px -16px rgba(21,25,26,.35); display: flex; align-items: center; justify-content: center; font-size: 12px; color: #575C59">shadow-md</div>
+<div style="height: 64px; border-radius: 14px; background: #FFFFFF; box-shadow: 0 40px 70px -36px rgba(21,25,26,.6); display: flex; align-items: center; justify-content: center; font-size: 12px; color: #575C59">shadow-lg</div>
+</div>
+</div>
+</div>
+<div style="display: flex; flex-direction: column; gap: 20px">
+<h2 style="margin: 0; font-family: 'Bricolage Grotesque', sans-serif; font-size: 28px; font-weight: 700; letter-spacing: -0.02em">Breakpoints</h2>
+<div style="padding: 24px; border-radius: 22px; background: #FFFFFF; border: 1px solid #E3E1D9; display: flex; flex-direction: column; gap: 14px">
+<sc-for list="{{bps}}" as="b" hint-placeholder-count="4">
+<div style="display: flex; flex-direction: column; gap: 6px"><div style="display: flex; justify-content: space-between"><span style="font-weight: 600">{{b.n}}</span><span style="font-family: ui-monospace, Menlo, monospace; font-size: 12px; color: #575C59">{{b.r}}</span></div><span style="height: 8px; width: {{b.w}}; border-radius: 999px; background: #1F4D3B"></span><span style="font-size: 12.5px; color: #575C59">{{b.note}}</span></div>
+</sc-for>
+</div>
+</div>
+</section>
+
+<!-- Menu themes -->
+<section style="display: flex; flex-direction: column; gap: 24px">
+<div style="display: flex; justify-content: space-between; align-items: baseline"><h2 style="margin: 0; font-family: 'Bricolage Grotesque', sans-serif; font-size: 28px; font-weight: 700; letter-spacing: -0.02em">Menu themes — one structure, five identities</h2><span style="font-size: 14px; color: #575C59">Every theme swaps the same tokens: ground, surface, ink, accent, display face, body face, radius</span></div>
+<div style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 16px">
+<sc-for list="{{themes}}" as="t" hint-placeholder-count="5">
+<div style="border-radius: 22px; overflow: hidden; border: 1px solid #E3E1D9; background: {{t.bg}}; color: {{t.ink}}; display: flex; flex-direction: column">
+<div style="padding: 22px 20px 16px; display: flex; flex-direction: column; gap: 6px"><span style="font-size: 32px; line-height: 1.05; font-family: {{t.display}}">{{t.name}}</span><span style="font-size: 13px; opacity: .75">{{t.kind}}</span></div>
+<div style="display: flex; gap: 6px; padding: 0 20px"><span style="width: 28px; height: 28px; border-radius: 999px; background: {{t.bg}}; box-shadow: 0 0 0 1px rgba(128,128,128,.4)"></span><span style="width: 28px; height: 28px; border-radius: 999px; background: {{t.surface}}; box-shadow: 0 0 0 1px rgba(128,128,128,.3)"></span><span style="width: 28px; height: 28px; border-radius: 999px; background: {{t.ink}}"></span><span style="width: 28px; height: 28px; border-radius: 999px; background: {{t.accent}}"></span></div>
+<div style="margin-top: 16px; padding: 14px 20px 18px; border-top: 1px solid rgba(128,128,128,.25); font-size: 12px; line-height: 1.6; opacity: .85; font-family: ui-monospace, Menlo, monospace">{{t.fonts}}<br>radius {{t.radius}}</div>
+</div>
+</sc-for>
+</div>
+</section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":3300}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var B = "'Bricolage Grotesque', sans-serif";
+    return {
+      colors: [
+        { name: 'Forest 900', hex: '#163A2C', on: '#F6F5F1', use: 'Pressed, deep panels' },
+        { name: 'Forest 700', hex: '#1F4D3B', on: '#F6F5F1', use: 'Primary actions, brand' },
+        { name: 'Forest 100', hex: '#E4EEE8', on: '#1F4D3B', use: 'Tints, active nav' },
+        { name: 'Saffron 500', hex: '#E7A33E', on: '#15191A', use: 'Accent, badges — sparingly' },
+        { name: 'Saffron 100', hex: '#FBEBD0', on: '#15191A', use: 'Accent tint' },
+        { name: 'Ink', hex: '#15191A', on: '#F6F5F1', use: 'Text, dark surfaces' },
+        { name: 'Graphite', hex: '#3A3F3C', on: '#F6F5F1', use: 'Secondary text' },
+        { name: 'Slate', hex: '#575C59', on: '#F6F5F1', use: 'Muted text (6:1 on Paper)' },
+        { name: 'Line', hex: '#E3E1D9', on: '#15191A', use: 'Borders, dividers' },
+        { name: 'Paper', hex: '#F6F5F1', on: '#15191A', use: 'Page background' },
+        { name: 'Success', hex: '#1F6B43', on: '#F6F5F1', use: 'Open now, confirmations' },
+        { name: 'Error', hex: '#A8321F', on: '#F6F5F1', use: 'Form errors, sold out' }
+      ],
+      type: [
+        { token: 'display-xl', sample: 'Beautifully served', spec: '80 / 0.98 · 700 · −4.5%', style: 'font-family: ' + B + '; font-size: 72px; font-weight: 700; letter-spacing: -0.045em; line-height: 1' },
+        { token: 'display-l', sample: 'One platform', spec: '56 / 1.02 · 700 · −3.5%', style: 'font-family: ' + B + '; font-size: 52px; font-weight: 700; letter-spacing: -0.035em; line-height: 1.02' },
+        { token: 'h1', sample: 'Compare plans', spec: '44 / 1.06 · 700 · −3%', style: 'font-family: ' + B + '; font-size: 40px; font-weight: 700; letter-spacing: -0.03em' },
+        { token: 'h2', sample: 'Your menu', spec: '28 / 1.15 · 700 · −2%', style: 'font-family: ' + B + '; font-size: 28px; font-weight: 700; letter-spacing: -0.02em' },
+        { token: 'h3', sample: 'Make it yours', spec: '21 / 1.25 · 700 · −2%', style: 'font-family: ' + B + '; font-size: 21px; font-weight: 700; letter-spacing: -0.02em' },
+        { token: 'body-l', sample: 'Update prices in seconds.', spec: '19 / 1.55 · 400', style: 'font-size: 19px' },
+        { token: 'body', sample: 'Guests scan, browse and order with confidence.', spec: '16 / 1.55 · 400', style: 'font-size: 16px' },
+        { token: 'small', sample: 'No credit card needed', spec: '14 / 1.5 · 500', style: 'font-size: 14px; font-weight: 500; color: #575C59' },
+        { token: 'eyebrow', sample: 'HOW IT WORKS', spec: '13 · 600 · +12%', style: 'font-size: 13px; font-weight: 600; letter-spacing: 0.12em; color: #1F4D3B' }
+      ],
+      icons: [
+        { n: 'qr', d: 'M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h2v2h-2zM18 18h2v2h-2zM14 18h2M18 14h2' },
+        { n: 'phone', d: 'M8 2.5h8a2 2 0 0 1 2 2v15a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2v-15a2 2 0 0 1 2-2zM11 18.5h2' },
+        { n: 'layers', d: 'M12 3l9 4.5-9 4.5-9-4.5L12 3zM3 12l9 4.5 9-4.5M3 16.5l9 4.5 9-4.5' },
+        { n: 'image', d: 'M4 5h16a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1zM3 16l5-5 4 4 3-3 6 6' },
+        { n: 'tag', d: 'M3 12V4h8l10 10-8 8L3 12zM7.5 8.5h.01' },
+        { n: 'globe', d: 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3z' },
+        { n: 'sliders', d: 'M4 7h10M18 7h2M4 17h4M12 17h8M16 5v4M10 15v4' },
+        { n: 'bolt', d: 'M13 2L4 14h7l-1 8 9-12h-7l1-8z' },
+        { n: 'sparkle', d: 'M12 3l2.2 5.8L20 11l-5.8 2.2L12 19l-2.2-5.8L4 11l5.8-2.2L12 3z' },
+        { n: 'search', d: 'M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14zM20 20l-4-4' },
+        { n: 'clock', d: 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM12 7.5V12l3 2' },
+        { n: 'pin', d: 'M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21zM12 7a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5z' },
+        { n: 'instagram', d: 'M7 3h10a4 4 0 0 1 4 4v10a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V7a4 4 0 0 1 4-4zM12 8.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7zM17.5 6.5h.01' },
+        { n: 'leaf', d: 'M5 19c0-8 5-14 15-15-1 10-7 15-15 15zM5 19l7-7' },
+        { n: 'check', d: 'M5 12.5l4.5 4.5L19 7.5' },
+        { n: 'arrow-right', d: 'M5 12h14M13 6l6 6-6 6' },
+        { n: 'arrow-left', d: 'M19 12H5M11 6l-6 6 6 6' },
+        { n: 'chevron', d: 'M6 9l6 6 6-6' },
+        { n: 'plus', d: 'M12 5v14M5 12h14' },
+        { n: 'close', d: 'M6 6l12 12M18 6L6 18' },
+        { n: 'mail', d: 'M4 6h16v12H4zM4 7l8 6 8-6' },
+        { n: 'lock', d: 'M6 11h12v10H6zM8.5 11V7.5a3.5 3.5 0 0 1 7 0V11' },
+        { n: 'eye', d: 'M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12zM12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6z' },
+        { n: 'user', d: 'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 21a8 8 0 0 1 16 0' }
+      ],
+      space: [
+        { t: 'space-1', w: '4px', v: '4' }, { t: 'space-2', w: '8px', v: '8' }, { t: 'space-3', w: '12px', v: '12' }, { t: 'space-4', w: '16px', v: '16' }, { t: 'space-6', w: '24px', v: '24' }, { t: 'space-8', w: '32px', v: '32' }, { t: 'space-12', w: '48px', v: '48' }, { t: 'space-16', w: '64px', v: '64' }, { t: 'space-24', w: '96px', v: '96 · section (mobile 64)' }, { t: 'space-32', w: '128px', v: '128 · hero' }
+      ],
+      radii: [
+        { n: 'xs · 6 · labels', v: '6px' }, { n: 'sm · 12 · inputs', v: '12px' }, { n: 'md · 14 · buttons', v: '14px' }, { n: 'lg · 20 · cards', v: '20px' }, { n: 'xl · 28 · panels', v: '28px' }, { n: 'pill · chips', v: '999px' }
+      ],
+      bps: [
+        { n: 'Mobile', r: '0 – 767', w: '30%', note: 'Single column, 20 px gutters. QR menus are designed here first at 390 px.' },
+        { n: 'Tablet', r: '768 – 1023', w: '55%', note: '2 columns. Menus centre at 480 px max width.' },
+        { n: 'Desktop', r: '1024 – 1439', w: '80%', note: '12-col grid, 24 px gutters, 1200 px container.' },
+        { n: 'Wide', r: '1440 +', w: '100%', note: 'Container stays 1200; extra space becomes margin.' }
+      ],
+      themes: [
+        { name: 'Kiln', kind: 'Specialty coffee', bg: '#F3ECE2', surface: '#FBF7F1', ink: '#3B2A20', accent: '#A0714F', display: 'Manrope, sans-serif; font-weight: 800; letter-spacing: -0.03em', fonts: 'Manrope 800 / 500', radius: '20–24' },
+        { name: 'Ardoise', kind: 'Fine dining', bg: '#0F0E0C', surface: '#1A1815', ink: '#EDE6D8', accent: '#C9A96E', display: "'Cormorant Garamond', serif; font-style: italic; font-weight: 500", fonts: 'Cormorant / Jost', radius: '2–4' },
+        { name: 'noon.', kind: 'Minimalist café', bg: '#FFFFFF', surface: '#F2F1EE', ink: '#111111', accent: '#E4572E', display: "'DM Sans', sans-serif; font-weight: 700; letter-spacing: -0.05em", fonts: 'DM Sans / DM Mono', radius: '10–14' },
+        { name: 'Petal', kind: 'Dessert & bakery', bg: '#FFF6F3', surface: '#FFFFFF', ink: '#3D2A35', accent: '#F08FA7', display: 'Fraunces, serif; font-weight: 700', fonts: 'Fraunces / Nunito Sans', radius: '26–34' },
+        { name: 'Konağı', kind: 'Turkish café', bg: '#F4EBDD', surface: '#FBF5EA', ink: '#23443A', accent: '#9C4A2F', display: "'Young Serif', serif", fonts: 'Young Serif / Figtree', radius: 'arch 160 / 12' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

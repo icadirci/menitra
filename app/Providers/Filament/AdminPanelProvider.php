@@ -35,8 +35,13 @@ class AdminPanelProvider extends PanelProvider
             ->domain(config('tenancy.central_domain'))
             ->login()
             ->brandName(fn (): string => __('panels.admin.brand'))
+            ->brandLogo(fn () => view('filament.brand-logo', ['name' => __('panels.admin.brand')]))
+            ->brandLogoHeight('2rem')
+            ->favicon(fn (): string => asset('favicon.svg'))
             ->colors([
-                'primary' => Color::Indigo,
+                // Restano design system: Forest primary on warm neutrals.
+                'primary' => Color::hex('#1F4D3B'),
+                'gray' => Color::Stone,
             ])
             ->discoverResources(in: app_path('Filament/Admin/Resources'), for: 'App\Filament\Admin\Resources')
             ->discoverPages(in: app_path('Filament/Admin/Pages'), for: 'App\Filament\Admin\Pages')

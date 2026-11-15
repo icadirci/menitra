@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
+use App\Services\Subscription\FeatureGate;
 use App\Tenancy\Queue\TenantQueueListener;
 use App\Tenancy\TenantContext;
 use Illuminate\Queue\Events\JobAttempted;
@@ -23,6 +24,9 @@ class TenancyServiceProvider extends ServiceProvider
         $this->app->scoped(TenantContext::class);
 
         $this->app->singleton(TenantQueueListener::class);
+
+        // Scoped like the context it depends on: limits are memoised per request/job.
+        $this->app->scoped(FeatureGate::class);
     }
 
     public function boot(): void

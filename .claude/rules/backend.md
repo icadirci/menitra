@@ -31,6 +31,9 @@
 - Panel access is decided in `User::canAccessPanel()`: `admin` requires a `platform_role`; `app` requires an active membership in an active tenant. Tenant access is decided in `User::canAccessTenant()` and re-checked by `ResolveTenantFromMembership`.
 - Do not rely on Filament's tenant ownership scoping for isolation; `BelongsToTenant` and policies are the enforcement.
 - Branch-level checks go through `TenantMembership::canAccessLocation()` / `accessibleLocations()`; owners reach every branch of their tenant, other roles only branches assigned in `location_user`.
+- Menu content: owners always; a manager only when the menu is attached to at least one location and every attached location is assigned to them. Attaching/detaching menus, extra groups and tenant-wide settings (`TenantPolicy::manageSettings`) are owner-only.
+- Translatable fields in the panel use `TranslatableFields`; services save them with `TranslationWriter` (enabled locales only, default locale required, other locales' rows untouched).
+- Money in forms uses `MoneyInput` / `App\Support\Money` (string parsing, never floats).
 - Do not add a global `Gate::before` that grants platform roles business permissions; platform and business authorization stay separate.
 - `platform_role`, `tenant_user.role` and membership state are never mass-assignable from request input.
 
@@ -40,6 +43,6 @@
 - Customer-facing text lives in translation tables and is read through `HasTranslations`; UI strings use `__()` with `lang/{locale}` files.
 - Public menu URLs are generated only by `MenuUrlGenerator`.
 - Subscription state changes go only through `SubscriptionService` and are recorded in `subscription_events`.
-- Plan restrictions are checked through `FeatureGate` / Gates, not ad-hoc comparisons.
+- Plan restrictions are checked through `FeatureGate`, not ad-hoc comparisons, and **always inside the backend service that creates the resource** (`ensureCanCreate()`); a disabled panel button is only information. `FeatureGate` restricts creation, never viewing, editing or deleting existing records.
 - Registration logic lives in `TenantRegistrationService`; Fortify actions only validate and delegate to it.
 - Fortify routes are declared explicitly in `routes/auth.php` (`Fortify::ignoreRoutes()`); keep Fortify's controllers and route names.

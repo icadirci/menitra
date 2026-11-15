@@ -23,6 +23,7 @@
 - Internal primary keys are `bigint`; entities exposed publicly by reference get a `public_id` ULID.
 - Money columns are `bigint` minor units (kuruş) with currency on the tenant or price row.
 - Translatable text exists only in `{entity}_translations` tables with `UNIQUE (parent_id, locale)`.
+- The tenant's default language is `tenants.default_locale` only; `tenant_locales` holds the enabled set and order (no `is_default`).
 - Fixed value sets use PHP enums stored as strings.
 - `jsonb` is allowed only where data is genuinely unstructured (theme settings, audit event meta).
 - Use soft deletes on tenants, locations and menus; never purge tenant data automatically.

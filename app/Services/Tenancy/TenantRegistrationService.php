@@ -22,8 +22,9 @@ use RuntimeException;
 
 /**
  * Public business registration. Creates, in one transaction, either all of:
- * user, tenant (+ name translation), owner membership, default location,
- * default menu attached to it, trial subscription — or nothing.
+ * user, tenant (+ name translation), owner membership, enabled locale,
+ * default location, default menu attached to it, trial subscription — or
+ * nothing. Every new tenant therefore starts trialing on the default plan.
  *
  * The user never receives a platform role here: platform roles are granted
  * only explicitly (platform:assign-role).
@@ -75,6 +76,10 @@ final class TenantRegistrationService
             $this->context->set($tenant);
 
             try {
+                // Enabled languages: the registration locale, which is also
+                // tenants.default_locale (the single source of the default).
+                $tenant->locales()->create(['locale' => $locale, 'sort_order' => 0]);
+
                 $location = new Location(['slug' => config('tenancy.default_location_slug')]);
                 $location->forceFill(['is_default' => true])->save();
                 $location->translations()->create(['locale' => $locale, 'name' => $businessName]);

@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Kiln Coffee — Flat white</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;display=swap">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 390px; min-height: 1100px; background: #E4D3BE; color: #3B2A20; font-family: Manrope, system-ui, sans-serif; font-size: 15px; line-height: 1.5; position: relative; -webkit-font-smoothing: antialiased">
+<div style="position: relative">
+<dc-import name="Dish" kind="latte" bg="#E4D3BE" ratio="1 / 1" pad="10%" hint-size="390px,390px"></dc-import>
+<div style="position: absolute; top: 16px; left: 16px; right: 16px; display: flex; justify-content: space-between">
+<a href="MenuKiln.dc.html" aria-label="Back to menu" style="width: 44px; height: 44px; border-radius: 999px; background: rgba(251,247,241,.92); display: inline-flex; align-items: center; justify-content: center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3B2A20" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"></path></svg></a>
+<button type="button" aria-label="Share" style="width: 44px; height: 44px; border-radius: 999px; border: 0; background: rgba(251,247,241,.92); display: inline-flex; align-items: center; justify-content: center; cursor: pointer"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3B2A20" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 8l5-5 5 5M5 14v5a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-5"></path></svg></button>
+</div>
+</div>
+
+<div style="position: relative; margin-top: -36px; min-height: 746px; border-radius: 30px 30px 0 0; background: #FBF7F1; padding: 12px 20px 36px; display: flex; flex-direction: column; gap: 20px; box-sizing: border-box">
+<span aria-hidden="true" style="align-self: center; width: 40px; height: 5px; border-radius: 999px; background: #DCCFBF"></span>
+<div style="display: flex; flex-direction: column; gap: 8px">
+<div style="display: flex; gap: 6px; flex-wrap: wrap"><span style="padding: 4px 10px; border-radius: 999px; background: #3B2A20; color: #FBF7F1; font-size: 12px; font-weight: 700">Most ordered</span><span style="padding: 4px 10px; border-radius: 999px; background: #E3EFE5; color: #2F6B45; font-size: 12px; font-weight: 700">Available all day</span></div>
+<div style="display: flex; justify-content: space-between; align-items: baseline; gap: 12px"><h1 style="margin: 0; font-size: 30px; font-weight: 800; letter-spacing: -0.035em; line-height: 1.1">Flat white</h1><span style="font-size: 24px; font-weight: 800">{{price}}</span></div>
+<p style="margin: 0; color: #6E5C50">A double ristretto of our Ember house blend under a thin layer of velvety microfoam. Stronger than a latte, smoother than a cortado.</p>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 10px">
+<h2 style="margin: 0; font-size: 13px; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; color: #7A6656">Size</h2>
+<div role="radiogroup" aria-label="Size" style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px">
+<sc-for list="{{sizes}}" as="s" hint-placeholder-count="2">
+<button type="button" role="radio" aria-checked="{{s.on}}" style="{{s.style}}" onClick="{{s.pick}}"><span style="font-weight: 700">{{s.label}}</span><span style="font-size: 13px; opacity: .8">{{s.meta}}</span></button>
+</sc-for>
+</div>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 10px">
+<h2 style="margin: 0; font-size: 13px; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; color: #7A6656">Milk</h2>
+<div style="display: flex; flex-direction: column; border-radius: 16px; border: 1px solid #E6DACB; overflow: hidden">
+<div style="display: flex; justify-content: space-between; padding: 12px 14px; border-bottom: 1px solid #EFE6DA"><span>Whole milk</span><span style="color: #7A6656">Included</span></div>
+<div style="display: flex; justify-content: space-between; padding: 12px 14px; border-bottom: 1px solid #EFE6DA"><span>Oat (Oatly Barista)</span><span style="color: #7A6656">Included</span></div>
+<div style="display: flex; justify-content: space-between; padding: 12px 14px"><span>Almond</span><span style="color: #7A6656">+€0.40</span></div>
+</div>
+</div>
+
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px">
+<div style="padding: 14px; border-radius: 16px; background: #F3ECE2; display: flex; flex-direction: column; gap: 6px"><span style="font-size: 12px; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; color: #7A6656">Tasting notes</span><span style="font-weight: 600">Cocoa · plum · brown sugar</span></div>
+<div style="padding: 14px; border-radius: 16px; background: #F3ECE2; display: flex; flex-direction: column; gap: 6px"><span style="font-size: 12px; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; color: #7A6656">Origin</span><span style="font-weight: 600">Brazil Cerrado &amp; Ethiopia Sidamo</span></div>
+</div>
+
+<div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-size: 13px">
+<span style="padding: 4px 10px; border-radius: 8px; border: 1px solid #C9B9A6; font-weight: 700">V · Vegetarian</span>
+<span style="padding: 4px 10px; border-radius: 8px; border: 1px solid #C9B9A6; font-weight: 700">VG with oat milk</span>
+<span style="color: #6E5C50">Contains: milk</span>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 10px">
+<h2 style="margin: 0; font-size: 13px; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; color: #7A6656">Goes well with</h2>
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px">
+<a href="MenuKiln.dc.html" style="display: flex; gap: 10px; align-items: center; padding: 8px; border-radius: 16px; background: #F3ECE2; text-decoration: none; color: #3B2A20"><div style="width: 52px; flex: none; border-radius: 12px; overflow: hidden"><dc-import name="Dish" kind="croissant" bg="#EADBC6" ratio="1 / 1" pad="4%" hint-size="52px,52px"></dc-import></div><span style="font-size: 13px; line-height: 1.3"><strong style="display: block">Croissant</strong>€3.20</span></a>
+<a href="MenuKiln.dc.html" style="display: flex; gap: 10px; align-items: center; padding: 8px; border-radius: 16px; background: #F3ECE2; text-decoration: none; color: #3B2A20"><div style="width: 52px; flex: none; border-radius: 12px; overflow: hidden"><dc-import name="Dish" kind="cake" bg="#EADBC6" ratio="1 / 1" pad="4%" hint-size="52px,52px"></dc-import></div><span style="font-size: 13px; line-height: 1.3"><strong style="display: block">Banana bread</strong>€3.80</span></a>
+</div>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1100}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var self = this;
+    var sel = (this.state && this.state.size) || 'double';
+    var opts = [{ id: 'single', label: 'Single', meta: '160 ml · €3.40', price: '€3.40' }, { id: 'double', label: 'Double', meta: '220 ml · €3.90', price: '€3.90' }];
+    var price = '€3.90';
+    var sizes = opts.map(function (o) {
+      var on = o.id === sel;
+      if (on) { price = o.price; }
+      return { label: o.label, meta: o.meta, on: on ? 'true' : 'false', pick: function () { self.setState({ size: o.id }); }, style: 'display: flex; flex-direction: column; align-items: flex-start; gap: 2px; min-height: 60px; padding: 10px 14px; border-radius: 16px; cursor: pointer; font: 500 15px Manrope, sans-serif; text-align: left; ' + (on ? 'background: #3B2A20; color: #FBF7F1; border: 1px solid #3B2A20' : 'background: #FFFFFF; color: #3B2A20; border: 1px solid #E0D3C3') };
+    });
+    return { sizes: sizes, price: price };
+  }
+}
+</script>
+</body>
+</html>

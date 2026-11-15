@@ -1,6 +1,6 @@
 # Menu System
 
-> Status: **Approved — v0.2**. Covers locations, menus, menu content, QR codes, public URLs, locale handling and the rendering pipeline. The schema is in [database.md](database.md), themes in [themes.md](themes.md), caching in [caching.md](caching.md).
+> Status: **Approved — v0.3** (2026-11-15: timed sold-out — `soldOutUntil` / `soldOutIndefinitely` in the snapshot, evaluated by `LiveMenuState`). v0.2: Covers locations, menus, menu content, QR codes, public URLs, locale handling and the rendering pipeline. The schema is in [database.md](database.md), themes in [themes.md](themes.md), caching in [caching.md](caching.md).
 
 ## Contents
 
@@ -47,7 +47,7 @@ Tenant (business)
 | Extras | Reusable `extra_groups` (e.g. "Milk choice", "Extra shots") linked to items through `menu_item_extra_group`. A group has a selection type (single/multiple), `min_select`, `max_select` and `is_required`. Each extra has a `price_delta` |
 | Allergens / dietary labels | `Allergen` and `DietaryLabel` enums stored in pivot tables. Names come from lang files |
 | Featured / popular | Manual flags `is_featured` and `is_popular`. Later, "popular" can be computed from analytics without a schema change |
-| Availability | `menu_items.is_available` is the item default. `location_item_states.is_sold_out` overrides it for one branch. Unavailable variants and extras are shown as unavailable, not hidden |
+| Availability | `menu_items.is_available` is the item default. `location_item_states` overrides it for one branch: `is_sold_out` with an optional `sold_out_until` (UTC) — indefinitely sold out when it is null, sold out until that moment otherwise. Whether a timed sold-out has expired is decided at request time by `LiveMenuState`, never cached and never reset by a scheduler. Unavailable variants and extras are shown as unavailable, not hidden |
 
 ## Public URLs
 
@@ -123,13 +123,15 @@ MenuSnapshot
  └─ menu: MenuData                 name, description, type
       └─ categories: CategoryData[]   id, name, description, imageUrl
            └─ items: ItemData[]        publicId, name, description, imageUrl, price: ?Money,
-                                       fromPrice: ?Money, isFeatured, isPopular, isSoldOut,
+                                       fromPrice: ?Money, isFeatured, isPopular,
+                                       soldOutIndefinitely: bool, soldOutUntil: ?int (UTC epoch),
                                        calories, preparationMinutes,
                                        allergens: Allergen[], dietaryLabels: DietaryLabel[],
                                        variants: VariantData[], extraGroups: ExtraGroupData[]
 ```
 
 - **Allow-listed:** only the fields above enter the snapshot. Internal IDs (other than display anchors), tenant status, subscription data, user data and hidden content never do.
+- **The snapshot holds no time-dependent decision.** Sold-out data is stored as raw facts (`soldOutIndefinitely`, `soldOutUntil`); themes ask `$live->isSoldOut($item)` for the effective state. `isAvailable = false` (item default) is resolved in the snapshot because it doesn't depend on the clock.
 - Text is already resolved for the locale. `Money` values carry a pre-formatted string (`₺85,00`).
 - Plain data, not Eloquent models, is what gets cached. That keeps entries small, means no hidden attributes can leak, and makes entries independent of model changes.
 - Changing the shape of the snapshot is an architectural change. All five themes and the contract tests must be updated together.
@@ -140,6 +142,7 @@ MenuSnapshot
 
 - `isOpenNow` and `opensAt` / `closesAt`, in the location's timezone, taking special hours and midnight-crossing shifts into account
 - the list of menus being served right now (from `location_menu_hours`)
+- `isSoldOut(ItemData $item)`: `soldOutIndefinitely` or `soldOutUntil > now (UTC)`. A timed sold-out therefore ends exactly on time even while the snapshot stays cached, without a scheduler or a cache bump
 
 It's computed from data already in the snapshot, with no database query.
 
@@ -182,6 +185,7 @@ Future modules (ordering, table service, waiter calls, reservations) add new tab
 - Subdomain and path URLs render the same menu. `MenuUrlGenerator` produces the canonical URL.
 - Hidden categories and items, unpublished menus, inactive locations and detached menus are not rendered.
 - Sold-out at location A doesn't affect location B.
+- Timed sold-out: sold out before `sold_out_until`, on sale after it with the same cached snapshot; indefinite sold-out stays until turned off.
 - Variant "from" price and extras render correctly. Allergen and label names are translated.
 - Locale: a valid `lang` is used; an invalid `lang` falls back to the tenant default; a missing translation falls back.
 - Snapshot contains only allow-listed fields (serialised snapshot is checked against a forbidden-keys list).

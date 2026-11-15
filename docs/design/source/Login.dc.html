@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Masa — Log in</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&amp;family=Inter:wght@400;500;600;700&amp;display=swap">
+<style>
+body{margin:0;background:#F6F5F1}
+a{color:#1F4D3B}a:hover{color:#163A2C}
+input:focus{outline:none;border-color:#1F4D3B !important;box-shadow:0 0 0 4px rgba(31,77,59,.12)}
+</style>
+</helmet>
+<div style="position: relative; min-height: 900px; overflow: hidden; background: #F6F5F1; color: #15191A; font-family: Inter, system-ui, sans-serif; font-size: 16px; line-height: 1.5; display: flex; flex-direction: column; align-items: center; padding: 36px 20px 48px; box-sizing: border-box; -webkit-font-smoothing: antialiased">
+<svg aria-hidden="true" width="520" height="520" viewBox="-1 -1 23 23" style="position: absolute; right: -140px; bottom: -160px; opacity: .06"><path fill="#1F4D3B" d="M0 0h7v7H0zM14 0h7v7h-7zM0 14h7v7H0z"></path><path fill="#F6F5F1" d="M1 1h5v5H1zM15 1h5v5h-5zM1 15h5v5H1z"></path><path fill="#1F4D3B" d="M2 2h3v3H2zM16 2h3v3h-3zM2 16h3v3H2zM8 1h1v1H8zM10 0h1v2h-1zM12 2h1v1h-1zM9 3h2v1H9zM8 5h1v2H8zM11 5h2v1h-2zM10 7h1v1h-1zM12 8h1v2h-1zM0 8h2v1H0zM3 8h1v1H3zM5 9h2v1H5zM2 10h1v2H2zM8 9h2v1H8zM9 11h1v2H9zM11 11h2v1h-2zM14 8h1v1h-1zM16 9h2v1h-2zM15 11h1v2h-1zM8 14h1v1H8zM10 15h2v1h-2zM14 14h2v1h-2zM15 17h3v1h-3zM18 18h1v1h-1z"></path></svg>
+<svg aria-hidden="true" width="300" height="300" viewBox="-1 -1 23 23" style="position: absolute; left: -90px; top: 120px; opacity: .05"><path fill="#1F4D3B" d="M0 0h7v7H0zM14 0h7v7h-7zM0 14h7v7H0z"></path><path fill="#F6F5F1" d="M1 1h5v5H1zM15 1h5v5h-5zM1 15h5v5H1z"></path></svg>
+
+<a href="Main.dc.html" aria-label="Masa home" style="position: relative; display: flex; align-items: center; gap: 10px; text-decoration: none; color: #15191A"><svg width="38" height="38" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="9" fill="#1F4D3B"></rect><rect x="7" y="7" width="7" height="7" rx="2" fill="#F6F5F1"></rect><rect x="18" y="7" width="7" height="7" rx="2" fill="#F6F5F1"></rect><rect x="7" y="18" width="7" height="7" rx="2" fill="#F6F5F1"></rect><circle cx="21.5" cy="21.5" r="3.6" fill="#E7A33E"></circle></svg><span style="font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; font-size: 28px; letter-spacing: -0.04em">masa</span></a>
+
+<div style="position: relative; width: 100%; max-width: 460px; margin-top: 48px; padding: clamp(24px, 5vw, 40px); border-radius: 28px; background: #FFFFFF; border: 1px solid #E3E1D9; box-shadow: 0 30px 60px -40px rgba(21,25,26,.35); box-sizing: border-box">
+<form style="display: flex; flex-direction: column; gap: 18px" onSubmit="{{noop}}">
+<div style="display: flex; flex-direction: column; gap: 8px; text-align: center; margin-bottom: 4px">
+<h1 style="margin: 0; font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; font-size: 34px; line-height: 1.05; letter-spacing: -0.04em">Welcome back</h1>
+<p style="margin: 0; color: #575C59">Log in to update your menu.</p>
+</div>
+<div style="display: flex; flex-direction: column; gap: 7px"><label for="l-email" style="font-size: 14px; font-weight: 600">Email</label><input id="l-email" type="email" autocomplete="email" placeholder="you@yourcafe.com" style="height: 50px; padding: 0 14px; border-radius: 12px; border: 1px solid #D6D4CB; background: #FFFFFF; font: 400 16px Inter, sans-serif; color: #15191A"></div>
+<div style="display: flex; flex-direction: column; gap: 7px">
+<div style="display: flex; justify-content: space-between; align-items: baseline"><label for="l-pass" style="font-size: 14px; font-weight: 600">Password</label><a href="ForgotPassword.dc.html" style="font-size: 14px; font-weight: 600; padding: 4px 0">Forgot password?</a></div>
+<div style="position: relative"><input id="l-pass" type="{{passType}}" autocomplete="current-password" placeholder="Your password" style="width: 100%; box-sizing: border-box; height: 50px; padding: 0 56px 0 14px; border-radius: 12px; border: 1px solid #D6D4CB; background: #FFFFFF; font: 400 16px Inter, sans-serif; color: #15191A"><button type="button" aria-label="{{toggleLabel}}" onClick="{{toggle}}" style="position: absolute; right: 4px; top: 3px; width: 44px; height: 44px; border: 0; background: transparent; cursor: pointer; display: inline-flex; align-items: center; justify-content: center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#575C59" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12zM12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6z"></path></svg></button></div>
+</div>
+<label for="l-remember" style="display: flex; gap: 10px; align-items: center; font-size: 14px; color: #3A3F3C; cursor: pointer; min-height: 32px"><input id="l-remember" type="checkbox" style="width: 20px; height: 20px; margin: 0; accent-color: #1F4D3B">Remember me on this device</label>
+<button type="submit" style="height: 54px; border-radius: 14px; border: 0; background: #1F4D3B; color: #FFFFFF; font: 600 16px Inter, sans-serif; cursor: pointer">Log in</button>
+<div style="display: flex; align-items: center; gap: 14px; color: #8A8E8B; font-size: 13px"><span style="flex: 1; height: 1px; background: #E3E1D9"></span>or<span style="flex: 1; height: 1px; background: #E3E1D9"></span></div>
+<button type="button" style="height: 52px; border-radius: 12px; border: 1px solid #D6D4CB; background: #FFFFFF; display: inline-flex; align-items: center; justify-content: center; gap: 12px; font: 600 15px Inter, sans-serif; color: #15191A; cursor: pointer"><span aria-hidden="true" style="width: 22px; height: 22px; border-radius: 999px; border: 1.5px solid #15191A; display: inline-flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700">G</span>Continue with Google</button>
+</form>
+</div>
+<p style="position: relative; margin: 24px 0 0; color: #575C59; font-size: 15px">New to Masa? <a href="Register.dc.html" style="font-weight: 600">Create an account</a></p>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var self = this;
+    var show = !!(this.state && this.state.show);
+    return {
+      passType: show ? 'text' : 'password',
+      toggleLabel: show ? 'Hide password' : 'Show password',
+      toggle: function () { self.setState({ show: !show }); },
+      noop: function (e) { if (e && e.preventDefault) { e.preventDefault(); } }
+    };
+  }
+}
+</script>
+</body>
+</html>

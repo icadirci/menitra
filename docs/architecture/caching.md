@@ -67,7 +67,7 @@ Version bumps come from model observers (`MenuContentObserver`, `LocationStateOb
 |---|---|---|
 | Menu, category, item, variant, extra group, extra, item–extra-group link, allergen, dietary label, or any of their translations | `tenant:{t}:version` | Every location of the tenant rebuilds |
 | `location_menu` (attach, detach, order, active), `location_menu_hours` | `tenant:{t}:location:{l}:version` | Only that branch |
-| `location_item_states` (sold-out) | `tenant:{t}:location:{l}:version` | Only that branch |
+| `location_item_states` (sold-out, `sold_out_until`) | `tenant:{t}:location:{l}:version` | Only that branch. The *expiry* of a timed sold-out needs no bump: `LiveMenuState` compares `soldOutUntil` with the clock per request |
 | Location details, opening or special hours, location translations, location theme | `tenant:{t}:location:{l}:version` | Only that branch |
 | Location created, deleted or (de)activated | `tenant:{t}:version` | Tenant location index |
 | Tenant brand, translations, theme, theme settings, locales | `tenant:{t}:version` + `host:*`/`slug:*` entries for the tenant | |
@@ -78,7 +78,7 @@ Version bumps come from model observers (`MenuContentObserver`, `LocationStateOb
 
 ## What is never cached
 
-- **Time-dependent state:** open now and serving now (`LiveMenuState`), computed per request.
+- **Time-dependent state:** open now, serving now and whether a timed sold-out has expired (`LiveMenuState`), computed per request. The snapshot only carries the raw `soldOutUntil` timestamp.
 - **Access decisions** outside `ResolvedTenant.access_until`. That value is a timestamp compared at request time, so expiry takes effect even if the cache is warm.
 - The unavailable page, sent with `Cache-Control: no-store`.
 - User-specific or authorization-sensitive data, which is never put under shared keys.

@@ -84,6 +84,10 @@ class RegistrationTest extends TestCase
         $this->assertSame(config('tenancy.default_location_slug'), $location->slug);
         $this->assertSame('Yaman Kahvesi', $location->translate()->name);
 
+        $this->assertSame('tr', $tenant->default_locale);
+        $this->assertSame(['tr'], $tenant->enabledLocales());
+        $this->assertSame(1, $tenant->locales()->count());
+
         $menu = Menu::query()->sole();
         $this->assertSame(MenuType::AllDay, $menu->type);
         $this->assertFalse($menu->is_published);
@@ -155,7 +159,7 @@ class RegistrationTest extends TestCase
             // expected
         }
 
-        foreach (['users', 'tenants', 'tenant_translations', 'tenant_user', 'locations', 'menus', 'location_menu', 'subscriptions'] as $table) {
+        foreach (['users', 'tenants', 'tenant_translations', 'tenant_locales', 'tenant_user', 'locations', 'menus', 'location_menu', 'subscriptions'] as $table) {
             $this->assertDatabaseCount($table, 0);
         }
         $this->assertFalse(app(TenantContext::class)->check());

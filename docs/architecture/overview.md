@@ -1,6 +1,6 @@
 # Architecture Overview
 
-> Status: **Approved — v0.3** (2026-11-15: Filament panels, roles). v0.2: 2026-11-14. Changes to architectural decisions must update this folder in the same change.
+> Status: **Approved — v0.4** (2026-11-15: business panel Phase B, manager content rule, `FeatureGate` in B1). v0.3: Filament panels, roles. v0.2: 2026-11-14. Changes to architectural decisions must update this folder in the same change.
 
 ## Contents
 
@@ -15,6 +15,7 @@
 - [Directory structure](#directory-structure)
 - [Testing strategy](#testing-strategy)
 - [Implementation roadmap](#implementation-roadmap)
+- [Design reference](#design-reference)
 - [Open decisions](#open-decisions)
 
 Related documents: [tenancy](tenancy.md) · [database](database.md) · [menu system](menu-system.md) · [themes](themes.md) · [caching](caching.md) · [subscriptions](subscriptions.md)
@@ -25,9 +26,10 @@ A multi-tenant SaaS platform for cafes, restaurants, bakeries and other hospital
 
 | In scope (current) | Out of scope (later, architecture must allow it) |
 |---|---|
-| Public marketing website, pricing page | CRUD modules inside the panels (platform and business management) |
+| Public marketing website, pricing page | CRUD modules in `/admin` (platform management) |
 | Registration, forgot password, email verification, minimal `/account` page | Payment gateway integration (iyzico / PayTR) |
-| Filament panel infrastructure: `/admin`, `/app/{tenant-slug}`, login, initial dashboards, roles | |
+| Filament panel infrastructure: `/admin`, `/app/{tenant-slug}`, login, initial dashboards, roles | Team management in `/app` (invitations, staff CRUD, branch-assignment screens) |
+| Business management modules in `/app` ([Phase B](#business-panel-phase-b)) | |
 | Public QR menu pages, stable QR redirects | Online ordering, payment from the menu, waiter calling, reservations |
 | Five menu themes | Custom domains, QR scan analytics |
 
@@ -124,9 +126,10 @@ Details: [tenancy.md](tenancy.md), [menu-system.md](menu-system.md).
   3. Owner membership (`tenant_user`, role `owner`)
   4. Default location (`is_default = true`, slug `config('tenancy.default_location_slug')`)
   5. Default menu (type `all_day`, unpublished), attached to the location via `location_menu`
-  6. Trial subscription for the default plan, plus a `trial_started` `subscription_events` entry
+  6. Trial subscription for the default plan, plus a `trial_started` `subscription_events` entry. Every new tenant therefore starts with a live `trialing` subscription, so the plan limits apply from the first request (see [subscriptions.md § Plan features and limits](subscriptions.md#plan-features-and-limits))
+  7. A `tenant_locales` row for the registration locale (= `tenants.default_locale`)
 
-  Added to the same transaction when their tables exist: `tenant_locales`, default `theme_settings`, the default QR code, and `?plan=` selection.
+  Added to the same transaction when their tables exist: default `theme_settings`, the default QR code, and `?plan=` selection.
 - After commit, `TenantRegistered` is fired.
 - Registration fields: name, email, password, business name, slug (auto-suggested, editable).
 - Rate limits: Filament login (5/min), registration (`registration`: 5/min per IP), password reset (`password-reset`: 5/min per email+IP, 20/min per IP), verification links and resends (6/min). The session is regenerated on login.
@@ -152,20 +155,65 @@ Authorization layers:
 1. **Panel:** `User::canAccessPanel()` — `admin` needs `platform_role`; `app` needs an active membership. Access to both panels requires both grants.
 2. **Tenant (app):** `User::canAccessTenant()` + `ResolveTenantFromMembership`, see [tenancy.md](tenancy.md#business-panel-tenancy-apptenant-slug).
 3. **Branch (app):** `TenantMembership::canAccessLocation()` / `accessibleLocations()`; owners reach every location of the tenant, managers and branch staff only their `location_user` assignments.
-4. **Action:** policies (e.g. `LocationPolicy`) combine role and branch access. Every future page and resource also checks `canAccess()` / policies; hiding navigation is never authorization.
+4. **Action:** policies (e.g. `LocationPolicy`, `TenantPolicy`) combine role and branch access. Every page and resource also checks `canAccess()` / policies; hiding navigation is never authorization.
+5. **Plan:** `FeatureGate`, evaluated inside the backend service that creates the resource (never only in the UI). See [subscriptions.md](subscriptions.md#plan-features-and-limits).
 
-Initial business action matrix (extended per resource as CRUD modules are added):
+Business action matrix (each row is implemented with its module in Phase B):
 
-| Action on a location | owner | manager | branch_staff |
+| Action | owner | manager | branch_staff |
 |---|---|---|---|
-| View | all | assigned | assigned |
-| Update | all | assigned | — |
-| Create / delete / restore / assign staff | yes | — | — |
+| Dashboard | all branches | assigned branches | assigned branches (limited) |
+| View locations | all | assigned | assigned |
+| Update location (details, hours, special hours) | all | assigned | — |
+| Create / delete / restore locations | yes | — | — |
+| Attach / detach menus to locations, menu order and serving hours per location | yes | — | — |
+| Menu content (menus, categories, items, variants, allergens, labels) | yes | only menus attached to ≥ 1 location where **every** attached location is assigned to the manager | — (read-only views) |
+| Create menus | yes | — | — |
+| Extra groups | yes | — | — |
+| Sold-out state per location | all | assigned | assigned |
+| QR codes: create / deactivate | yes | assigned locations | — (download for assigned locations) |
+| Tenant settings: profile, languages, theme, subscription | yes | — | — |
+| Team: invitations, staff, branch assignment | later phase | — | — |
 | Permanent deletion | — | — | — |
+
+The manager content rule exists because menus are shared: editing a menu also changes it at every location it is attached to, so a manager may only edit menus that are fully inside their branches. Because only owners can attach menus to locations, a manager can't widen that scope.
 
 Livewire's update, upload and preview endpoints are restricted to the central domain and to panel users; see [tenancy.md](tenancy.md#livewire-endpoints). Members of a suspended business get an explicit 403 in `/app` and keep their data.
 
 Platform roles: `super_admin` holds every platform permission; `platform_staff` gets limited platform permissions defined per future resource. Platform roles grant nothing in `/app`; there is no global `Gate::before`. Platform roles are assigned with `php artisan platform:assign-role {email} {role}` until a management UI exists.
+
+### Business panel (Phase B)
+
+Navigation groups of the `app` panel (Filament hides empty groups, so each group appears with its first page):
+
+```
+Dashboard
+Menu management   Menus (categories as a relation manager) · Items · Extra groups
+Locations         Locations (hours, special days, attached menus) · Stock status · QR codes
+Business          Business profile · Languages · Theme & appearance · Subscription (read-only)
+```
+
+- No global "current branch" selector: branch-bound pages filter by location, with options taken only from `accessibleLocations()`; a submitted `location_id` is re-checked on the server.
+- Shared panel building blocks live in `app/Filament/App/Forms/`:
+  - `TranslatableFields` — one tab per enabled tenant locale (default locale first and required), state path `translations.{locale}.{field}`; saved by services through `App\Services\Translations\TranslationWriter`, never with `->relationship()`.
+  - `MoneyInput` — TL in the form, kuruş (`App\Support\Money`) in the database; no floats.
+  - `TenantImageUpload` — `media` disk, tenant-prefixed UUID paths, JPEG/PNG/WebP only (see [tenancy.md § File storage](tenancy.md#file-storage)).
+- Pages and resources are presentation: they call services (which enforce `FeatureGate`) and policies.
+
+| Step | Scope |
+|---|---|
+| B0 | Scope and architecture documents |
+| B1 | Panel foundation: navigation groups, `Money`, `TranslatableFields` + `TranslationWriter`, `media` disk + `HasTenantMedia`, `tenant_locales` + `TenantLocaleService`, `plan_limits` + `FeatureGate`, `TenantPolicy`, Languages page |
+| B2 | Business profile, subscription page (read-only) |
+| B3 | Locations: resource, opening hours, special hours |
+| B4 | Menus, location attachment (`LocationMenu` pivot model), categories |
+| B5 | Items, allergens, dietary labels |
+| B6 | Variants, extra groups |
+| B7 | Branch operations: stock status (`location_item_states`), menu serving hours |
+| B8 | QR codes (`chillerlan/php-qrcode`, SVG + PNG) |
+| B9 | Theme & appearance (`theme_settings`) |
+| B10 | Dashboard widgets and onboarding checklist |
+| later | Team management / invitations, menu duplication, bulk price updates |
 
 ## Public marketing website
 
@@ -196,7 +244,8 @@ app/
   Exceptions/                TenantNotResolvedException, MenuUnavailableException
   Filament/
     Admin/                   Pages/Dashboard (platform panel; Resources/, Widgets/ later)
-    App/                     Pages/Dashboard (business panel; Resources/, Widgets/ later)
+    App/                     Pages/ (Dashboard, ManageLocales, …), Resources/, Widgets/,
+                             Forms/ (TranslatableFields, MoneyInput, TenantImageUpload)
   Http/
     Controllers/
       Marketing/             HomeController, PricingController, ThemeShowcaseController,
@@ -208,7 +257,7 @@ app/
                              ResolveMenuLocale, SetMarketingLocale
     Requests/
   Models/
-    Concerns/                BelongsToTenant, HasTranslations
+    Concerns/                BelongsToTenant, HasTranslations, HasTenantMedia
     Translations/            TenantTranslation, LocationTranslation, MenuTranslation, …
     Tenant, TenantDomain, TenantLocale, TenantMembership, User, Location, LocationOpeningHour,
     LocationSpecialHour, LocationItemState, Menu, LocationMenu, LocationMenuHour,
@@ -216,18 +265,21 @@ app/
     MenuItemDietaryLabel, QrCode, ThemeSetting, Plan, PlanPrice, PlanLimit,
     Subscription, SubscriptionEvent
   Observers/                 MenuContentObserver, LocationStateObserver, TenantObserver
-  Policies/                  LocationPolicy, Menu, QrCode, …
+  Policies/                  LocationPolicy, TenantPolicy, Menu, QrCode, …
   Providers/                 AppServiceProvider, FortifyServiceProvider, TenancyServiceProvider,
                              Filament/AdminPanelProvider, Filament/AppPanelProvider
   Services/
-    Tenancy/                 TenantRegistrationService, SlugService
+    Tenancy/                 TenantRegistrationService, TenantLocaleService, SlugService
     Subscription/            SubscriptionService, FeatureGate
+    Translations/            TranslationWriter
+    Media/                   MediaCleaner
     Menu/                    PublicMenuService, MenuSnapshotBuilder, MenuCache, MenuCacheKeys,
                              LiveMenuState, MenuUrlGenerator, ThemeRenderer
     QrCode/                  QrCodeResolver, QrCodeGenerator
   Support/
     Menu/Data/               MenuSnapshot, TenantBrand, LocationInfo, MenuData, CategoryData,
                              ItemData, VariantData, ExtraGroupData, ExtraData, ThemeSettings
+    Media/                   TenantMediaPath
     Money.php
   Tenancy/
     TenantContext.php, ResolvedTenant.php, TenantResolverPipeline.php
@@ -285,16 +337,27 @@ Each phase ends with tests run, a summary of changed files, and a review pause.
 |---|---|---|
 | 0. Environment | Docker Compose (PHP 8.5 + `intl`, `bcmath`, PostgreSQL, Redis); `composer.json` php `^8.4`; `.env.example` → `pgsql` + `redis` (separate DBs); PostgreSQL test DB (`restano_test`). `laravel/fortify` moves to Phase 4, `alpinejs` to Phase 5 | `docker exec restano-php-fpm-1 php artisan test` green on PostgreSQL |
 | P. Panels | Filament 5 install; `admin` and `app` panels with login and dashboards on the central domain; `PlatformRole` + `users.platform_role`; `TenantContext`, `BelongsToTenant`; tenants, translations, memberships, locations, `location_user`; `ResolveTenantFromMembership`; branch authorization | Panel, isolation and authorization tests pass |
-| 1. Tenancy core | Remainder after Phase P: resolver pipeline, public middleware, `tenant_locales` (queue propagation done 2026-11-15) | Isolation, scope and queue tests pass |
-| 2. Database foundation | Remaining migrations with composite FKs, enums, models, `HasTranslations`, factories | DB rejects cross-tenant inserts; relationship tests pass |
-| 3. Subscriptions | Plans, prices, limits, `SubscriptionService`, lifecycle command, `FeatureGate`, `PlanSeeder` | Lifecycle and grace tests pass |
+| B. Business panel | `/app` modules, steps B0–B10 ([Business panel](#business-panel-phase-b)). Pulls forward from Phases 1–3: `tenant_locales`, the menu content migrations as each step needs them, `plan_limits` + `FeatureGate` | Per step: authorization matrix, isolation and limit tests pass |
+| 1. Tenancy core | Remainder after Phases P and B: resolver pipeline, public middleware (queue propagation done 2026-11-15; `tenant_locales` moved to B1) | Isolation, scope and queue tests pass |
+| 2. Database foundation | Migrations not already created by Phase B, with composite FKs, enums, models, factories | DB rejects cross-tenant inserts; relationship tests pass |
+| 3. Subscriptions | Remainder: plan prices, lifecycle command (`plan_limits`, `FeatureGate` and `PlanSeeder` limits moved to B1) | Lifecycle and grace tests pass |
 | 4. Authentication | Fortify (registration, password reset, email verification), Blade auth views (tr/en), `TenantRegistrationService`, `/account`; `GET /login` → `/app/login` | Registration atomicity and auth tests pass |
-| 5. Marketing site | `components/ui` design system, marketing layout and pages, pricing from DB, tr/en, SEO | Pages render in both locales |
+| 5. Marketing site | `components/ui` design system, marketing layout and pages, pricing from DB, tr/en, SEO. Design source: `docs/design/source/` (see [Design reference](#design-reference)) | Pages render in both locales |
 | 6. Public menu infrastructure | Snapshot builder, cache versions, `PublicMenuService`, routes, `/q/{code}`, unavailable page, `DemoTenantSeeder`, reference theme `classic` | Access, visibility, cache, query-count and QR tests pass |
 | 7. Themes | `minimal`, `bistro`, `cafe`, `grid`; theme showcase | Theme architecture and zero-query tests pass for all five |
 | 8. Hardening | CSP and security headers, HTTP caching/ETag, image upload pipeline, rate limits, performance pass | Security checklist and performance budget met |
 
 **Environment status** (2026-11-15): Node 24 LTS runs in the on-demand `node` Compose service; Postgres data is on the named volume `restano_postgres-data`; `queue` (Redis worker), `scheduler` and `mailpit` services run with Compose; Alpine.js is installed (public site and menus only).
+
+## Design reference
+
+The approved visual design (2026-11-15) is kept as source files in `docs/design/source/` (`*.dc.html` artboards from the design canvas: marketing pages, auth pages, five menu identities with product detail views, and `DesignSystem.dc.html`). They are reference material, not code: views are rebuilt in Blade + Tailwind and never load these files.
+
+- **Brand:** the product name stays **Restano**; the design's "Masa" name is not used. Its visual language (Forest `#1F4D3B`, Saffron `#E7A33E`, Paper/Ink neutrals, Bricolage Grotesque + Inter, radii 6/12/14/20/28) is implemented as tokens in `resources/css/app.css` and components in `resources/views/components/ui/`.
+- **Fonts** are self-hosted from `resources/fonts/` (OFL, latin + latin-ext); no third-party font CDN on public pages. Menu theme fonts follow the same rule when the themes are built.
+- **Panels** keep Filament's native design system; only the panel colours (`primary` Forest, `gray` Stone), the brand logo (`resources/views/filament/brand-logo.blade.php`) and the favicon are set in the panel providers. No custom Filament theme.
+- **Menu themes** map onto the existing `MenuTheme` keys ([themes.md § Theme registry](themes.md#theme-registry)).
+- Design elements without a backend counterpart (social sign-up, terms checkbox, password strength meter) are not implemented until requested.
 
 ## Open decisions
 
@@ -302,9 +365,10 @@ Working defaults apply until each item is confirmed.
 
 | Decision | Working default |
 |---|---|
-| Plan names, TRY prices, limits | Placeholder seeds |
+| Plan names, TRY prices, limits | Placeholder seeds; the `starter` limits in `PlanSeeder` are development placeholders, not a pricing decision |
 | Pricing shown KDV-inclusive or "+KDV" | Display-only decision; storage unaffected |
 | Trial / grace length | 14 days / 7 days |
-| QR image generation library | `chillerlan/php-qrcode` is now installed as a mandatory Filament dependency; using it directly for QR images still needs a decision |
+| QR image generation library | **Decided 2026-11-15:** `chillerlan/php-qrcode` (already installed with Filament) directly, SVG + PNG; no other QR package |
+| Production media storage | `media` disk is S3-ready; `league/flysystem-aws-s3-v3` is not installed and needs approval when production storage is set up |
 | Per-location price overrides | Deferred (`location_item_states` can take `price_override` later) |
 | Marketing locales | `tr` at `/`, `en` at `/en` |

@@ -47,6 +47,30 @@ return [
             'report' => false,
         ],
 
+        /*
+        | Tenant images (logos, covers, category and item photos). Paths are
+        | built only by App\Support\Media\TenantMediaPath:
+        | tenants/{tenant_public_id}/{type}/{uuid}.{ext}.
+        | Development: local, on the same root and URL as the `public` disk
+        | (served through the public/storage link). Production can switch to
+        | S3-compatible storage with MEDIA_DRIVER=s3 and MEDIA_S3_* — that
+        | needs league/flysystem-aws-s3-v3 (not installed; approval required).
+        */
+        'media' => [
+            'driver' => env('MEDIA_DRIVER', 'local'),
+            'root' => storage_path('app/public'),
+            'url' => env('MEDIA_URL', rtrim(env('APP_URL', 'http://localhost'), '/').'/storage'),
+            'visibility' => 'public',
+            'key' => env('MEDIA_S3_KEY'),
+            'secret' => env('MEDIA_S3_SECRET'),
+            'region' => env('MEDIA_S3_REGION'),
+            'bucket' => env('MEDIA_S3_BUCKET'),
+            'endpoint' => env('MEDIA_S3_ENDPOINT'),
+            'use_path_style_endpoint' => env('MEDIA_S3_USE_PATH_STYLE_ENDPOINT', false),
+            'throw' => false,
+            'report' => false,
+        ],
+
         's3' => [
             'driver' => 's3',
             'key' => env('AWS_ACCESS_KEY_ID'),

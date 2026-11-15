@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Masa — Navigation</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&amp;family=Inter:wght@400;500;600;700&amp;display=swap">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<header style="background: #F6F5F1; border-bottom: 1px solid #E3E1D9; font-family: Inter, system-ui, sans-serif; color: #15191A">
+<div style="max-width: 1200px; margin: 0 auto; padding: 0 24px; height: 76px; display: flex; align-items: center; justify-content: space-between; gap: 24px; box-sizing: border-box">
+<a href="Main.dc.html" aria-label="Masa home" style="display: flex; align-items: center; gap: 10px; text-decoration: none; color: #15191A">
+<svg width="34" height="34" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="9" fill="#1F4D3B"></rect><rect x="7" y="7" width="7" height="7" rx="2" fill="#F6F5F1"></rect><rect x="18" y="7" width="7" height="7" rx="2" fill="#F6F5F1"></rect><rect x="7" y="18" width="7" height="7" rx="2" fill="#F6F5F1"></rect><circle cx="21.5" cy="21.5" r="3.6" fill="#E7A33E"></circle></svg>
+<span style="font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; font-size: 25px; letter-spacing: -0.04em">masa</span>
+</a>
+<nav class="m-links" aria-label="Main" style="display: flex; align-items: center; gap: 4px">
+<sc-for list="{{links}}" as="l" hint-placeholder-count="4">
+<a href="{{l.href}}" style="{{l.style}}">{{l.label}}</a>
+</sc-for>
+</nav>
+<div style="display: flex; align-items: center; gap: 8px">
+<a class="m-hide" href="Login.dc.html" style="display: inline-flex; align-items: center; height: 44px; padding: 0 16px; border-radius: 12px; color: #15191A; font-weight: 600; font-size: 15px; text-decoration: none">Log in</a>
+<a href="Register.dc.html" style="display: inline-flex; align-items: center; height: 44px; padding: 0 18px; border-radius: 12px; background: #1F4D3B; color: #FFFFFF; font-weight: 600; font-size: 15px; text-decoration: none">Get started</a>
+<button class="m-burger" type="button" aria-label="Open menu" style="display: none; width: 44px; height: 44px; border-radius: 12px; border: 1px solid #DAD8CF; background: #FFFFFF; align-items: center; justify-content: center; cursor: pointer"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#15191A" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"></path></svg></button>
+</div>
+</div>
+</header>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"active":{"editor":"enum","options":["home","features","pricing","examples","contact","none"],"default":"home"},"$preview":{"width":1440,"height":80}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var active = this.props.active ?? 'home';
+    var items = [
+      { key: 'features', label: 'Features', href: 'Features.dc.html' },
+      { key: 'pricing', label: 'Pricing', href: 'Pricing.dc.html' },
+      { key: 'examples', label: 'Menu examples', href: 'Main.dc.html#examples' },
+      { key: 'contact', label: 'Contact', href: 'Contact.dc.html' }
+    ];
+    return {
+      links: items.map(function (i) {
+        var on = i.key === active;
+        i.style = 'display: inline-flex; align-items: center; height: 40px; padding: 0 14px; border-radius: 10px; font-size: 15px; font-weight: 500; text-decoration: none; ' + (on ? 'background: #E4EEE8; color: #1F4D3B' : 'color: #3A3F3C');
+        return i;
+      })
+    };
+  }
+}
+</script>
+</body>
+</html>

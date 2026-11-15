@@ -36,13 +36,15 @@
 
 Themes are code (Blade and CSS), so they're registered in code rather than in a table. The `App\Enums\MenuTheme` string-backed enum is the registry:
 
-| Case | Character (working description) |
-|---|---|
-| `classic` | Reference theme. Clean list layout with a sticky category bar |
-| `minimal` | Typography-first, lots of whitespace, few images |
-| `bistro` | Dark, elegant, serif headings |
-| `cafe` | Warm palette, rounded product cards |
-| `grid` | Photo-first grid layout |
+| Case | Character (working description) | Design reference (`docs/design/source/`) |
+|---|---|---|
+| `classic` | Reference theme. Clean list layout with a sticky category bar; warm Turkish-café palette, arched images | `MenuKonak`, `DetailKonak` (Young Serif / Figtree) |
+| `minimal` | Typography-first, lots of whitespace, few images | `MenuNoon`, `DetailNoon` (DM Sans / DM Mono) |
+| `bistro` | Dark, elegant, serif headings | `MenuArdoise`, `DetailArdoise` (Cormorant Garamond / Jost) |
+| `cafe` | Warm palette, rounded product cards | `MenuKiln`, `DetailKiln` (Manrope) |
+| `grid` | Photo-first grid layout, soft pastel palette | `MenuPetal`, `DetailPetal` (Fraunces / Nunito Sans) |
+
+The venue names in the design files (Kiln Coffee, Maison Ardoise, noon., Petal Bakehouse, Kahve Konağı) are sample content only; they become demo data, never theme keys or template strings (decided 2026-11-15).
 
 Each case provides:
 
@@ -62,7 +64,7 @@ A theme view receives exactly these three variables:
 | Variable | Type | Source |
 |---|---|---|
 | `$menu` | `MenuSnapshot` | Cached, locale-resolved, allow-listed data ([menu-system.md](menu-system.md#menusnapshot-contract)) |
-| `$live` | `LiveMenuState` | Per request: open now, serving now |
+| `$live` | `LiveMenuState` | Per request: open now, serving now, effective sold-out (`$live->isSoldOut($item)`) |
 | `$theme` | `ThemeSettings` | Merged `defaults()` and tenant `theme_settings`, validated |
 
 UI strings come from `__('menu.*')`. No other data source is allowed.

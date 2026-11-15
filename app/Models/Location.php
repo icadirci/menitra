@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Enums\MediaType;
 use App\Enums\MenuTheme;
 use App\Models\Concerns\BelongsToTenant;
+use App\Models\Concerns\HasTenantMedia;
 use App\Models\Concerns\HasTranslations;
 use App\Models\Translations\LocationTranslation;
 use Database\Factories\LocationFactory;
@@ -20,7 +22,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class Location extends Model
 {
     /** @use HasFactory<LocationFactory> */
-    use BelongsToTenant, HasFactory, HasTranslations, SoftDeletes;
+    use BelongsToTenant, HasFactory, HasTenantMedia, HasTranslations, SoftDeletes;
 
     /** @var list<string> */
     protected $fillable = [
@@ -65,6 +67,16 @@ class Location extends Model
             ->withPivotValue('tenant_id', $this->tenant_id)
             ->withPivot(['is_active', 'sort_order'])
             ->withTimestamps();
+    }
+
+    public function mediaAttributes(): array
+    {
+        return ['cover_path' => MediaType::Location];
+    }
+
+    public function mediaTenant(): Tenant
+    {
+        return $this->tenant ?? Tenant::withTrashed()->findOrFail($this->tenant_id);
     }
 
     protected function translationModel(): string

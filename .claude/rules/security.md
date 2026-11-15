@@ -8,7 +8,7 @@
 - Prevent mass assignment vulnerabilities.
 - Use CSRF protection.
 - Escape untrusted output.
-- Validate uploaded files (MIME, extension, size); store under `tenants/{tenant_public_id}/…` with random names.
+- Validate uploaded files (MIME, extension, size); images are JPEG/PNG/WebP only (no SVG, no GIF). Store them on the `media` disk under `tenants/{tenant_public_id}/{type}/{uuid}.{ext}` built by `TenantMediaPath`, with the extension derived from the MIME type. Use `TenantImageUpload` (content sniffing, `preventFilePathTampering()`) + `HasTenantMedia`: a stored path must be inside the tenant's directory for its media type (existing paths in upload fields are client-controllable), files are written only through `MediaCleaner::store()` (removed on rollback), old files are deleted only after commit, and nothing outside the tenant prefix is ever deleted.
 - Never expose secrets or credentials.
 - Never commit environment files.
 - Never disable middleware to bypass errors.
@@ -32,6 +32,7 @@
 - Never secure a panel feature only by hiding its navigation item.
 - Livewire endpoints serve panels only: the update route is bound to the central domain (the default host-agnostic route is disabled), and temporary upload/preview require the central host plus a user with panel access (`RestrictLivewireFileEndpoints`), on top of Livewire's signed URLs and throttling.
 - Members of a suspended tenant get an explicit 403 in `/app` and `TenantContext` is never set; non-members always get 404.
+- Tenant-wide settings pages (profile, languages, theme, subscription) are owner-only through `TenantPolicy::manageSettings`, checked in `canAccess()` and again in every action.
 - Public registration never accepts `platform_role`, `tenant_id` or `role`; only the validated fields reach `TenantRegistrationService`.
 - There is a single login per panel (Filament). Fortify's own routes are ignored; do not add another `POST /login`. The central `POST /logout` exists only because the verification page can't reach the panel's logout.
 - The business panel requires a verified email (`EnsureEmailIsVerified`, Livewire-persistent); the admin panel doesn't.

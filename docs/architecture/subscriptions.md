@@ -1,6 +1,6 @@
 # Subscriptions and Pricing
 
-> Status: **Approved — v0.2**. Provider-agnostic foundation. **No payment integration is implemented yet.** iyzico or PayTR will be added later behind the `PaymentGateway` contract.
+> Status: **Approved — v0.3** (2026-11-15: `max_qr_codes`, `FeatureGate` semantics for missing subscriptions, placeholder limits). v0.2: Provider-agnostic foundation. **No payment integration is implemented yet.** iyzico or PayTR will be added later behind the `PaymentGateway` contract.
 
 ## Contents
 
@@ -36,7 +36,9 @@ Tables are defined in [database.md](database.md#subscriptions).
 - `subscriptions`: a tenant's subscription history. **At most one live subscription per tenant**, enforced by a partial unique index on `tenant_id` where `ended_at IS NULL`.
 - `subscription_events`: an append-only audit trail of every transition.
 
-**Implemented so far (2026-11-15):** `plans`, `plan_translations`, `subscriptions` (without `plan_price_id`), `subscription_events`, and `SubscriptionService::startTrial()` used by registration. `PlanSeeder` seeds a placeholder `starter` plan (`config('subscriptions.default_plan')`). `?plan=` selection, prices, limits, the lifecycle command and `FeatureGate` come with Phase 3 / Phase 5.
+**Implemented so far (2026-11-15):** `plans`, `plan_translations`, `plan_limits`, `subscriptions` (without `plan_price_id`), `subscription_events`, `SubscriptionService::startTrial()` used by registration, and `FeatureGate` (Phase B1). `PlanSeeder` idempotently seeds a placeholder `starter` plan (`config('subscriptions.default_plan')`) with **development placeholder limits** — they are not a pricing decision. `?plan=` selection, prices and the lifecycle command come with Phase 3 / Phase 5.
+
+**New tenants:** registration always creates a `trialing` subscription for the default plan in the same transaction (`SubscriptionService::startTrial()`, with a `trial_started` event), so a new tenant's plan limits apply immediately. Registration fails as a whole if the default plan is missing.
 
 ## Lifecycle
 
@@ -107,16 +109,22 @@ menu is online  ⇔  tenant.status = active  AND  access_until ≠ null  AND  no
 | `max_menus` | count | Number of menus |
 | `max_items` | count | Number of items across all menus |
 | `max_languages` | count | Enabled tenant locales |
+| `max_qr_codes` | count | Number of QR codes |
 | `premium_themes` | boolean | Access to themes that require it |
 | `custom_domain` | boolean | Custom domains (later phase) |
 | `remove_branding` | boolean | Hide the "Powered by Restano" footer |
 | `qr_analytics` | boolean | Scan analytics (later phase) |
 
 - In `plan_limits.limit_value`, `null` means unlimited. Boolean features use `0` or `1`. A missing row means the feature isn't included.
-- `FeatureGate` is the only place limits are evaluated:
-  - `FeatureGate::allows(Tenant $tenant, PlanFeature $feature, ?int $currentCount = null): bool`
-  - `FeatureGate::limit(Tenant $tenant, PlanFeature $feature): ?int`
-- It's exposed through Laravel Gates for the future dashboard and Form Requests.
+- **Which plan applies:** the plan of the tenant's live subscription (`ended_at IS NULL`) while its status is `trialing`, `active`, `past_due` or `grace`. With no live subscription, or an `expired` one, every count feature allows nothing new and every boolean feature is off.
+- **The gate only controls creation and feature access.** It never blocks viewing, editing or deleting existing records, and nothing ever locks or changes tenants in bulk because they lack a subscription.
+- `App\Services\Subscription\FeatureGate` (scoped singleton, memoised per request/job) is the only place limits are evaluated:
+  - `limit(Tenant $tenant, PlanFeature $feature): ?int` — `null` = unlimited; `0` when not included
+  - `allows(Tenant $tenant, PlanFeature $feature, ?int $currentCount = null): bool` — boolean features: enabled; count features: `$currentCount < limit` (`$currentCount` defaults to `usage()`)
+  - `usage(Tenant $tenant, PlanFeature $feature): int` — current count, implemented per feature as its table exists (soft-deleted rows don't count; restoring a row is a creation and is checked)
+  - `ensureCanCreate(Tenant $tenant, PlanFeature $feature): void` — throws `PlanLimitExceededException` (translated message)
+- The tenant must be the one in `TenantContext` (otherwise `CrossTenantWriteException`); no scope bypass is involved.
+- **Enforcement lives in backend services** (`TenantLocaleService::enable()`, later `LocationService`, `MenuService`, …). Disabled buttons in the panel only inform the user.
 - **A downgrade never deletes content.** Content over a limit stays stored:
   - premium themes fall back to `classic`
   - branding reappears
@@ -168,4 +176,4 @@ The 14-day trial and 7-day grace defaults are working values pending confirmatio
 - Re-subscribing after expiry creates a new row; the partial unique index prevents two live subscriptions.
 - `access_until` is correct for each status; expiry takes effect while the cache is warm.
 - The lifecycle command is idempotent and isolates per-tenant failures.
-- `FeatureGate` handles unlimited, count limits, boolean features and missing rows; a downgrade falls back to `classic` without deleting settings.
+- `FeatureGate` handles unlimited, count limits, boolean features and missing rows; trialing / active / past_due / grace apply the plan, expired or no subscription allows no creation; a downgrade falls back to `classic` without deleting settings.

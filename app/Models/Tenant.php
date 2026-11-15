@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Enums\MediaType;
 use App\Enums\MenuTheme;
 use App\Enums\TenantStatus;
+use App\Models\Concerns\HasTenantMedia;
 use App\Models\Concerns\HasTranslations;
 use App\Models\Translations\TenantTranslation;
 use Database\Factories\TenantFactory;
@@ -23,7 +25,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class Tenant extends Model implements HasName
 {
     /** @use HasFactory<TenantFactory> */
-    use HasFactory, HasTranslations, HasUlids, SoftDeletes;
+    use HasFactory, HasTenantMedia, HasTranslations, HasUlids, SoftDeletes;
 
     /**
      * `status` is not fillable: it changes only through platform actions.
@@ -65,6 +67,35 @@ class Tenant extends Model implements HasName
         return $this->hasMany(Location::class);
     }
 
+    /**
+     * Enabled locales (tenant-scoped: read inside this tenant's context).
+     */
+    public function locales(): HasMany
+    {
+        return $this->hasMany(TenantLocale::class);
+    }
+
+    /**
+     * Enabled locale codes, default first, then by sort order. The default is
+     * always included (tenants.default_locale is the source of truth).
+     *
+     * @return list<string>
+     */
+    public function enabledLocales(): array
+    {
+        $locales = $this->locales()->orderBy('sort_order')->orderBy('id')->pluck('locale')->all();
+
+        return array_values(array_unique([$this->default_locale, ...$locales]));
+    }
+
+    /**
+     * Subscription history; at most one row has ended_at = null (live).
+     */
+    public function subscriptions(): HasMany
+    {
+        return $this->hasMany(Subscription::class);
+    }
+
     public function isActive(): bool
     {
         return $this->status === TenantStatus::Active && ! $this->trashed();
@@ -73,6 +104,16 @@ class Tenant extends Model implements HasName
     public function scopeActive(Builder $query): Builder
     {
         return $query->where('status', TenantStatus::Active);
+    }
+
+    public function mediaAttributes(): array
+    {
+        return ['logo_path' => MediaType::Logo, 'cover_path' => MediaType::Cover];
+    }
+
+    public function mediaTenant(): Tenant
+    {
+        return $this;
     }
 
     public function getFilamentName(): string

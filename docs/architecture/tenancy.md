@@ -1,6 +1,6 @@
 # Multi-Tenancy
 
-> Status: **Approved — v0.3** (2026-11-15: business panel tenant URL strategy, branch roles). This is the authoritative tenant identification and isolation strategy.
+> Status: **Approved — v0.4** (2026-11-15: `media` disk, upload ownership and cleanup). v0.3: business panel tenant URL strategy, branch roles. This is the authoritative tenant identification and isolation strategy.
 
 ## Contents
 
@@ -161,10 +161,17 @@ Livewire is used only by the panels, so its endpoints follow the panels:
 
 ## File storage
 
-- Path layout: `tenants/{tenant_public_id}/{type}/{uuid}.{ext}`, where type is `logo`, `cover`, `locations`, `categories` or `items`.
-- Validate MIME type, extension and size. Store files under random names, and never use the user-provided filename in the path.
+- **Disk:** `media` (`config/filesystems.php`). In development it is a local disk on `storage/app/public`, served through the `public/storage` link (`php artisan storage:link`, run only if the link doesn't exist), URL `APP_URL/storage`, visibility public. `MEDIA_DRIVER=s3` with `MEDIA_S3_*` switches it to S3-compatible storage in production; that needs `league/flysystem-aws-s3-v3` (not installed, approval required). The existing `public` disk is unchanged.
+- **Path layout:** `tenants/{tenant_public_id}/{type}/{uuid}.{ext}`, where type is `logo`, `cover`, `locations`, `categories` or `items` (`App\Enums\MediaType`). Built only by `App\Support\Media\TenantMediaPath`. The file name is a UUID and the extension is derived from the detected MIME type; the client's filename and extension are never used.
+- **Validation:** JPEG, PNG and WebP only; SVG and GIF are rejected. Three server-side checks in `TenantImageUpload`: Livewire's detected MIME type, the client extension, and the file's actual bytes sniffed with `finfo` (`TenantMediaPath::detectMimeType()`, also used to pick the stored extension). Size limits per `MediaType` (logo 2 MB, others 5 MB).
+- **Ownership:** an existing file path in a Filament upload field is client-controllable Livewire state, so it is checked twice: `TenantImageUpload` uses Filament's `preventFilePathTampering()` (only the field's original path or a fresh upload is accepted), and models with images use `HasTenantMedia`, whose `saving` hook requires a changed path to lie inside the tenant's directory **for that media type** (`TenantMediaPath::isOwnedBy()`: prefix match, no `.`/`..` segments, no absolute paths, backslashes or NUL); otherwise `CrossTenantWriteException`.
+- **Cleanup (`App\Services\Media\MediaCleaner`), never outside the tenant's prefix:**
+  - Replaced or cleared image → the old file is deleted **after commit** (`DB::afterCommit`); a rollback keeps it.
+  - Force-deleted record → its files are deleted after commit. Soft deletes keep files.
+  - Newly stored upload → `MediaCleaner::store()` is the only way files are written; it registers the new file for deletion on **rollback** of every open transaction level (`afterRollBack`, so an outer rollback after a committed savepoint also counts). A failed save therefore never leaves an orphan. `TenantImageUpload` stores inside the save transaction (the `app` panel runs with `databaseTransactions()`). Rollback cleanup is tied to the moment a file is written, never to a model's `saving`, so a rolled-back save can't delete a file that another record still references.
+  - Deletes are idempotent; failures are logged and never break the request.
+- **Access:** menu images are public by nature. Isolation comes from unguessable UUID paths, ownership checks on every write and delete, and no directory listing.
 - Images are re-encoded and resized in Phase 8 (dependency approval pending).
-- The disk is local in development; S3-compatible storage can be used in production. Paths are tenant-prefixed either way.
 
 ## Security controls
 
