@@ -33,6 +33,8 @@ return [
     ],
 
     'errors' => [
+        'invalid_transition' => 'This subscription change is not possible in the current status (:status).',
+        'live_subscription_exists' => 'This business already has a live subscription.',
         'limit_reached' => 'You have reached your plan\'s :feature limit (:limit).',
         'not_included' => ':feature is not included in your current plan or subscription status.',
     ],

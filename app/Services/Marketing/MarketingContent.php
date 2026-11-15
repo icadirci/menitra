@@ -170,6 +170,7 @@ final class MarketingContent
             limits: $plan->limits
                 ->mapWithKeys(fn (PlanLimit $limit): array => [$limit->feature->value => $limit->limit_value])
                 ->all(),
+            trialDays: $plan->trialDays(),
         );
     }
 

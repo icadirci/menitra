@@ -29,6 +29,13 @@
                         <p class="text-muted">{{ __('auth.register.subtitle') }}</p>
                     </div>
 
+                    @if ($selectedPlan ?? null)
+                        <input type="hidden" name="plan" value="{{ $selectedPlan->code }}">
+                        <p class="rounded-input border border-forest-100 bg-forest-100/40 px-4 py-3 text-[15px] text-forest-900">
+                            {{ __('auth.register.selected_plan', ['plan' => $selectedPlan->translate()?->name ?? $selectedPlan->code, 'days' => $selectedPlan->trialDays()]) }}
+                        </p>
+                    @endif
+
                     <div class="grid grid-cols-[repeat(auto-fit,minmax(min(200px,100%),1fr))] gap-3.5">
                         <x-ui.field name="name" :label="__('auth.fields.name')" autocomplete="name" required autofocus />
                         <x-ui.field name="business_name" :label="__('auth.fields.business_name')" autocomplete="organization" required />

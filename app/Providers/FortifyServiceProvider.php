@@ -6,6 +6,7 @@ namespace App\Providers;
 
 use App\Actions\Fortify\CreateNewUser;
 use App\Actions\Fortify\ResetUserPassword;
+use App\Models\Plan;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
@@ -27,7 +28,15 @@ class FortifyServiceProvider extends ServiceProvider
         Fortify::createUsersUsing(CreateNewUser::class);
         Fortify::resetUserPasswordsUsing(ResetUserPassword::class);
 
-        Fortify::registerView(fn () => view('auth.register'));
+        // ?plan= preselects an active, public plan (pricing page CTAs); anything else is ignored.
+        Fortify::registerView(function (Request $request) {
+            $code = $request->query('plan');
+            $plan = is_string($code) && $code !== ''
+                ? Plan::query()->selectable()->where('code', $code)->with('translations')->first()
+                : null;
+
+            return view('auth.register', ['selectedPlan' => $plan]);
+        });
         Fortify::requestPasswordResetLinkView(fn () => view('auth.forgot-password'));
         Fortify::resetPasswordView(fn (Request $request) => view('auth.reset-password', ['request' => $request]));
         Fortify::verifyEmailView(fn () => view('auth.verify-email'));

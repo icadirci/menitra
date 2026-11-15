@@ -28,6 +28,7 @@ use App\Services\Dashboard\BusinessDashboard;
 use App\Services\Dashboard\OnboardingStep;
 use App\Services\Menu\MenuUrlGenerator;
 use App\Services\Subscription\FeatureGate;
+use App\Services\Subscription\SubscriptionService;
 use App\Tenancy\TenantContext;
 use Filament\Facades\Filament;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -327,6 +328,59 @@ class DashboardTest extends TestCase
         $this->livewire($this->owner(), SubscriptionStatusWidget::class)
             ->assertSee(__('panels.app.dashboard.subscription.offline'))
             ->assertSee(__('panels.app.dashboard.subscription.ended'));
+    }
+
+    public function test_subscription_widget_shows_grace_with_its_end_date_and_the_menu_online(): void
+    {
+        $this->travel(14)->days();
+        $subscription = $this->inTenant($this->tenant, function (): Subscription {
+            $subscription = Subscription::query()->whereNull('ended_at')->firstOrFail();
+            app(SubscriptionService::class)->processDue($subscription);
+
+            return $subscription;
+        });
+
+        $this->assertSame(SubscriptionStatus::Grace, $subscription->status);
+        $this->livewire($this->owner(), SubscriptionStatusWidget::class)
+            ->assertSee(__('panels.app.dashboard.subscription.grace', ['status' => SubscriptionStatus::Grace->label()]))
+            ->assertSee(__('panels.app.subscription.fields.grace_ends_at'))
+            ->assertSee($subscription->grace_ends_at->setTimezone('Europe/Istanbul')->locale(app()->getLocale())->isoFormat('LL'))
+            ->assertSee(__('panels.app.dashboard.subscription.online'));
+    }
+
+    public function test_subscription_widget_shows_an_expired_subscription_and_the_menu_offline(): void
+    {
+        $this->travel(30)->days();
+        $this->inTenant($this->tenant, fn () => app(SubscriptionService::class)
+            ->processDue(Subscription::query()->whereNull('ended_at')->firstOrFail()));
+
+        $this->livewire($this->owner(), SubscriptionStatusWidget::class)
+            ->assertSee(__('panels.app.dashboard.subscription.expired', ['status' => SubscriptionStatus::Expired->label()]))
+            ->assertSee(__('panels.app.subscription.fields.ended_at'))
+            ->assertSee(__('panels.app.dashboard.subscription.expired_help'))
+            ->assertSee(__('panels.app.dashboard.subscription.offline'))
+            ->assertDontSee(__('panels.app.dashboard.subscription.none'));
+
+        $this->livewire($this->owner(), PlanUsageWidget::class)
+            ->assertSee(__('panels.app.dashboard.usage.description_none'));
+
+        $this->livewire($this->owner(), BranchOverviewWidget::class)
+            ->assertSee(__('panels.app.dashboard.branches.offline'));
+    }
+
+    public function test_subscription_widget_marks_a_cancellation(): void
+    {
+        $this->inTenant($this->tenant, function (): void {
+            $service = app(SubscriptionService::class);
+            $subscription = Subscription::query()->whereNull('ended_at')->firstOrFail();
+            $service->activate($subscription, now()->toImmutable(), now()->toImmutable()->addDays(30));
+            $service->cancel($subscription);
+        });
+
+        $this->livewire($this->owner(), SubscriptionStatusWidget::class)
+            ->assertSee(SubscriptionStatus::Active->label())
+            ->assertSee(__('panels.app.subscription.fields.cancel_at_period_end_yes'))
+            ->assertSee(__('panels.app.dashboard.subscription.online'));
     }
 
     public function test_plan_usage_comes_from_the_feature_gate(): void

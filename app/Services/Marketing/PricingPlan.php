@@ -30,6 +30,7 @@ final readonly class PricingPlan
         public ?Money $yearlyPerMonth,
         public ?int $yearlySavingPercent,
         public array $limits = [],
+        public ?int $trialDays = null,
     ) {}
 
     /**

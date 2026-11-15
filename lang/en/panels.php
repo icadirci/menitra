@@ -121,6 +121,9 @@ return [
                 'days_left' => ':days days left',
                 'ends_soon' => 'Less than a day left',
                 'ended' => 'Ended',
+                'expired' => ':status — renew to bring your menu back online',
+                'expired_help' => 'Your menus, branches and QR codes are kept and come back online when you renew. Nothing new can be added until then.',
+                'grace' => ':status — renew before it ends to keep your menu online',
             ],
             'usage' => [
                 'heading' => 'Plan usage',
@@ -227,6 +230,10 @@ return [
                 'title' => 'No active subscription',
                 'body' => 'Your existing content is kept; renew your subscription to add new locations, menus or languages.',
             ],
+            'expired' => [
+                'title' => 'Your subscription has expired',
+                'body' => 'Your public menu is offline. Your menus, branches, QR codes and settings are kept and come back online when you subscribe again; nothing new can be added until then.',
+            ],
             'sections' => [
                 'plan' => 'Plan',
                 'limits' => 'Plan limits',
@@ -242,6 +249,7 @@ return [
                 'grace_ends_at' => 'Grace period ends',
                 'cancel_at_period_end' => 'Cancellation',
                 'cancel_at_period_end_yes' => 'Cancels at the end of the period',
+                'ended_at' => 'Ended on',
             ],
         ],
         'theme' => [

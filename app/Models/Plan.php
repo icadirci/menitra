@@ -46,6 +46,14 @@ class Plan extends Model
         return $query->where('is_active', true);
     }
 
+    /**
+     * Plans a visitor may pick at registration (/register?plan=): active and public.
+     */
+    public function scopeSelectable(Builder $query): Builder
+    {
+        return $query->active()->where('is_public', true);
+    }
+
     public function limits(): HasMany
     {
         return $this->hasMany(PlanLimit::class);

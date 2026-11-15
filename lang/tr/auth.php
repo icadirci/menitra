@@ -29,6 +29,7 @@ return [
         'slug_example' => 'isletmeniz',
         'slug_format' => 'Menü adresi yalnızca küçük harf, rakam ve tek tire içerebilir.',
         'slug_reserved' => 'Bu menü adresi kullanılamaz. Lütfen başka bir adres seçin.',
+        'selected_plan' => 'Seçilen paket: :plan · :days gün ücretsiz deneme',
         'submit' => 'Hesap oluştur',
         'have_account' => 'Zaten hesabınız var mı?',
         'login' => 'Giriş yapın',

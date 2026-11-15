@@ -45,7 +45,7 @@ class SubscriptionStatusWidget extends StatsOverviewWidget
     protected function getStats(): array
     {
         $dashboard = app(BusinessDashboard::class);
-        $subscription = $dashboard->liveSubscription();
+        $subscription = $dashboard->latestSubscription();
         $url = ViewSubscription::getUrl();
 
         if ($subscription === null) {
@@ -59,11 +59,31 @@ class SubscriptionStatusWidget extends StatsOverviewWidget
             ];
         }
 
+        $planStat = Stat::make(__('panels.app.dashboard.subscription.plan'), $subscription->plan?->translate()?->name ?? $subscription->plan?->code ?? '—')
+            ->description($subscription->status->label())
+            ->color($subscription->status->color())
+            ->url($url);
+
+        if (! $subscription->isLive()) {
+            return [
+                $planStat
+                    ->description(__('panels.app.dashboard.subscription.expired', ['status' => $subscription->status->label()]))
+                    ->descriptionIcon(Heroicon::OutlinedExclamationTriangle),
+                Stat::make(__('panels.app.subscription.fields.ended_at'), $this->date($subscription->ended_at))
+                    ->description(__('panels.app.dashboard.subscription.expired_help'))
+                    ->color('danger'),
+                $this->onlineStat($dashboard->isMenuOnline()),
+            ];
+        }
+
+        if ($subscription->status === SubscriptionStatus::Grace) {
+            $planStat
+                ->description(__('panels.app.dashboard.subscription.grace', ['status' => $subscription->status->label()]))
+                ->descriptionIcon(Heroicon::OutlinedExclamationTriangle);
+        }
+
         return array_values(array_filter([
-            Stat::make(__('panels.app.dashboard.subscription.plan'), $subscription->plan?->translate()?->name ?? $subscription->plan?->code ?? '—')
-                ->description($subscription->status->label())
-                ->color($subscription->status->color())
-                ->url($url),
+            $planStat,
             $this->keyDateStat($subscription),
             $this->accessStat($subscription),
             $this->onlineStat($dashboard->isMenuOnline()),

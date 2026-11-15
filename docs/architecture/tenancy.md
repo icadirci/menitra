@@ -157,7 +157,7 @@ Livewire is used only by the panels, so its endpoints follow the panels:
 - On `JobProcessing` the context is **cleared first** (a job never inherits one), then loaded from the payload. A missing, soft-deleted or suspended tenant marks the job failed (`TenantNotResolvedException`) and its `handle()` never runs. A job without `tenant_id` runs with an empty context, so any tenant-owned query throws.
 - After the attempt (`JobProcessed`, `JobFailed`, `JobExceptionOccurred`, `JobAttempted`) the previous context is restored, idempotently per job UUID: empty in a worker, the request's own context for jobs run inline by the `sync` driver.
 - The worker additionally resets scoped instances (and so `TenantContext`) between jobs.
-- `TenantAgnostic` is introduced with the first cross-tenant command (subscription lifecycle).
+- `App\Tenancy\TenantAgnostic` (marker interface, 2026-11-15) is implemented by `ProcessSubscriptionLifecycle` (`subscriptions:process-lifecycle`): its scope bypass only finds tenant ids; it sets each active tenant in `TenantContext` and dispatches a parameterless `ProcessTenantSubscriptionLifecycle` job, so the tenant reaches the job only through the payload.
 
 ## File storage
 

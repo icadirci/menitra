@@ -42,9 +42,20 @@ class BusinessDashboard
      */
     public function liveSubscription(): ?Subscription
     {
+        $subscription = $this->latestSubscription();
+
+        return $subscription?->ended_at === null ? $subscription : null;
+    }
+
+    /**
+     * The most recent subscription with its plan: the live one if there is
+     * one (a new row is only created after the previous one ended), otherwise
+     * the last ended one (e.g. expired), or null when the tenant never had one.
+     */
+    public function latestSubscription(): ?Subscription
+    {
         if (! $this->subscriptionLoaded) {
             $this->subscription = Subscription::query()
-                ->whereNull('ended_at')
                 ->with('plan.translations')
                 ->latest('id')
                 ->first();

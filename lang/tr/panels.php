@@ -121,6 +121,9 @@ return [
                 'days_left' => ':days gün kaldı',
                 'ends_soon' => '1 günden az kaldı',
                 'ended' => 'Süresi doldu',
+                'expired' => ':status — menünüzü tekrar yayına almak için yenileyin',
+                'expired_help' => 'Menüleriniz, şubeleriniz ve QR kodlarınız korunur; yenilediğinizde tekrar yayına girer. O zamana kadar yeni kayıt eklenemez.',
+                'grace' => ':status — menünüzün yayında kalması için süre bitmeden yenileyin',
             ],
             'usage' => [
                 'heading' => 'Plan kullanımı',
@@ -227,6 +230,10 @@ return [
                 'title' => 'Aktif abonelik yok',
                 'body' => 'Mevcut içerikleriniz korunur; yeni şube, menü veya dil eklemek için aboneliğinizi yenileyin.',
             ],
+            'expired' => [
+                'title' => 'Aboneliğinizin süresi doldu',
+                'body' => 'Herkese açık menünüz yayında değil. Menüleriniz, şubeleriniz, QR kodlarınız ve ayarlarınız korunur ve yeniden abone olduğunuzda tekrar yayına girer; o zamana kadar yeni kayıt eklenemez.',
+            ],
             'sections' => [
                 'plan' => 'Paket',
                 'limits' => 'Paket limitleri',
@@ -242,6 +249,7 @@ return [
                 'grace_ends_at' => 'Ek süre bitişi',
                 'cancel_at_period_end' => 'İptal',
                 'cancel_at_period_end_yes' => 'Dönem sonunda iptal edilecek',
+                'ended_at' => 'Sona erdiği tarih',
             ],
         ],
         'theme' => [

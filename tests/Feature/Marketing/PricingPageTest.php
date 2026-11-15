@@ -102,6 +102,19 @@ class PricingPageTest extends TestCase
         $this->get('/en/pricing')->assertSee('EN pro');
     }
 
+    public function test_plan_cta_links_to_registration_with_the_plan_and_shows_its_trial_days(): void
+    {
+        $this->plan('pro', 99900, attributes: ['trial_days' => 30]);
+        $this->plan('basic', 49900, attributes: ['trial_days' => null]);
+
+        $this->get('/fiyatlar')
+            ->assertOk()
+            ->assertSee('href="'.route('register', ['plan' => 'pro']).'"', false)
+            ->assertSee('href="'.route('register', ['plan' => 'basic']).'"', false)
+            ->assertSee(__('marketing.pricing_page.start_trial', ['days' => 30]))
+            ->assertSee(__('marketing.pricing_page.start_trial', ['days' => config('subscriptions.trial_days')]));
+    }
+
     public function test_yearly_prices_and_savings_are_computed_from_stored_prices(): void
     {
         // 12 × 499 = 5988 → 4790 saves 20 %; 12 × 299 = 3588 → 2990 saves 16 % (floored).

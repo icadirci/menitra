@@ -26,6 +26,7 @@ return [
         'slug_example' => 'your-business',
         'slug_format' => 'The menu address may contain only lowercase letters, numbers and single hyphens.',
         'slug_reserved' => 'This menu address is reserved. Please choose another one.',
+        'selected_plan' => 'Selected plan: :plan · :days-day free trial',
         'submit' => 'Create account',
         'have_account' => 'Already have an account?',
         'login' => 'Log in',

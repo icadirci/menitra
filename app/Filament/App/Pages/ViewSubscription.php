@@ -73,7 +73,10 @@ class ViewSubscription extends Page
             ]);
         }
 
-        return $schema->components([
+        return $schema->components(array_values(array_filter([
+            $subscription->isLive() ? null : Section::make(__('panels.app.subscription.expired.title'))
+                ->icon(Heroicon::OutlinedExclamationTriangle)
+                ->schema([Text::make(__('panels.app.subscription.expired.body'))]),
             Section::make(__('panels.app.subscription.sections.plan'))
                 ->columns(['default' => 1, 'md' => 3])
                 ->schema([
@@ -97,7 +100,7 @@ class ViewSubscription extends Page
                 ->schema($this->limitEntries()),
             Section::make()
                 ->schema([Text::make(__('panels.app.subscription.contact'))]),
-        ]);
+        ])));
     }
 
     /**
@@ -109,6 +112,7 @@ class ViewSubscription extends Page
             'trial_ends_at' => $subscription->trial_ends_at,
             'current_period_ends_at' => $subscription->current_period_ends_at,
             'grace_ends_at' => $subscription->grace_ends_at,
+            'ended_at' => $subscription->ended_at,
         ];
 
         $entries = [];
@@ -176,13 +180,13 @@ class ViewSubscription extends Page
     }
 
     /**
-     * The live subscription (ended_at null), read through the tenant scope.
+     * The most recent subscription, read through the tenant scope: the live
+     * one, or the last ended (expired) one so its state can be explained.
      */
     private function subscription(): ?Subscription
     {
         if (! $this->loaded) {
             $this->subscription = Subscription::query()
-                ->whereNull('ended_at')
                 ->with('plan.translations')
                 ->latest('id')
                 ->first();

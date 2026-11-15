@@ -24,6 +24,7 @@ use App\Tenancy\TenantContext;
 use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
+use PHPUnit\Framework\Attributes\DataProvider;
 use RuntimeException;
 use Tests\TestCase;
 
@@ -111,6 +112,68 @@ class RegistrationTest extends TestCase
         $this->assertSame(SubscriptionStatus::Trialing, $event->to_status);
 
         Notification::assertSentTo($user, VerifyEmail::class);
+    }
+
+    public function test_a_selected_active_public_plan_starts_the_trial_with_its_own_trial_days(): void
+    {
+        $pro = Plan::factory()->create(['code' => 'pro', 'trial_days' => 30]);
+        $pro->translations()->where('locale', 'tr')->update(['name' => 'Profesyonel']);
+
+        $this->get('/register?plan=pro')
+            ->assertOk()
+            ->assertSee('<input type="hidden" name="plan" value="pro">', false)
+            ->assertSee(__('auth.register.selected_plan', ['plan' => 'Profesyonel', 'days' => 30]));
+
+        $this->post('/register', $this->payload(['plan' => 'pro']))->assertRedirect('/app');
+
+        $tenant = Tenant::query()->where('slug', 'yaman-kahvesi')->sole();
+        app(TenantContext::class)->set($tenant);
+        $subscription = Subscription::query()->sole();
+        $this->assertSame($pro->id, $subscription->plan_id);
+        $this->assertEqualsWithDelta(now()->addDays(30)->timestamp, $subscription->trial_ends_at->timestamp, 5);
+        $this->assertSame(30, SubscriptionEvent::query()->sole()->meta['trial_days']);
+    }
+
+    public function test_a_plan_without_its_own_trial_days_uses_the_configured_default(): void
+    {
+        Plan::factory()->create(['code' => 'pro', 'trial_days' => null]);
+        config(['subscriptions.trial_days' => 10]);
+
+        $this->post('/register', $this->payload(['plan' => 'pro']))->assertRedirect('/app');
+
+        app(TenantContext::class)->set(Tenant::query()->where('slug', 'yaman-kahvesi')->sole());
+        $this->assertEqualsWithDelta(now()->addDays(10)->timestamp, Subscription::query()->sole()->trial_ends_at->timestamp, 5);
+    }
+
+    /**
+     * @return array<string, array{0: array<string, mixed>|null}>
+     */
+    public static function unselectablePlans(): array
+    {
+        return [
+            'inactive' => [['code' => 'old', 'is_active' => false]],
+            'not public' => [['code' => 'secret', 'is_public' => false]],
+            'unknown' => [null],
+        ];
+    }
+
+    #[DataProvider('unselectablePlans')]
+    public function test_an_inactive_hidden_or_unknown_plan_falls_back_to_the_default_plan(?array $attributes): void
+    {
+        $code = $attributes['code'] ?? 'does-not-exist';
+
+        if ($attributes !== null) {
+            Plan::factory()->create($attributes);
+        }
+
+        $this->get('/register?plan='.$code)
+            ->assertOk()
+            ->assertDontSee('name="plan"', false);
+
+        $this->post('/register', $this->payload(['plan' => $code]))->assertRedirect('/app');
+
+        app(TenantContext::class)->set(Tenant::query()->where('slug', 'yaman-kahvesi')->sole());
+        $this->assertSame($this->plan->id, Subscription::query()->sole()->plan_id);
     }
 
     public function test_registered_owner_must_verify_their_email_before_entering_the_panel(): void

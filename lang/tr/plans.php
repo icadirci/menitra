@@ -33,6 +33,8 @@ return [
     ],
 
     'errors' => [
+        'invalid_transition' => 'Bu abonelik değişikliği mevcut durumda (:status) yapılamaz.',
+        'live_subscription_exists' => 'Bu işletmenin zaten devam eden bir aboneliği var.',
         'limit_reached' => 'Paketinizin :feature limitine (:limit) ulaştınız.',
         'not_included' => ':feature mevcut paketinize veya abonelik durumunuza dahil değil.',
     ],

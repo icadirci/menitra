@@ -25,7 +25,7 @@ use RuntimeException;
  * Public business registration. Creates, in one transaction, either all of:
  * user, tenant (+ name translation), owner membership, enabled locale,
  * default location, default menu attached to it, default QR code, default
- * theme settings (classic), trial subscription — or nothing. Every new tenant therefore starts trialing on the default plan.
+ * theme settings (classic), trial subscription — or nothing. Every new tenant therefore starts trialing on the selected (active, public) plan or the default plan.
  *
  * The user never receives a platform role here: platform roles are granted
  * only explicitly (platform:assign-role).
@@ -38,6 +38,22 @@ final class TenantRegistrationService
         private readonly ThemeService $themes,
     ) {}
 
+    /**
+     * The plan a new business starts its trial on: the requested plan when it
+     * is active and public (selectable), otherwise the default plan. The code
+     * comes from the visitor (/register?plan=), so it is only ever a hint.
+     */
+    public function planFor(?string $code): Plan
+    {
+        $selected = filled($code)
+            ? Plan::query()->selectable()->where('code', $code)->first()
+            : null;
+
+        return $selected
+            ?? Plan::query()->active()->where('code', config('subscriptions.default_plan'))->first()
+            ?? throw new RuntimeException('The default subscription plan is missing; run the PlanSeeder.');
+    }
+
     public function register(
         string $name,
         string $email,
@@ -45,9 +61,9 @@ final class TenantRegistrationService
         string $businessName,
         string $slug,
         string $locale,
+        ?string $planCode = null,
     ): User {
-        $plan = Plan::query()->active()->where('code', config('subscriptions.default_plan'))->first()
-            ?? throw new RuntimeException('The default subscription plan is missing; run the PlanSeeder.');
+        $plan = $this->planFor($planCode);
 
         return DB::transaction(function () use ($name, $email, $password, $businessName, $slug, $locale, $plan): User {
             $user = User::create([

@@ -47,6 +47,8 @@ class CreateNewUser implements CreatesNewUsers
                 Rule::notIn(config('tenancy.reserved_slugs')),
                 Rule::unique('tenants', 'slug'),
             ],
+            // A hint only: TenantRegistrationService falls back to the default plan.
+            'plan' => ['nullable', 'string', 'max:64'],
         ], [
             'slug.regex' => __('auth.register.slug_format'),
             'slug.not_in' => __('auth.register.slug_reserved'),
@@ -67,6 +69,7 @@ class CreateNewUser implements CreatesNewUsers
             // New businesses always start in the platform default (tr); they can
             // enable and switch locales later. Independent of the UI language.
             locale: config('locales.default'),
+            planCode: $data['plan'] ?? null,
         );
     }
 }

@@ -134,13 +134,13 @@
                             @endforeach
 
                             <a
-                                href="{{ route('register') }}"
+                                href="{{ route('register', ['plan' => $plan->code]) }}"
                                 @class([
                                     'inline-flex min-h-[54px] items-center justify-center rounded-input px-4 text-center font-semibold no-underline transition-colors',
                                     'bg-saffron-500 text-ink hover:bg-[#D9932C] hover:text-ink' => $plan->featured,
                                     'bg-forest-700 text-white hover:bg-forest-900 hover:text-white' => ! $plan->featured,
                                 ])
-                            >{{ __('marketing.pricing_page.start_trial', ['days' => $trialDays]) }}</a>
+                            >{{ __('marketing.pricing_page.start_trial', ['days' => $plan->trialDays ?? $trialDays]) }}</a>
 
                             @if ($highlights !== [])
                                 <div @class(['h-px', 'bg-paper/15' => $plan->featured, 'bg-line' => ! $plan->featured])></div>

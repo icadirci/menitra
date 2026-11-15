@@ -59,6 +59,23 @@ class SubscriptionPageTest extends TestCase
             ->assertSee(__('panels.app.subscription.none.title'));
     }
 
+    public function test_an_expired_subscription_is_explained_and_its_data_kept(): void
+    {
+        $subscription = app(SubscriptionService::class)->startTrial($this->tenant, Plan::factory()->create());
+        $this->travel(30)->days();
+        app(TenantContext::class)->set($this->tenant);
+        app(SubscriptionService::class)->processDue($subscription);
+        app(TenantContext::class)->clear();
+
+        $this->actingAs($this->owner())
+            ->get('/app/yaman-kahvesi/subscription')
+            ->assertOk()
+            ->assertSee(__('panels.app.subscription.expired.title'))
+            ->assertSee(__('plans.statuses.expired'))
+            ->assertSee(__('panels.app.subscription.fields.ended_at'))
+            ->assertDontSee(__('panels.app.subscription.none.title'));
+    }
+
     public function test_managers_are_forbidden(): void
     {
         $membership = TenantMembership::factory()->for($this->tenant)->manager()->create();
