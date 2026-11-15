@@ -571,8 +571,25 @@ return [
             'actions' => [
                 'download_svg' => 'Download SVG',
                 'download_png' => 'Download PNG',
+                'download_on_background' => 'Download with background',
                 'activate' => 'Activate',
                 'deactivate' => 'Deactivate',
+            ],
+            'background_modal' => [
+                'heading' => 'Download QR code with background',
+                'description' => 'Place your QR code on a ready-made design and download it as a print-ready PNG.',
+                'background' => 'Background',
+                'submit' => 'Download PNG',
+            ],
+            'backgrounds' => [
+                'cream-portrait' => 'Cream and green (portrait)',
+                'wood-portrait' => 'Wood (portrait)',
+                'emerald-portrait' => 'Emerald "Menü" (portrait)',
+                'terrace-portrait' => 'Café terrace (portrait)',
+                'emerald-landscape' => 'Emerald "Menü" (landscape)',
+                'cream-landscape' => 'Cream café "Menü" (landscape)',
+                'patisserie-landscape' => 'Patisserie "Menü" (landscape)',
+                'wood-landscape' => 'Wooden coffee "Menü" (landscape)',
             ],
             'confirm' => [
                 'delete' => 'A deleted QR code stops working for good and printed copies no longer open the menu. To pause it, deactivate it instead.',

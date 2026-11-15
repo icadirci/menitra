@@ -21,6 +21,7 @@ class EditQrCode extends EditRecord
         return [
             QrCodeResource::downloadAction('svg'),
             QrCodeResource::downloadAction('png'),
+            QrCodeResource::downloadOnBackgroundAction(),
             DeleteAction::make()
                 ->modalDescription(__('panels.app.qr_codes.confirm.delete'))
                 ->using(function (QrCode $record): bool {

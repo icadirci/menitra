@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Panels;
 
+use App\Enums\QrBackground;
 use App\Exceptions\CrossTenantWriteException;
 use App\Exceptions\PlanLimitExceededException;
 use App\Filament\App\Resources\QrCodes\Pages\CreateQrCode;
@@ -157,6 +158,54 @@ class QrCodeManagementTest extends TestCase
         $this->livewire($this->owner(), ListQrCodes::class)
             ->callTableAction('downloadSvg', $this->modaCode)
             ->assertFileDownloaded('qr-moda-vitrin-'.strtolower($this->modaCode->code).'.svg', $svg, 'image/svg+xml');
+    }
+
+    public function test_every_background_carries_a_readable_code_of_the_stable_url(): void
+    {
+        $images = app(QrCodeImage::class);
+        $url = $images->url($this->modaCode);
+
+        foreach (QrBackground::cases() as $background) {
+            [$x, $y, $width, $height] = $background->frame();
+            [$imageWidth, $imageHeight] = getimagesize($background->path()) ?: [0, 0];
+            $this->assertLessThanOrEqual($imageWidth, $x + $width, $background->value);
+            $this->assertLessThanOrEqual($imageHeight, $y + $height, $background->value);
+
+            $png = $images->pngOnBackground($this->modaCode, $background);
+
+            $this->assertSame('image/png', getimagesizefromstring($png)['mime'] ?? null, $background->value);
+            $this->assertSame($url, (string) (new QRCodeReader)->readFromBlob($png), $background->value);
+        }
+
+        $this->assertStringStartsWith('data:image/jpeg;base64,', $images->backgroundPreviewDataUri($this->modaCode, QrBackground::WoodLandscape));
+    }
+
+    public function test_branch_staff_download_codes_on_a_background(): void
+    {
+        $staff = $this->member('branchStaff', $this->moda);
+        $expected = app(QrCodeImage::class)->pngOnBackground($this->modaCode, QrBackground::WoodLandscape);
+
+        $this->livewire($staff, ListQrCodes::class)
+            ->assertTableActionVisible('downloadOnBackground', $this->modaCode)
+            ->callTableAction('downloadOnBackground', $this->modaCode, ['background' => 'wood-landscape'])
+            ->assertHasNoTableActionErrors()
+            ->assertFileDownloaded(
+                'qr-moda-vitrin-'.strtolower($this->modaCode->code).'-wood-landscape.png',
+                $expected,
+                'image/png',
+            );
+
+        $this->livewire($this->owner(), EditQrCode::class, ['record' => $this->modaCode->getKey()])
+            ->callAction('downloadOnBackground', ['background' => 'cream-portrait'])
+            ->assertFileDownloaded('qr-moda-vitrin-'.strtolower($this->modaCode->code).'-cream-portrait.png', contentType: 'image/png');
+    }
+
+    public function test_unknown_backgrounds_are_refused(): void
+    {
+        $this->livewire($this->owner(), ListQrCodes::class)
+            ->callTableAction('downloadOnBackground', $this->modaCode, ['background' => '../../../.env'])
+            ->assertHasTableActionErrors(['background'])
+            ->assertNoFileDownloaded();
     }
 
     public function test_owner_creates_a_code_deep_linked_to_an_attached_menu(): void

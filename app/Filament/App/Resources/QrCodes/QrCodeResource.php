@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Filament\App\Resources\QrCodes;
 
+use App\Enums\QrBackground;
 use App\Filament\App\Navigation\AppNavigationGroup;
 use App\Filament\App\Resources\QrCodes\Pages\CreateQrCode;
 use App\Filament\App\Resources\QrCodes\Pages\EditQrCode;
@@ -152,6 +153,7 @@ class QrCodeResource extends Resource
             ->recordActions([
                 self::downloadAction('svg'),
                 self::downloadAction('png'),
+                self::downloadOnBackgroundAction(),
                 EditAction::make(),
                 self::toggleActiveAction(),
                 DeleteAction::make()
@@ -184,6 +186,58 @@ class QrCodeResource extends Resource
                     },
                     $images->filename($record, $format),
                     ['Content-Type' => $format === 'svg' ? 'image/svg+xml' : 'image/png'],
+                );
+            });
+    }
+
+    /**
+     * PNG of the code placed on one of the platform's printable backgrounds,
+     * chosen in a modal with a live preview. Also part of viewing.
+     */
+    public static function downloadOnBackgroundAction(): Action
+    {
+        return Action::make('downloadOnBackground')
+            ->label(__('panels.app.qr_codes.actions.download_on_background'))
+            ->icon(Heroicon::OutlinedPhoto)
+            ->color('gray')
+            ->authorize('view')
+            ->modalHeading(__('panels.app.qr_codes.background_modal.heading'))
+            ->modalDescription(__('panels.app.qr_codes.background_modal.description'))
+            ->modalSubmitActionLabel(__('panels.app.qr_codes.background_modal.submit'))
+            ->modalWidth('md')
+            ->schema(fn (QrCode $record): array => [
+                Select::make('background')
+                    ->label(__('panels.app.qr_codes.background_modal.background'))
+                    ->options(QrBackground::options())
+                    ->default(QrBackground::cases()[0]->value)
+                    ->selectablePlaceholder(false)
+                    ->required()
+                    ->live(),
+                Image::make(
+                    fn (Get $get): string => app(QrCodeImage::class)->backgroundPreviewDataUri(
+                        $record,
+                        QrBackground::tryFrom((string) $get('background')) ?? QrBackground::cases()[0],
+                    ),
+                    __('panels.app.qr_codes.preview_alt'),
+                )
+                    // Natural aspect ratio for portrait and landscape backgrounds.
+                    ->imageWidth('auto')
+                    ->imageHeight('auto')
+                    ->extraAttributes(['style' => 'max-width: 100%; max-height: 20rem'])
+                    ->alignCenter(),
+            ])
+            ->action(function (QrCode $record, array $data): StreamedResponse {
+                // The Select only accepts its options; from() fails closed on anything else.
+                $background = QrBackground::from((string) ($data['background'] ?? ''));
+                $images = app(QrCodeImage::class);
+                $content = $images->pngOnBackground($record, $background);
+
+                return response()->streamDownload(
+                    function () use ($content): void {
+                        echo $content;
+                    },
+                    $images->filename($record, 'png', $background),
+                    ['Content-Type' => 'image/png'],
                 );
             });
     }

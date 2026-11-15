@@ -571,8 +571,25 @@ return [
             'actions' => [
                 'download_svg' => 'SVG indir',
                 'download_png' => 'PNG indir',
+                'download_on_background' => 'Arka planlı indir',
                 'activate' => 'Aktifleştir',
                 'deactivate' => 'Pasifleştir',
+            ],
+            'background_modal' => [
+                'heading' => 'Arka planlı QR kod indir',
+                'description' => 'QR kodunuzu hazır bir tasarımın üzerine yerleştirip baskıya hazır PNG olarak indirin.',
+                'background' => 'Arka plan',
+                'submit' => 'PNG indir',
+            ],
+            'backgrounds' => [
+                'cream-portrait' => 'Krem ve yeşil (dikey)',
+                'wood-portrait' => 'Ahşap (dikey)',
+                'emerald-portrait' => 'Zümrüt "Menü" (dikey)',
+                'terrace-portrait' => 'Kafe terası (dikey)',
+                'emerald-landscape' => 'Zümrüt "Menü" (yatay)',
+                'cream-landscape' => 'Krem kafe "Menü" (yatay)',
+                'patisserie-landscape' => 'Pastane "Menü" (yatay)',
+                'wood-landscape' => 'Ahşap kahve "Menü" (yatay)',
             ],
             'confirm' => [
                 'delete' => 'Silinen QR kod kalıcı olarak çalışmaz hale gelir ve basılı kopyalar artık menüyü açmaz. Geçici olarak durdurmak için pasifleştirmeyi tercih edin.',
