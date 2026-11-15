@@ -82,7 +82,7 @@ Version bumps come from one model observer, `App\Observers\MenuCacheObserver` (r
 - **Time-dependent state:** open now, serving now and whether a timed sold-out has expired (`LiveMenuState`), computed per request. The snapshot only carries the raw `soldOutUntil` timestamp.
 - **Access decisions** outside `ResolvedTenant.access_until`. That value is a timestamp compared at request time, so expiry takes effect even if the cache is warm.
 - The unavailable page, sent with `Cache-Control: no-store`.
-- User-specific or authorization-sensitive data, which is never put under shared keys.
+- User-specific or authorization-sensitive data, which is never put under shared keys. The `/app` dashboard is not cached at all: its queries are few and constant, its rows depend on the member's branches and its stock and subscription state on the clock. If it ever needs caching, keys are built by `MenuCacheKeys` and include the tenant, the membership and the tenant version.
 - Eloquent models. Only plain DTO data (`MenuSnapshot`, `ResolvedTenant`) is stored.
 
 ## HTTP caching

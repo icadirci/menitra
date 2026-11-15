@@ -7,7 +7,8 @@ namespace App\Events;
 use Illuminate\Foundation\Events\Dispatchable;
 
 /**
- * Analytics hook, dispatched after the QR redirect response. No listener in v1.
+ * Analytics hook, dispatched after the QR redirect response. Listener in v1:
+ * RecordQrCodeScan (throttled qr_codes.last_scanned_at); scan analytics later.
  */
 final class QrCodeScanned
 {

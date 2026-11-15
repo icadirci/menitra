@@ -84,7 +84,7 @@ Tenant (business)
   2. Unknown code → 404. Inactive code, or a tenant that's suspended or expired past grace → the unavailable page (without revealing which tenant).
   3. If the target menu is no longer attached to the location, fall back to the location page.
   4. **302** redirect to `MenuUrlGenerator->for($location, $menu)`. It's 302 rather than 301 so browsers never cache the target.
-  5. Dispatch `QrCodeScanned` after the response. There is no listener in v1. Analytics later adds a listener and a `qr_scans` table, with no QR reprint.
+  5. Dispatch `QrCodeScanned` after the response. The v1 listener `RecordQrCodeScan` updates `qr_codes.last_scanned_at` with one conditional `UPDATE` (matched by id and tenant id from the resolver, at most once per hour per code, no model events, so no cache version bump); the dashboard's onboarding step "scan your QR code" reads it. Analytics later adds a `qr_scans` table, with no QR reprint.
 - Because the target is computed at scan time, changing the slug, subdomain or a future custom domain never breaks printed codes.
 - Registration creates one default QR code for the default location.
 - **Panel module (B8):** `QrCodeResource` in `/app` (authorization matrix in [overview.md](overview.md#admin-and-business-panels)). Writes go through `QrCodeService`: `max_qr_codes` via `FeatureGate::ensureCanCreate()` on create, the branch must belong to the tenant and not be deleted, a deep-linked `menu_id` must be attached to that branch (`location_menu`), and the `code` is never changed. Deleting is owner-only; deactivating is the reversible way to stop a printed code.
@@ -184,7 +184,7 @@ Future modules (ordering, table service, waiter calls, reservations) add new tab
 - Extra groups already define `min_select`, `max_select` and `is_required`.
 - `qr_codes.table_label` exists for table-bound QR codes.
 - Prices are integer kuruş.
-- The future dashboard writes through services and policies. Observers handle cache invalidation automatically.
+- The `/app` panel (incl. the dashboard) writes through services and policies. Observers handle cache invalidation automatically.
 
 ## Tests
 

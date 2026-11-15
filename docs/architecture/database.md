@@ -126,7 +126,7 @@
 
 | Table | Columns | Constraints / indexes |
 |---|---|---|
-| `qr_codes` 🔒 | `code` (10-character random Crockford base32), `location_id`, `menu_id` nullable (deep link), `label`, `table_label` nullable (reserved for future table service), `is_active`, `last_scanned_at` nullable | unique `code` (global) |
+| `qr_codes` 🔒 | `code` (10-character random Crockford base32), `location_id`, `menu_id` nullable (deep link), `label`, `table_label` nullable (reserved for future table service), `is_active`, `last_scanned_at` nullable (set by `RecordQrCodeScan`, at most hourly) | unique `code` (global) |
 | `qr_scans` | **Not created in v1.** Added with analytics, fed by the `QrCodeScanned` event | |
 
 ### Subscriptions

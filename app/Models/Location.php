@@ -15,6 +15,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
@@ -84,6 +85,15 @@ class Location extends Model
     public function qrCodes(): HasMany
     {
         return $this->hasMany(QrCode::class);
+    }
+
+    /**
+     * The branch's default QR code: its oldest active code (registration
+     * creates the first one with the default branch).
+     */
+    public function defaultQrCode(): HasOne
+    {
+        return $this->hasOne(QrCode::class)->ofMany(['id' => 'min'], fn ($query) => $query->where('is_active', true));
     }
 
     public function openingHours(): HasMany

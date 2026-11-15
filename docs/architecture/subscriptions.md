@@ -129,7 +129,7 @@ menu is online  ⇔  tenant.status = active  AND  access_until ≠ null  AND  no
   - premium themes fall back to `classic`
   - branding reappears
   - extra locales are still stored, but menus are served only in locales within the limit (the default first)
-  - creating new resources beyond limits is blocked in the future dashboard
+  - creating new resources beyond limits is blocked by the services; the `/app` dashboard shows usage against limits (`PlanUsageWidget`, information only)
 
 ## Payment architecture
 

@@ -104,7 +104,7 @@ GET {slug}.restano.app/{location}/{menu}?lang=en
 **QR scan**
 ```
 GET restano.app/q/{code} → QrCodeResolver (cached) → 302 to MenuUrlGenerator URL
-                         → QrCodeScanned event (analytics hook)
+                         → QrCodeScanned event (analytics hook; RecordQrCodeScan sets last_scanned_at)
 ```
 
 **Registration**
@@ -164,7 +164,7 @@ Business action matrix (each row is implemented with its module in Phase B):
 
 | Action | owner | manager | branch_staff |
 |---|---|---|---|
-| Dashboard | all branches | assigned branches | assigned branches (limited) |
+| Dashboard | all branches; onboarding checklist, subscription, plan usage, menu status, branches | assigned branches: menu status (menus on those branches), branches | assigned branches: branches (links, sold-out count, QR downloads) |
 | View locations | all | assigned | assigned |
 | Update location (details, hours, special hours) | all | assigned | — |
 | Create / delete / restore locations | yes | — | — |
@@ -216,7 +216,7 @@ Business          Business profile · Languages · Theme & appearance · Subscri
 | B7 | Branch operations: stock status (`location_item_states`), menu serving hours. **Done 2026-11-16:** `ManageStock` page for every role on its accessible branches (`LocationPolicy::manageStock`, `StockService`: for today / until a time / indefinitely); serving hours on the menu ↔ location attachment |
 | B8 | QR codes (`chillerlan/php-qrcode`, SVG + PNG). **Done 2026-11-15:** `QrCodeResource` (list/create/edit; query limited to codes of `accessibleLocations()`, so another branch's code is a 404). Target branch from `accessibleLocations()`, optional deep-linked menu only among menus attached to that branch; the submitted branch is re-checked (`QrCodePolicy::manageAt`, also when a code is moved) and `QrCodeService` enforces `max_qr_codes` on create, the branch (current tenant, not deleted) and the menu attachment. The `code` never changes. `QrCodeImage` renders SVG and PNG on demand from the stable `/q/{code}` URL (nothing is stored); download actions for every role on its branches, SVG preview on the edit page. Deactivation takes effect at once (the `qrmenu:qr:{code}` entry is forgotten by `MenuCacheObserver`); delete is owner-only |
 | B9 | Theme & appearance (`theme_settings`). **Done 2026-11-15:** `theme_settings` (one jsonb row per tenant and theme: colours, `MenuFontPair`, layout options) and `ManageTheme` (owner-only): theme choice plus the selected theme's settings, validated on the server by `MenuTheme::validator()` incl. WCAG AA contrast (`ColorContrast`); switching back restores a theme's settings. `ThemeService` allows only built themes (the other four are shown as "coming soon" until Phase 7) and gates newly choosing a premium theme with `FeatureGate` (`premium_themes`); keeping the current theme is never blocked and settings are never deleted. Branch override on the location form, owner-only (`LocationPolicy::setTheme`). Settings travel in `ResolvedTenant` (warm requests stay query-free); writes bump the tenant version and clear resolution entries. Registration writes the default `classic` row |
-| B10 | Dashboard widgets and onboarding checklist |
+| B10 | Dashboard widgets and onboarding checklist. **Done 2026-11-15:** widgets in `app/Filament/App/Widgets/` (Filament components only; the existing `Dashboard` page and `AccountWidget` are unchanged). Owner-only (`TenantPolicy::manageSettings`): `OnboardingChecklistWidget` (profile + logo, at least one item, a published menu actively attached to an active branch, opening hours of the default branch, theme chosen — a non-`classic` theme or a `theme_settings` row saved after registration —, a QR code scanned at least once), `SubscriptionStatusWidget` (plan, status, trial / grace / period end, `accessUntil()`, menu online or not — the same rule as the public menu) and `PlanUsageWidget` (`FeatureGate` usage / limit). Owner and manager: `MenuStatusWidget` (published / draft, active branches, item count; managers see menus attached to their branches, the edit link only where the manager content rule allows it). Every role: `BranchOverviewWidget` (rows from `accessibleLocations()`: public link from `MenuUrlGenerator`, items sold out right now with a link to the stock page filtered to that branch, the default QR code — `Location::defaultQrCode()`, the oldest active code — with SVG/PNG downloads). Checklist and online state come from `BusinessDashboard` (scoped, one query for all checklist steps); nothing about the checklist is stored and the widget disappears once every step is done. Nothing is cached: queries are constant per widget (tested against the number of branches and menus), the data is time-dependent and member-specific. `RecordQrCodeScan` (listener of `QrCodeScanned`) keeps `qr_codes.last_scanned_at`, written at most once an hour per code. Suspended tenants keep the explicit 403; without a live subscription the widgets say so (no subscription, menu offline, nothing new can be created) |
 | later | Team management / invitations, menu duplication, bulk price updates |
 
 ## Public marketing website
@@ -245,11 +245,13 @@ app/
                              ExtraSelectionType, SubscriptionStatus, SubscriptionEventType,
                              BillingInterval, PlanFeature
   Events/                    TenantRegistered, QrCodeScanned
+  Listeners/                 RecordQrCodeScan
   Exceptions/                TenantNotResolvedException, MenuUnavailableException
   Filament/
     Admin/                   Pages/ (Dashboard, ManageSiteSettings), Resources/ (Plans, Faqs, Testimonials)
     App/                     Pages/ (Dashboard, ManageLocales, EditBusinessProfile, ManageTheme, ViewSubscription, …),
-                             Resources/ (Locations, Menus, MenuItems, ExtraGroups), Widgets/,
+                             Resources/ (Locations, Menus, MenuItems, ExtraGroups),
+                             Widgets/ (OnboardingChecklist, SubscriptionStatus, PlanUsage, MenuStatus, BranchOverview),
                              Support/ (ServiceCall, PanelContext), Pages/ManageStock,
                              Forms/ (TranslatableFields, MoneyInput, TenantImageUpload)
   Http/

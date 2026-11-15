@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Providers;
 
 use App\Observers\MenuCacheObserver;
+use App\Services\Dashboard\BusinessDashboard;
 use App\Services\Subscription\FeatureGate;
 use App\Tenancy\Queue\TenantQueueListener;
 use App\Tenancy\TenantContext;
@@ -28,6 +29,9 @@ class TenancyServiceProvider extends ServiceProvider
 
         // Scoped like the context it depends on: limits are memoised per request/job.
         $this->app->scoped(FeatureGate::class);
+
+        // Dashboard read model, memoised per request like FeatureGate.
+        $this->app->scoped(BusinessDashboard::class);
     }
 
     public function boot(): void

@@ -30,6 +30,7 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Livewire\Attributes\Url;
 use UnitEnum;
 
 /**
@@ -48,6 +49,15 @@ class ManageStock extends Page implements HasTable
     protected static ?int $navigationSort = 20;
 
     protected static ?string $slug = 'stock';
+
+    /**
+     * Filters in the query string (?filters[location][value]=…), so the
+     * dashboard can link to a branch. The value is re-checked in location().
+     *
+     * @var array<string, mixed>|null
+     */
+    #[Url(as: 'filters')]
+    public ?array $tableFilters = null;
 
     /** @var Collection<int, Location>|null */
     private ?Collection $locations = null;
