@@ -86,7 +86,9 @@ Tenant (business)
   4. **302** redirect to `MenuUrlGenerator->for($location, $menu)`. It's 302 rather than 301 so browsers never cache the target.
   5. Dispatch `QrCodeScanned` after the response. There is no listener in v1. Analytics later adds a listener and a `qr_scans` table, with no QR reprint.
 - Because the target is computed at scan time, changing the slug, subdomain or a future custom domain never breaks printed codes.
-- Registration creates one default QR code for the default location. QR **images** and the panel module come with B8 (`chillerlan/php-qrcode`).
+- Registration creates one default QR code for the default location.
+- **Panel module (B8):** `QrCodeResource` in `/app` (authorization matrix in [overview.md](overview.md#admin-and-business-panels)). Writes go through `QrCodeService`: `max_qr_codes` via `FeatureGate::ensureCanCreate()` on create, the branch must belong to the tenant and not be deleted, a deep-linked `menu_id` must be attached to that branch (`location_menu`), and the `code` is never changed. Deleting is owner-only; deactivating is the reversible way to stop a printed code.
+- **Images:** `QrCodeImage` (`chillerlan/php-qrcode`, ECC level M, quiet zone) renders SVG and PNG (~900 px) on demand. They encode only `MenuUrlGenerator::qr()` — the stable URL — so they never change and are not stored on the `media` disk. Download file names are `qr-{label-slug}-{code}.{svg|png}`.
 - A code is normalised before lookup (case-insensitive; `I`/`L` → `1`, `O` → `0`, `U` → `V`). `/q/*` is limited by `throttle:qr` (60/min per IP); `QrCodeScanned` is dispatched with `defer()` after the response.
 
 ## Rendering pipeline

@@ -124,7 +124,7 @@ menu is online  ⇔  tenant.status = active  AND  access_until ≠ null  AND  no
   - `usage(Tenant $tenant, PlanFeature $feature): int` — current count, implemented per feature as its table exists (soft-deleted rows don't count; restoring a row is a creation and is checked)
   - `ensureCanCreate(Tenant $tenant, PlanFeature $feature): void` — throws `PlanLimitExceededException` (translated message)
 - The tenant must be the one in `TenantContext` (otherwise `CrossTenantWriteException`); no scope bypass is involved.
-- **Enforcement lives in backend services** (`TenantLocaleService::enable()`, `LocationService::create()` / `restore()`, later `MenuService`, …). Disabled buttons in the panel only inform the user.
+- **Enforcement lives in backend services** (`TenantLocaleService::enable()`, `LocationService::create()` / `restore()`, `MenuService::create()` / `restore()`, `MenuContentService::saveItem()`, `QrCodeService::create()`). Disabled buttons in the panel only inform the user.
 - **A downgrade never deletes content.** Content over a limit stays stored:
   - premium themes fall back to `classic`
   - branding reappears

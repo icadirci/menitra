@@ -172,7 +172,9 @@ Business action matrix (each row is implemented with its module in Phase B):
 | Create menus | yes | — | — |
 | Extra groups | yes | — | — |
 | Sold-out state per location | all | assigned | assigned |
-| QR codes: create / deactivate | yes | assigned locations | — (download for assigned locations) |
+| QR codes: view and download (SVG/PNG) | all | assigned locations | assigned locations |
+| QR codes: create, edit (label, target menu, branch), activate / deactivate | yes | assigned locations (old and new branch) | — |
+| QR codes: delete (breaks printed codes; deactivation is the reversible alternative) | yes | — | — |
 | Tenant settings: profile, languages, theme, subscription | yes | — | — |
 | Team: invitations, staff, branch assignment | later phase | — | — |
 | Permanent deletion | — | — | — |
@@ -211,7 +213,7 @@ Business          Business profile · Languages · Theme & appearance · Subscri
 | B5 | Items, allergens, dietary labels. **Done 2026-11-16:** `MenuItemResource`, `MenuContentService` (`max_items` on create), `MenuItemPolicy` (follows the item's menu; the submitted category is re-authorized) |
 | B6 | Variants, extra groups. **Done 2026-11-16:** `VariantsRelationManager` (one default per item), `ExtraGroupResource` + `ExtrasRelationManager` (owner-only, `ExtraGroupService`) |
 | B7 | Branch operations: stock status (`location_item_states`), menu serving hours. **Done 2026-11-16:** `ManageStock` page for every role on its accessible branches (`LocationPolicy::manageStock`, `StockService`: for today / until a time / indefinitely); serving hours on the menu ↔ location attachment |
-| B8 | QR codes (`chillerlan/php-qrcode`, SVG + PNG) |
+| B8 | QR codes (`chillerlan/php-qrcode`, SVG + PNG). **Done 2026-11-15:** `QrCodeResource` (list/create/edit; query limited to codes of `accessibleLocations()`, so another branch's code is a 404). Target branch from `accessibleLocations()`, optional deep-linked menu only among menus attached to that branch; the submitted branch is re-checked (`QrCodePolicy::manageAt`, also when a code is moved) and `QrCodeService` enforces `max_qr_codes` on create, the branch (current tenant, not deleted) and the menu attachment. The `code` never changes. `QrCodeImage` renders SVG and PNG on demand from the stable `/q/{code}` URL (nothing is stored); download actions for every role on its branches, SVG preview on the edit page. Deactivation takes effect at once (the `qrmenu:qr:{code}` entry is forgotten by `MenuCacheObserver`); delete is owner-only |
 | B9 | Theme & appearance (`theme_settings`) |
 | B10 | Dashboard widgets and onboarding checklist |
 | later | Team management / invitations, menu duplication, bulk price updates |
@@ -268,7 +270,7 @@ app/
     MenuItemDietaryLabel, QrCode, ThemeSetting, Plan, PlanPrice, PlanLimit,
     Subscription, SubscriptionEvent
   Observers/                 MenuContentObserver, LocationStateObserver, TenantObserver
-  Policies/                  LocationPolicy, TenantPolicy, Menu, QrCode, …
+  Policies/                  LocationPolicy, TenantPolicy, MenuPolicy, QrCodePolicy, …
   Providers/                 AppServiceProvider, FortifyServiceProvider, TenancyServiceProvider,
                              Filament/AdminPanelProvider, Filament/AppPanelProvider
   Services/
@@ -277,8 +279,8 @@ app/
     Translations/            TranslationWriter
     Media/                   MediaCleaner
     Menu/                    PublicMenuService, MenuSnapshotBuilder, MenuCache, MenuCacheKeys,
-                             LiveMenuState, MenuUrlGenerator, ThemeRenderer
-    QrCode/                  QrCodeResolver, QrCodeGenerator
+                             LiveMenuState, MenuUrlGenerator, ThemeRenderer, QrCodeResolver
+    QrCodes/                 QrCodeService (panel writes), QrCodeImage (SVG/PNG)
   Support/
     Menu/Data/               MenuSnapshot, TenantBrand, LocationInfo, MenuData, CategoryData,
                              ItemData, VariantData, ExtraGroupData, ExtraData, ThemeSettings
@@ -371,7 +373,7 @@ Working defaults apply until each item is confirmed.
 | Plan names, TRY prices, limits | Placeholder seeds; the `starter` limits in `PlanSeeder` are development placeholders, not a pricing decision |
 | Pricing shown KDV-inclusive or "+KDV" | Display-only decision; storage unaffected |
 | Trial / grace length | 14 days / 7 days |
-| QR image generation library | **Decided 2026-11-15:** `chillerlan/php-qrcode` (already installed with Filament) directly, SVG + PNG; no other QR package |
+| QR image generation library | **Decided 2026-11-15:** `chillerlan/php-qrcode` (already installed with Filament) directly, SVG + PNG; no other QR package. Images are rendered on demand by `QrCodeImage` and not stored: they encode only the stable `/q/{code}` URL, so they never change |
 | Production media storage | `media` disk is S3-ready; `league/flysystem-aws-s3-v3` is not installed and needs approval when production storage is set up |
 | Per-location price overrides | Deferred (`location_item_states` can take `price_override` later) |
 | Marketing locales | `tr` at `/`, `en` at `/en` |
