@@ -43,7 +43,8 @@ return [
     'reserved_slugs' => [
         'www', 'app', 'api', 'admin', 'dashboard', 'account', 'q', 'm', 'mail', 'smtp',
         'static', 'cdn', 'assets', 'img', 'docs', 'help', 'support', 'status', 'blog',
-        'billing', 'pricing', 'features', 'ozellikler', 'login', 'register',
+        'billing', 'pricing', 'fiyatlar', 'features', 'ozellikler', 'contact', 'iletisim',
+        'login', 'register',
     ],
 
 ];

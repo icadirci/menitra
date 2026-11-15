@@ -16,6 +16,22 @@ return [
         'qr_analytics' => 'QR scan analytics',
     ],
 
+    'allowance' => [
+        'max_locations' => '{1} :count branch|[2,*] :count branches',
+        'max_menus' => '{1} :count menu|[2,*] :count menus',
+        'max_items' => '{1} :count product|[2,*] :count products',
+        'max_languages' => '{1} :count language|[2,*] :count languages',
+        'max_qr_codes' => '{1} :count QR code|[2,*] :count QR codes',
+    ],
+
+    'allowance_unlimited' => [
+        'max_locations' => 'Unlimited branches',
+        'max_menus' => 'Unlimited menus',
+        'max_items' => 'Unlimited products',
+        'max_languages' => 'Unlimited languages',
+        'max_qr_codes' => 'Unlimited QR codes',
+    ],
+
     'errors' => [
         'limit_reached' => 'You have reached your plan\'s :feature limit (:limit).',
         'not_included' => ':feature is not included in your current plan or subscription status.',
@@ -24,6 +40,14 @@ return [
     'intervals' => [
         'monthly' => 'Monthly',
         'yearly' => 'Yearly',
+    ],
+
+    'statuses' => [
+        'trialing' => 'Trial',
+        'active' => 'Active',
+        'past_due' => 'Payment due',
+        'grace' => 'Grace period',
+        'expired' => 'Expired',
     ],
 
     'usage' => ':used / :limit',

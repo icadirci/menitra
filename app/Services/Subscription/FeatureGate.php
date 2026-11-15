@@ -79,6 +79,14 @@ class FeatureGate
     }
 
     /**
+     * Count features whose usage can be counted yet (their table exists).
+     */
+    public function tracksUsage(PlanFeature $feature): bool
+    {
+        return in_array($feature, [PlanFeature::MaxLocations, PlanFeature::MaxMenus, PlanFeature::MaxLanguages], true);
+    }
+
+    /**
      * Current number of rows for a count feature. Soft-deleted rows don't
      * count (restoring one is a creation and must be checked).
      */

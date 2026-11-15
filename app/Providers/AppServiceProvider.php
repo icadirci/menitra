@@ -5,7 +5,13 @@ declare(strict_types=1);
 namespace App\Providers;
 
 use App\Http\Middleware\RestrictLivewireFileEndpoints;
+use App\Services\Marketing\MarketingContent;
+use App\Support\MarketingUrl;
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 use Livewire\Features\SupportFileUploads\FilePreviewController;
 use Livewire\Livewire;
@@ -14,12 +20,39 @@ class AppServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        //
+        // Memoizes platform content (e.g. contact details) within one request.
+        $this->app->scoped(MarketingContent::class);
     }
 
     public function boot(): void
     {
         $this->restrictLivewireToTheCentralDomain();
+        $this->configureMarketing();
+    }
+
+    /**
+     * - Footer: platform contact details from the /admin site settings.
+     * - Contact form: per IP, 3 messages a minute and 10 an hour. Over the
+     *   limit the visitor is sent back to the form with an error instead of a
+     *   bare 429 page.
+     */
+    private function configureMarketing(): void
+    {
+        View::composer('components.marketing.footer', function ($view): void {
+            $view->with('contact', app(MarketingContent::class)->contactDetails());
+        });
+
+        RateLimiter::for('contact', function (Request $request) {
+            $back = fn () => redirect()
+                ->to(MarketingUrl::to('contact', fragment: 'contact-form'))
+                ->withInput($request->except(['_token']))
+                ->withErrors(['message' => __('marketing.contact_page.throttled')]);
+
+            return [
+                Limit::perMinute(3)->by('contact-minute|'.$request->ip())->response($back),
+                Limit::perHour(10)->by('contact-hour|'.$request->ip())->response($back),
+            ];
+        });
     }
 
     /**

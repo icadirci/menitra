@@ -6,6 +6,7 @@ namespace App\Models;
 
 use App\Enums\SubscriptionStatus;
 use App\Models\Concerns\BelongsToTenant;
+use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -43,5 +44,31 @@ class Subscription extends Model
     public function events(): HasMany
     {
         return $this->hasMany(SubscriptionEvent::class);
+    }
+
+    public function isLive(): bool
+    {
+        return $this->ended_at === null && $this->status !== SubscriptionStatus::Expired;
+    }
+
+    /**
+     * Until when the public menu stays online (docs/architecture/subscriptions.md):
+     * trial or period end plus the grace period, the grace end while in grace,
+     * null once expired or ended.
+     */
+    public function accessUntil(): ?CarbonImmutable
+    {
+        if (! $this->isLive()) {
+            return null;
+        }
+
+        $graceDays = (int) config('subscriptions.grace_days');
+
+        return match ($this->status) {
+            SubscriptionStatus::Trialing => $this->trial_ends_at?->addDays($graceDays),
+            SubscriptionStatus::Active, SubscriptionStatus::PastDue => $this->current_period_ends_at?->addDays($graceDays),
+            SubscriptionStatus::Grace => $this->grace_ends_at,
+            SubscriptionStatus::Expired => null,
+        };
     }
 }

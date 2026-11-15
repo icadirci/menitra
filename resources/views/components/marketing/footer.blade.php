@@ -1,18 +1,24 @@
 @props(['page' => 'home'])
 
+{{-- $contact (ContactDetails, /admin site settings) comes from the view composer in AppServiceProvider. --}}
+
 @php
     use App\Support\MarketingUrl;
 
     $columns = [
         __('marketing.footer.product') => [
             ['label' => __('marketing.nav.features'), 'href' => MarketingUrl::to('features')],
-            ['label' => __('marketing.nav.pricing'), 'href' => MarketingUrl::to('home', fragment: 'pricing')],
+            ['label' => __('marketing.nav.pricing'), 'href' => MarketingUrl::to('pricing')],
             ['label' => __('marketing.nav.examples'), 'href' => MarketingUrl::to('home', fragment: 'examples')],
         ],
         __('marketing.footer.account') => [
             ['label' => __('marketing.footer.register'), 'href' => route('register')],
             ['label' => __('marketing.footer.login'), 'href' => route('login')],
             ['label' => __('marketing.footer.reset'), 'href' => route('password.request')],
+        ],
+        __('marketing.footer.company') => [
+            ['label' => __('marketing.footer.contact'), 'href' => MarketingUrl::to('contact')],
+            ['label' => __('marketing.footer.help'), 'href' => MarketingUrl::to('home', fragment: 'faq')],
         ],
     ];
 @endphp
@@ -25,6 +31,42 @@
                     <x-ui.logo />
                 </a>
                 <p class="text-[15px] text-[#A9AEAA]">{{ __('marketing.footer.tagline') }}</p>
+
+                @if ($contact->email || $contact->phone)
+                    <ul class="flex flex-col gap-2 text-[15px]">
+                        @if ($contact->email)
+                            <li class="flex items-center gap-2.5">
+                                <x-ui.icon name="mail" :size="18" class="text-[#8E938F]" />
+                                <a href="mailto:{{ $contact->email }}" class="break-all text-paper no-underline hover:text-saffron-500">{{ $contact->email }}</a>
+                            </li>
+                        @endif
+                        @if ($contact->phone)
+                            <li class="flex items-center gap-2.5">
+                                <x-ui.icon name="chat" :size="18" class="text-[#8E938F]" />
+                                <a href="{{ $contact->telUrl() }}" class="text-paper no-underline hover:text-saffron-500">{{ $contact->phone }}</a>
+                                @if ($contact->whatsappUrl())
+                                    <a href="{{ $contact->whatsappUrl() }}" class="text-sm text-saffron-500 underline-offset-4 hover:underline" rel="noopener" target="_blank">WhatsApp</a>
+                                @endif
+                            </li>
+                        @endif
+                    </ul>
+                @endif
+
+                @if ($contact->socials !== [])
+                    <ul class="flex flex-wrap gap-2" aria-label="{{ __('marketing.footer.social_label') }}">
+                        @foreach ($contact->socials as $social)
+                            <li>
+                                <a
+                                    href="{{ $social['url'] }}"
+                                    class="inline-flex size-10 items-center justify-center rounded-input border border-white/10 text-[#E8E9E6] hover:border-saffron-500 hover:text-saffron-500"
+                                    rel="noopener me"
+                                    target="_blank"
+                                    aria-label="{{ __('marketing.footer.social_link', ['network' => $social['network']->label()]) }}"
+                                ><x-ui.icon :name="$social['network']->value" :size="18" /></a>
+                            </li>
+                        @endforeach
+                    </ul>
+                @endif
             </div>
 
             <div class="flex flex-wrap gap-x-16 gap-y-8">

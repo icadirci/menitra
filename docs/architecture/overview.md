@@ -26,7 +26,7 @@ A multi-tenant SaaS platform for cafes, restaurants, bakeries and other hospital
 
 | In scope (current) | Out of scope (later, architecture must allow it) |
 |---|---|
-| Public marketing website, pricing page; `/admin` resources for its content: plans and prices, FAQ, testimonials | Other CRUD modules in `/admin` (tenants, users, subscriptions) |
+| Public marketing website, pricing page, contact page; `/admin` resources for its content: plans and prices, FAQ, testimonials, site settings (contact details) | Other CRUD modules in `/admin` (tenants, users, subscriptions) |
 | Registration, forgot password, email verification, minimal `/account` page | Payment gateway integration (iyzico / PayTR) |
 | Filament panel infrastructure: `/admin`, `/app/{tenant-slug}`, login, initial dashboards, roles | Team management in `/app` (invitations, staff CRUD, branch-assignment screens) |
 | Business management modules in `/app` ([Phase B](#business-panel-phase-b)) | |
@@ -149,7 +149,7 @@ Two independent Filament 5 panels, registered only on the central domain (`confi
 | Who | Users with `platform_role` (`super_admin`, `platform_staff`) | Users with an active membership in an active tenant (`owner`, `manager`, `branch_staff`) |
 | Code | `app/Filament/Admin/{Pages,Resources,Widgets}` | `app/Filament/App/{Pages,Resources,Widgets}` |
 | Look | Filament defaults; Restano logo, Forest primary, Stone gray | Filament defaults; Restano logo, Forest primary, Stone gray |
-| Resources | Plans (`PlanPolicy`: super admins only; saved by `PlanService`; never deleted), FAQ and testimonials (`FaqPolicy`, `TestimonialPolicy`: any platform role) | Phase B modules |
+| Resources | Plans (`PlanPolicy`: super admins only; saved by `PlanService`; never deleted), FAQ and testimonials (`FaqPolicy`, `TestimonialPolicy`: any platform role); page **Site settings** (`/admin/site-settings`, `ManageSiteSettings`, `SiteSettingPolicy`: super admins only) | Phase B modules |
 
 Authorization layers:
 
@@ -205,8 +205,8 @@ Business          Business profile · Languages · Theme & appearance · Subscri
 |---|---|
 | B0 | Scope and architecture documents |
 | B1 | Panel foundation: navigation groups, `Money`, `TranslatableFields` + `TranslationWriter`, `media` disk + `HasTenantMedia`, `tenant_locales` + `TenantLocaleService`, `plan_limits` + `FeatureGate`, `TenantPolicy`, Languages page |
-| B2 | Business profile, subscription page (read-only) |
-| B3 | Locations: resource, opening hours, special hours |
+| B2 | Business profile, subscription page (read-only). **Done 2026-11-15:** `EditBusinessProfile` (name/tagline/description per enabled locale, logo + cover; slug and currency read-only — a slug change is a support task for now) and `ViewSubscription` (plan, status, dates, `Subscription::accessUntil()`, limits with usage from `FeatureGate`), both owner-only |
+| B3 | Locations: resource, opening hours, special hours. **Done 2026-11-15:** `LocationResource` (list/create/view/edit; query limited to `accessibleLocations()`, so another branch is a 404), weekly hours as a repeater on the form, special days as a relation manager. Writes go through `LocationService` (plan limit on create and restore, translations, default-branch rules: exactly one default, which can't be deactivated or deleted; switching it is owner-only via `LocationPolicy::setDefault`) and `LocationHoursService` (server-side time, overlap and closed-day rules). Panel glue `App\Filament\App\Support\ServiceCall` maps service validation errors onto form fields and plan limits onto notifications. The location theme override comes with B9 |
 | B4 | Menus, location attachment (`LocationMenu` pivot model), categories |
 | B5 | Items, allergens, dietary labels |
 | B6 | Variants, extra groups |
@@ -223,11 +223,11 @@ Business          Business profile · Languages · Theme & appearance · Subscri
 - Pages:
   - Home
   - Features (`/ozellikler` · `/en/features`): copy in `marketing.features_page`; it claims only what this architecture provides — design mock-up claims without a backend counterpart (PDF/print templates, table codes, extra languages/RTL, custom domains, automatic image compression, plan-specific perks) are left out and guarded by `FeaturesPageTest`
-  - Pricing (plans read from the DB, cached)
+  - Pricing (`/fiyatlar` · `/en/pricing`, `PricingController`): plans, prices and limits from `/admin` through `MarketingContent`; monthly/yearly toggle (Alpine), comparison table from `PlanFeature` limits, FAQs with placement `pricing` — see [subscriptions.md § Pricing page](subscriptions.md#pricing-page). Nav, footer and the home page (hero button, "compare all plans" under the pricing preview) link here
   - Themes showcase (live demo menus from `DemoTenantSeeder`, no hard-coded menu data)
-  - Contact (Form Request, rate limited, queued mail)
+  - Contact (`/iletisim` · `/en/contact`, `ContactController`): design `Contact.dc.html`. `ContactRequest` (Form Request) validates name, email, subject (`ContactSubject` enum) and message; `ContactMessageSender` queues `ContactMessageMail` (Redis queue → `queue` worker → Mailpit in development) to the site settings contact email, falling back to `mail.from.address` while none is set. The mail is a platform job (no tenant context), written in the platform default locale, Reply-To the visitor, visitor text escaped (no Markdown). Messages are not stored. Spam protection: `throttle:contact` (per IP 3/minute and 10/hour; over the limit the visitor is sent back to the form with an error) and a honeypot field (`ContactRequest::HONEYPOT`) — a filled honeypot gets the normal success redirect but nothing is sent. Post/Redirect/Get with a one-shot `contact_sent` flash for the success state. The channel card (email, phone/WhatsApp, support hours, office) and the footer's contact details and social links come from the **site settings** (`site_settings`, edited in `/admin` by super admins) through `MarketingContent::contactDetails()` (allow-listed `ContactDetails` DTO, memoized per request; the footer receives it from a view composer); empty fields are hidden. Nav, footer ("Company" column), the home FAQ lead ("Talk to us") and the home CTA ("Talk to sales") link here
   - Privacy and Terms
-- Locales: Turkish at `/`, English at `/en/…`, set by the `SetMarketingLocale` middleware. Route names are `marketing.{locale}.{page}` with a locale-independent page name; page paths are localised in `routes/web.php` (`$marketingPaths`, e.g. `ozellikler` ↔ `features`), so links, canonical and hreflang always go through `MarketingUrl::to($page)`. Every localised page path is also listed in `tenancy.reserved_slugs` (enforced by `FeaturesPageTest`). The nav marks the current page with `aria-current="page"`; sections without their own page yet link to home page anchors. All strings come from `lang/{locale}/marketing.php`. App locale `tr`, fallback `en`; Laravel's own strings are translated in `lang/tr/{validation,passwords,pagination,auth}.php` and `lang/tr.json`.
+- Locales: Turkish at `/`, English at `/en/…`, set by the `SetMarketingLocale` middleware. Route names are `marketing.{locale}.{page}` with a locale-independent page name; page paths are localised in `routes/web.php` (`$marketingPaths`, e.g. `ozellikler` ↔ `features`, `fiyatlar` ↔ `pricing`), so links, canonical and hreflang always go through `MarketingUrl::to($page)`. Every localised page path is also listed in `tenancy.reserved_slugs` (enforced by `FeaturesPageTest`). The nav marks the current page with `aria-current="page"`; sections without their own page yet link to home page anchors. All strings come from `lang/{locale}/marketing.php`. App locale `tr`, fallback `en`; Laravel's own strings are translated in `lang/tr/{validation,passwords,pagination,auth}.php` and `lang/tr.json`.
 - SEO: per-page meta and Open Graph component, canonical URLs, hreflang between tr and en, `sitemap.xml`.
 - Assets: `app.css` and `app.js`, which are never loaded on menu pages.
 
@@ -244,8 +244,9 @@ app/
   Events/                    TenantRegistered, QrCodeScanned
   Exceptions/                TenantNotResolvedException, MenuUnavailableException
   Filament/
-    Admin/                   Pages/Dashboard (platform panel; Resources/, Widgets/ later)
-    App/                     Pages/ (Dashboard, ManageLocales, …), Resources/, Widgets/,
+    Admin/                   Pages/ (Dashboard, ManageSiteSettings), Resources/ (Plans, Faqs, Testimonials)
+    App/                     Pages/ (Dashboard, ManageLocales, EditBusinessProfile, ViewSubscription, …),
+                             Resources/ (Locations, …), Widgets/, Support/ (ServiceCall),
                              Forms/ (TranslatableFields, MoneyInput, TenantImageUpload)
   Http/
     Controllers/
@@ -343,7 +344,7 @@ Each phase ends with tests run, a summary of changed files, and a review pause.
 | 2. Database foundation | Migrations not already created by Phase B, with composite FKs, enums, models, factories | DB rejects cross-tenant inserts; relationship tests pass |
 | 3. Subscriptions | Remainder: plan prices, lifecycle command (`plan_limits`, `FeatureGate` and `PlanSeeder` limits moved to B1) | Lifecycle and grace tests pass |
 | 4. Authentication | Fortify (registration, password reset, email verification), Blade auth views (tr/en), `TenantRegistrationService`, `/account`; `GET /login` → `/app/login` | Registration atomicity and auth tests pass |
-| 5. Marketing site | `components/ui` design system, marketing layout and pages, pricing from DB, tr/en, SEO. **Status (2026-11-15):** design system, auth pages, marketing layout, home page (`/` tr, `/en` en; routes `marketing.{locale}.{page}`; content from `MarketingContent`) and features page (`/ozellikler`, `/en/features`) done; pricing and contact pages next. Design source: `docs/design/source/` (see [Design reference](#design-reference)) | Pages render in both locales |
+| 5. Marketing site | `components/ui` design system, marketing layout and pages, pricing from DB, tr/en, SEO. **Status (2026-11-15):** design system, auth pages, marketing layout, home page (`/` tr, `/en` en; routes `marketing.{locale}.{page}`; content from `MarketingContent`) features page (`/ozellikler`, `/en/features`) pricing page (`/fiyatlar`, `/en/pricing`) and contact page (`/iletisim`, `/en/contact`, with `/admin` site settings) done. Design source: `docs/design/source/` (see [Design reference](#design-reference)) | Pages render in both locales |
 | 6. Public menu infrastructure | Snapshot builder, cache versions, `PublicMenuService`, routes, `/q/{code}`, unavailable page, `DemoTenantSeeder`, reference theme `classic` | Access, visibility, cache, query-count and QR tests pass |
 | 7. Themes | `minimal`, `bistro`, `cafe`, `grid`; theme showcase | Theme architecture and zero-query tests pass for all five |
 | 8. Hardening | CSP and security headers, HTTP caching/ETag, image upload pipeline, rate limits, performance pass | Security checklist and performance budget met |

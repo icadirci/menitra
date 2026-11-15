@@ -2,7 +2,7 @@
 
 > Status: **Approved — v0.4** (2026-11-15: `tenant_locales` without `is_default`, `location_item_states.sold_out_until`, `PlanFeature::max_qr_codes`). v0.3: platform roles, `TenantRole.branch_staff`, `location_user`.
 >
-> **Implemented so far:** `users.platform_role`, `tenants`, `tenant_translations`, `tenant_locales`, `tenant_user`, `locations`, `location_translations`, `location_user`, `menus`, `menu_translations`, `location_menu`, `plans` (+ `is_featured`), `plan_translations`, `plan_prices`, `plan_limits`, `subscriptions` (+ `plan_price_id`), `subscription_events`, `faqs`, `faq_translations`, `testimonials`, `testimonial_translations`. The rest of this document is the approved target schema. PostgreSQL. Every change goes through a migration; this document must be updated with it.
+> **Implemented so far:** `users.platform_role`, `tenants`, `tenant_translations`, `tenant_locales`, `tenant_user`, `locations`, `location_translations`, `location_opening_hours`, `location_special_hours`, `location_user`, `menus`, `menu_translations`, `location_menu`, `plans` (+ `is_featured`), `plan_translations`, `plan_prices`, `plan_limits`, `subscriptions` (+ `plan_price_id`), `subscription_events`, `faqs`, `faq_translations`, `testimonials`, `testimonial_translations`, `site_settings`, `site_setting_translations`. The rest of this document is the approved target schema. PostgreSQL. Every change goes through a migration; this document must be updated with it.
 
 ## Contents
 
@@ -96,8 +96,8 @@
 |---|---|---|
 | `locations` 🔒 | `slug`, `is_active`, `is_default`, `theme` nullable (override), `phone`, `email`, `whatsapp`, `address_line`, `district`, `city`, `postal_code`, `country_code` char(2) default `TR`, `latitude` / `longitude` numeric(9,6) nullable, `timezone` default `Europe/Istanbul`, `cover_path`, `sort_order`, `deleted_at` | unique (`tenant_id`, `slug`); partial unique (`tenant_id`) where `is_default` |
 | `location_translations` | `location_id` FK cascade, `locale`, `name`, `description` nullable | unique (`location_id`, `locale`) |
-| `location_opening_hours` 🔒 | `location_id`, `day_of_week` smallint (1–7, ISO), `opens_at` time, `closes_at` time | index (`location_id`, `day_of_week`). Several rows per day allowed (split shifts); `closes_at < opens_at` means open past midnight |
-| `location_special_hours` 🔒 | `location_id`, `date`, `is_closed`, `opens_at` / `closes_at` nullable | unique (`location_id`, `date`, `opens_at`). Covers holidays such as Bayram |
+| `location_opening_hours` 🔒 | `location_id`, `day_of_week` smallint (1–7, ISO), `opens_at` time, `closes_at` time | index (`location_id`, `day_of_week`); checks `day_of_week BETWEEN 1 AND 7`, `opens_at <> closes_at`. Several rows per day allowed (split shifts); `closes_at < opens_at` means open past midnight. Overlapping intervals of the same day are rejected by `LocationHoursService` |
+| `location_special_hours` 🔒 | `location_id`, `date`, `is_closed`, `opens_at` / `closes_at` nullable | unique (`location_id`, `date`, `opens_at`); partial unique (`location_id`, `date`) where `is_closed`; check: closed rows have no times, open rows have both (and they differ). A date is either closed or has non-overlapping intervals (`LocationHoursService`). The intervals of a date replace that weekday's hours. Covers holidays such as Bayram |
 | `location_item_states` 🔒 | `location_id`, `menu_item_id`, `is_sold_out` boolean, `sold_out_until` timestamp nullable (UTC, like every timestamp: the app timezone is UTC) | unique (`location_id`, `menu_item_id`). A missing row means the item default applies. Semantics: `is_sold_out = false` → on sale; `is_sold_out = true` and `sold_out_until IS NULL` → sold out until someone turns it back on; `is_sold_out = true` and `sold_out_until` in the future → sold out until then, on sale again automatically afterwards. Comparisons are in UTC at read time; **no scheduler** resets rows, and an expired row is simply treated as on sale |
 
 ### Menus and content
@@ -152,6 +152,8 @@ Platform-level (no `tenant_id`), managed in `/admin`, read only by `App\Services
 | `faq_translations` | `faq_id` FK cascade, `locale`, `question`, `answer` text | unique (`faq_id`, `locale`) |
 | `testimonials` | `author_name` (not translated), `is_published`, `sort_order` | index (`is_published`, `sort_order`) |
 | `testimonial_translations` | `testimonial_id` FK cascade, `locale`, `quote` text, `author_role` nullable | unique (`testimonial_id`, `locale`) |
+| `site_settings` | Platform contact details: `contact_email`, `phone`, `phone_has_whatsapp`, `{instagram,facebook,x,linkedin,youtube,tiktok}_url` (one column per `SocialNetwork` case), all nullable | Single row: `CHECK (id = 1)`; `SiteSetting::current()` creates it on first save in `/admin`, public pages only read (`existing()`) |
+| `site_setting_translations` | `site_setting_id` FK cascade, `locale`, `address` nullable, `support_hours` nullable | unique (`site_setting_id`, `locale`); no required field; read with per-field fallback to the platform default locale |
 
 ## Tenant integrity constraints
 
@@ -208,7 +210,7 @@ Composite foreign keys:
 | **One `{entity}_translations` table per entity** | **Chosen**: real FKs with cascade, unique per locale, typed columns, eager-loadable |
 
 - Base tables contain **no** translatable text columns. Each piece of text has a single source of truth.
-- Translatable entities: tenants, locations, menus, menu categories, menu items, variants, extra groups, extras, plans, marketing FAQ, testimonials. Platform-level ones (plans, FAQ, testimonials) use the platform locales (`config('locales.supported')`, default `config('locales.default')`) and are written by `TranslationWriter::syncPlatform()`.
+- Translatable entities: tenants, locations, menus, menu categories, menu items, variants, extra groups, extras, plans, marketing FAQ, testimonials, site settings. Platform-level ones (plans, FAQ, testimonials, site settings) use the platform locales (`config('locales.supported')`, default `config('locales.default')`) and are written by `TranslationWriter::syncPlatform()`.
 - The in-house trait `App\Models\Concerns\HasTranslations` provides:
   - `translations()` (hasMany)
   - `translate(?string $locale)`, with fallback order: requested locale → tenant default locale → first available

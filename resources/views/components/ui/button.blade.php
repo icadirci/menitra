@@ -19,6 +19,7 @@
             'secondary' => 'border border-line-strong bg-white text-ink hover:border-ink/40',
             'accent' => 'bg-saffron-500 text-ink hover:bg-[#D9932C]',
             'ghost' => 'text-forest-700 hover:text-forest-900 hover:underline underline-offset-4',
+            'inverse' => 'border border-paper/35 text-paper hover:bg-white/10',
             default => 'bg-forest-700 text-white shadow-cta hover:bg-forest-900',
         },
     ];

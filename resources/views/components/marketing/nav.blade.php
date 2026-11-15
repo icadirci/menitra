@@ -7,8 +7,9 @@
     $links = [
         ['label' => __('marketing.nav.features'), 'href' => MarketingUrl::to('features'), 'page' => 'features'],
         ['label' => __('marketing.nav.examples'), 'href' => MarketingUrl::to('home', fragment: 'examples')],
-        ['label' => __('marketing.nav.pricing'), 'href' => MarketingUrl::to('home', fragment: 'pricing')],
+        ['label' => __('marketing.nav.pricing'), 'href' => MarketingUrl::to('pricing'), 'page' => 'pricing'],
         ['label' => __('marketing.nav.faq'), 'href' => MarketingUrl::to('home', fragment: 'faq')],
+        ['label' => __('marketing.nav.contact'), 'href' => MarketingUrl::to('contact'), 'page' => 'contact'],
     ];
 @endphp
 

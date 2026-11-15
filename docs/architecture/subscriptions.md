@@ -84,7 +84,7 @@ access_until = match (status) {
 menu is online  ⇔  tenant.status = active  AND  access_until ≠ null  AND  now ≤ access_until
 ```
 
-- `access_until` is computed when the tenant is resolved and stored in the cached `ResolvedTenant`. Requests compare it to the current time with **no query**, so expiry takes effect on time even before the scheduled job runs.
+- `access_until` is implemented by `Subscription::accessUntil()` (also shown on the read-only subscription page in `/app`). It is computed when the tenant is resolved and stored in the cached `ResolvedTenant`. Requests compare it to the current time with **no query**, so expiry takes effect on time even before the scheduled job runs.
 - After access ends, the public menu renders the professional unavailable page (503, `no-store`, `noindex`); see [menu-system.md](menu-system.md#access-rules-and-the-unavailable-page). QR redirects lead to the same page.
 - The tenant can still log in and see `/account` with the reactivation path.
 
@@ -124,7 +124,7 @@ menu is online  ⇔  tenant.status = active  AND  access_until ≠ null  AND  no
   - `usage(Tenant $tenant, PlanFeature $feature): int` — current count, implemented per feature as its table exists (soft-deleted rows don't count; restoring a row is a creation and is checked)
   - `ensureCanCreate(Tenant $tenant, PlanFeature $feature): void` — throws `PlanLimitExceededException` (translated message)
 - The tenant must be the one in `TenantContext` (otherwise `CrossTenantWriteException`); no scope bypass is involved.
-- **Enforcement lives in backend services** (`TenantLocaleService::enable()`, later `LocationService`, `MenuService`, …). Disabled buttons in the panel only inform the user.
+- **Enforcement lives in backend services** (`TenantLocaleService::enable()`, `LocationService::create()` / `restore()`, later `MenuService`, …). Disabled buttons in the panel only inform the user.
 - **A downgrade never deletes content.** Content over a limit stays stored:
   - premium themes fall back to `classic`
   - branding reappears
@@ -144,11 +144,15 @@ menu is online  ⇔  tenant.status = active  AND  access_until ≠ null  AND  no
 
 ## Pricing page
 
-- Active, public plans with an active monthly price are read through `MarketingContent::plans()` (DTO `PricingPlan`: localised name/description, monthly and yearly `Money`, yearly-per-month and saving % computed from stored prices). Caching as `qrmenu:plans:{locale}` is deferred until `MenuCacheKeys` exists (Phase 6); the queries are eager-loaded and small.
-- Monthly/annual toggle (Alpine). The annual saving is computed from stored prices, never hard-coded.
-- Amounts are formatted with `NumberFormatter` (`tr_TR`), e.g. `₺1.299,00`. The English page uses the `en` locale with TRY.
-- Whether prices are shown KDV-inclusive or "+KDV" is an open decision; it affects display only.
-- CTA: `/register?plan={code}`. Registration validates the code and falls back to the default plan.
+- Routes: `/fiyatlar` (tr) and `/en/pricing` (en), route `marketing.{locale}.pricing`, `PricingController` → `MarketingContent` → `marketing/pricing.blade.php`. Central domain only; both paths are reserved tenant slugs.
+- Active, public plans with an active monthly price are read through `MarketingContent::plans()` (DTO `PricingPlan`: localised name/description, monthly and yearly `Money`, yearly-per-month and saving % computed from stored prices, and the plan's `plan_limits` as `feature => limit_value`). Only these allow-listed fields reach the views. Caching as `qrmenu:plans:{locale}` is deferred until `MenuCacheKeys` exists (Phase 6); the queries are eager-loaded (`translations`, `prices`, `limits`) and small.
+- Monthly/annual toggle (Alpine, `x-data="{ yearly: false }"`, an ARIA radiogroup). Without JS the monthly prices are shown. The toggle appears only when at least one plan has a yearly price; a plan without one keeps its monthly price with a "monthly only" note. The yearly view shows the yearly total, the per-month equivalent (`intdiv(yearly, 12)`) and the plan's saving.
+- **The annual saving is computed from stored prices, never hard-coded:** `floor((12 × monthly − yearly) × 100 / (12 × monthly))`, shown only when positive. The toggle badge (`MarketingContent::yearlySaving()`) shows the largest saving — "save X%" when every yearly-priced plan saves the same, otherwise "save up to X%".
+- Plan card bullet points (`PricingPlan::highlights()`) and the comparison table (`MarketingContent::comparison()`) are built only from `plan_limits`, in `PlanFeature` order: count features show the number or "unlimited" (`null`), boolean features a check or a dash; a missing row or `0` is "not included". A feature appears in the table only when at least one listed plan includes it, so features nobody offers (e.g. a reserved `custom_domain = 0`) are never advertised. Count features and boolean features are two row groups. These are display values; enforcement stays in `FeatureGate`.
+- Billing FAQ: published `Faq` entries with placement `pricing` (`MarketingContent::faqs(FaqPlacement::Pricing)`); the section is hidden when there are none. Home page FAQs (placement `home`) are not shown here.
+- Amounts are formatted with `NumberFormatter` (`Money::format()`, `tr_TR`), e.g. `₺1.299` (whole amounts without fraction). The English page uses the `en` locale with TRY. Limit numbers use the page locale (`1.000` / `1,000`).
+- Whether prices are shown KDV-inclusive or "+KDV" is an open decision; it affects display only (the page currently states neither).
+- CTA: `/register`. Plan selection at registration (`/register?plan={code}`) is **not implemented yet**: every trial starts on the default plan (`subscriptions.default_plan`), so the CTA carries no plan code and the trial length shown is `subscriptions.trial_days`.
 
 ## Data retention
 

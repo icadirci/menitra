@@ -15,8 +15,8 @@ use App\Tenancy\TenantContext;
  * the user's membership in the current tenant (TenantContext); without a
  * context, or for a location of another tenant, everything is denied.
  *
- * owner: everything on every location of the tenant.
- * manager: view and update assigned locations.
+ * owner: everything on every location of the tenant (incl. the default branch).
+ * manager: view and update assigned locations (details, hours, special days).
  * branch_staff: view assigned locations.
  */
 class LocationPolicy
@@ -53,6 +53,14 @@ class LocationPolicy
     }
 
     public function restore(User $user, Location $location): bool
+    {
+        return $this->ownerOf($user, $location);
+    }
+
+    /**
+     * Choosing the default branch is tenant-wide: owners only.
+     */
+    public function setDefault(User $user, Location $location): bool
     {
         return $this->ownerOf($user, $location);
     }

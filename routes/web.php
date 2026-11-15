@@ -1,6 +1,8 @@
 <?php
 
+use App\Http\Controllers\Marketing\ContactController;
 use App\Http\Controllers\Marketing\HomeController;
+use App\Http\Controllers\Marketing\PricingController;
 use App\Http\Middleware\SetMarketingLocale;
 use App\Support\MarketingUrl;
 use Illuminate\Support\Facades\Route;
@@ -23,6 +25,8 @@ use Illuminate\Support\Facades\Route;
 
 $marketingPaths = [
     'features' => ['tr' => 'ozellikler', 'en' => 'features'],
+    'pricing' => ['tr' => 'fiyatlar', 'en' => 'pricing'],
+    'contact' => ['tr' => 'iletisim', 'en' => 'contact'],
 ];
 
 Route::domain(config('tenancy.central_domain'))->group(function () use ($marketingPaths): void {
@@ -33,6 +37,11 @@ Route::domain(config('tenancy.central_domain'))->group(function () use ($marketi
             ->group(function () use ($locale, $marketingPaths): void {
                 Route::get('/', HomeController::class)->name('home');
                 Route::view($marketingPaths['features'][$locale] ?? 'features', 'marketing.features')->name('features');
+                Route::get($marketingPaths['pricing'][$locale] ?? 'pricing', PricingController::class)->name('pricing');
+                Route::get($marketingPaths['contact'][$locale] ?? 'contact', [ContactController::class, 'show'])->name('contact');
+                Route::post($marketingPaths['contact'][$locale] ?? 'contact', [ContactController::class, 'store'])
+                    ->middleware('throttle:contact')
+                    ->name('contact.store');
             });
     }
 });

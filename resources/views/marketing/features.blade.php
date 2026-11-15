@@ -180,7 +180,7 @@
             </div>
             <div class="flex flex-wrap gap-3">
                 <x-ui.button :href="route('register')" variant="accent" size="lg" class="font-bold">{{ __('marketing.features_page.cta.primary') }}</x-ui.button>
-                <a href="{{ MarketingUrl::to('home', fragment: 'pricing') }}" class="inline-flex min-h-14 items-center rounded-button border border-paper/35 px-7 font-semibold text-paper no-underline hover:border-paper/70 hover:text-paper">{{ __('marketing.features_page.cta.secondary') }}</a>
+                <a href="{{ MarketingUrl::to('pricing') }}" class="inline-flex min-h-14 items-center rounded-button border border-paper/35 px-7 font-semibold text-paper no-underline hover:border-paper/70 hover:text-paper">{{ __('marketing.features_page.cta.secondary') }}</a>
             </div>
         </div>
     </section>

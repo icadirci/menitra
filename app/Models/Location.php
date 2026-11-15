@@ -14,6 +14,7 @@ use Database\Factories\LocationFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
@@ -67,6 +68,16 @@ class Location extends Model
             ->withPivotValue('tenant_id', $this->tenant_id)
             ->withPivot(['is_active', 'sort_order'])
             ->withTimestamps();
+    }
+
+    public function openingHours(): HasMany
+    {
+        return $this->hasMany(LocationOpeningHour::class)->orderBy('day_of_week')->orderBy('opens_at');
+    }
+
+    public function specialHours(): HasMany
+    {
+        return $this->hasMany(LocationSpecialHour::class)->orderBy('date')->orderBy('opens_at');
     }
 
     public function mediaAttributes(): array

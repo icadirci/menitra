@@ -19,10 +19,10 @@ Area-specific rules live in [.claude/rules/](.claude/rules/) (backend, frontend,
 
 ## 1. Scope
 
-**In scope now:** public marketing website, pricing page, registration, forgot password, email verification, a minimal read-only `/account` page, public QR menu pages, stable QR redirects, five menu themes, the **Filament panel infrastructure** (`/admin` for the platform and `/app/{tenant-slug}` for businesses, each with login and an initial dashboard), and the **business management modules in `/app`** (Phase B, built step by step: business settings and languages, locations, menus and content, branch operations, QR codes, themes, dashboard — see [overview.md § Business panel](docs/architecture/overview.md#business-panel-phase-b)).
+**In scope now:** public marketing website, pricing page, contact page (queued mail, no storage), registration, forgot password, email verification, a minimal read-only `/account` page, public QR menu pages, stable QR redirects, five menu themes, the **Filament panel infrastructure** (`/admin` for the platform and `/app/{tenant-slug}` for businesses, each with login and an initial dashboard), and the **business management modules in `/app`** (Phase B, built step by step: business settings and languages, locations, menus and content, branch operations, QR codes, themes, dashboard — see [overview.md § Business panel](docs/architecture/overview.md#business-panel-phase-b)).
 
 **Out of scope — do not build unless explicitly requested:**
-- CRUD modules (Filament resources) in `/admin` (platform management) beyond the ones listed here. Exists: the admin panel infrastructure, its initial dashboard, and the **marketing site content resources** requested on 2026-11-15 — plans (prices, limits, translations; super admins only), marketing FAQ and testimonials (any platform role). Tenant/user management in `/admin` is still out of scope.
+- CRUD modules (Filament resources) in `/admin` (platform management) beyond the ones listed here. Exists: the admin panel infrastructure, its initial dashboard, and the **marketing site content resources** requested on 2026-11-15 — plans (prices, limits, translations; super admins only), marketing FAQ and testimonials (any platform role), and the **site settings page** (platform contact details: email, phone/WhatsApp, address, support hours, social links; super admins only). Tenant/user management in `/admin` is still out of scope.
 - Team management in `/app`: invitations, staff CRUD, membership and branch-assignment screens (later phase; memberships are created by registration, artisan or seeders).
 - Payment gateway integration (keep the provider-agnostic `PaymentGateway` contract only).
 - Online ordering, payment from the menu, waiter calling, table reservations (keep the design extensible for them).
@@ -99,7 +99,7 @@ Work proceeds phase by phase with a review pause between phases (details in [ove
 - S3-compatible media storage in production needs `league/flysystem-aws-s3-v3` (not installed; requires approval). The `media` disk config is ready for it.
 
 **Decided (2026-11-15):** QR images use the already-installed `chillerlan/php-qrcode` directly (SVG + PNG), no other QR package. Images are stored on the `media` disk (see [tenancy.md § File storage](docs/architecture/tenancy.md#file-storage)).
-- Marketing site locales: `tr` at `/`, `en` at `/en`; page paths are localised (`/ozellikler` ↔ `/en/features`, see [overview.md § Public marketing website](docs/architecture/overview.md#public-marketing-website)).
+- Marketing site locales: `tr` at `/`, `en` at `/en`; page paths are localised (`/ozellikler` ↔ `/en/features`, `/fiyatlar` ↔ `/en/pricing`, see [overview.md § Public marketing website](docs/architecture/overview.md#public-marketing-website)).
 
 ## 9. Docker Execution Strategy
 

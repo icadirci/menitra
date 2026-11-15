@@ -26,7 +26,7 @@
 ## Panels
 - `/admin` and `/app` are registered for the central domain only and never on tenant subdomains or custom domains.
 - `/admin` access requires an explicit `platform_role`; `/app` requires an active membership in an active tenant. Holding one never implies the other.
-- `/admin` resources are authorized by their policies, not by panel access alone: plans (prices, limits) are super-admin only and never deleted; marketing FAQ and testimonials allow any platform role. Platform content is public by design, but only published / public records with allow-listed fields reach the marketing pages (`MarketingContent`).
+- `/admin` resources are authorized by their policies, not by panel access alone: plans (prices, limits) are super-admin only and never deleted; marketing FAQ and testimonials allow any platform role; site settings (public contact details, `SiteSettingPolicy`) are super-admin only, checked in `canAccess()` and again in `save()`. Social links must be `https://` URLs. Platform content is public by design, but only published / public records with allow-listed fields reach the marketing pages (`MarketingContent`).
 - The `{tenant-slug}` in `/app/{tenant-slug}` is an identifier, not authorization: Filament checks `canAccessTenant()`, and `ResolveTenantFromMembership` re-verifies the membership before setting `TenantContext`. A tenant the user can't access returns 404.
 - Branch staff and managers act only on branches assigned to their membership; owners on all branches of their tenant.
 - Panel registration is disabled; accounts are created by `TenantRegistrationService` (business) or explicitly by a platform administrator / artisan command (platform roles).
@@ -39,6 +39,10 @@
 - The business panel requires a verified email (`EnsureEmailIsVerified`, Livewire-persistent); the admin panel doesn't.
 - Marketing and auth routes are registered for the central domain only; a tenant subdomain's `/` is 404 until public menus exist.
 - Queued jobs carry `tenant_id` in the payload and never inherit a context; jobs of missing, deleted or suspended tenants fail without running.
+
+## Public forms
+- The contact form validates through `ContactRequest`, is rate limited per IP (`throttle:contact`) and has a honeypot; a filled honeypot answers like a success and sends nothing.
+- Contact messages are only mailed (queued), never stored. The mail renders visitor input escaped (HTML view + plain text, no Markdown) and uses it only as Reply-To, never as From; names with line breaks are rejected.
 
 ## Sessions and domains
 - The session cookie is bound to the central domain only, never `.restano.app`, so tenant subdomains never receive auth cookies.

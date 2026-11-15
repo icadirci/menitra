@@ -33,7 +33,7 @@
                         {{ __('marketing.hero.cta_primary') }}
                         <x-ui.icon name="arrow-right" :size="18" :stroke="2" />
                     </x-ui.button>
-                    <x-ui.button :href="MarketingUrl::to('home', fragment: 'pricing')" variant="secondary" size="lg">{{ __('marketing.hero.cta_secondary') }}</x-ui.button>
+                    <x-ui.button :href="MarketingUrl::to('pricing')" variant="secondary" size="lg">{{ __('marketing.hero.cta_secondary') }}</x-ui.button>
                 </div>
                 <ul class="flex flex-wrap gap-x-5 gap-y-2 text-sm text-muted">
                     @foreach (__('marketing.hero.trust') as $point)
@@ -269,6 +269,10 @@
                         </div>
                     @endforeach
                 </div>
+                <x-ui.button :href="MarketingUrl::to('pricing')" variant="ghost" class="self-center">
+                    {{ __('marketing.pricing.compare_all') }}
+                    <x-ui.icon name="arrow-right" :size="18" :stroke="2" />
+                </x-ui.button>
             </div>
         </section>
     @endif
@@ -279,7 +283,11 @@
             <div class="mx-auto flex max-w-[1200px] flex-wrap gap-12">
                 <div class="flex flex-[1_1_320px] flex-col gap-4">
                     <h2 class="font-display text-[clamp(34px,4vw,52px)] leading-[1.04] font-bold tracking-[-0.035em]">{{ __('marketing.faq.title') }}</h2>
-                    <p class="max-w-[340px] text-muted">{{ __('marketing.faq.lead') }}</p>
+                    <p class="max-w-[340px] text-muted">
+                        {{ __('marketing.faq.lead') }}
+                        <a href="{{ MarketingUrl::to('contact') }}" class="font-semibold">{{ __('marketing.faq.contact_link') }}</a>
+                        {{ __('marketing.faq.lead_after') }}
+                    </p>
                 </div>
                 <div class="flex min-w-0 flex-[2_1_560px] flex-col gap-3">
                     @foreach ($faqs as $faq)
@@ -305,7 +313,10 @@
                 <h2 class="font-display text-[clamp(32px,4vw,52px)] leading-[1.02] font-bold tracking-[-0.035em] text-balance">{{ __('marketing.cta.title') }}</h2>
                 <p class="text-lg text-[#CFE0D6]">{{ __('marketing.cta.lead', ['days' => $trialDays]) }}</p>
             </div>
-            <x-ui.button :href="route('register')" variant="accent" size="lg" class="font-bold">{{ __('marketing.cta.primary') }}</x-ui.button>
+            <div class="flex flex-wrap gap-3">
+                <x-ui.button :href="route('register')" variant="accent" size="lg" class="font-bold">{{ __('marketing.cta.primary') }}</x-ui.button>
+                <x-ui.button :href="MarketingUrl::to('contact')" variant="inverse" size="lg">{{ __('marketing.cta.secondary') }}</x-ui.button>
+            </div>
         </div>
     </section>
 @endsection
