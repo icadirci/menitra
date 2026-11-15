@@ -287,3 +287,182 @@ html.menu-lock {
     color: #1f4d3b;
     font-weight: 600;
 }
+
+/* ---------------------------------------------------------------------------
+ * Shared building blocks of the Phase 7 themes (components/menu/item-details,
+ * open-state, contact-actions). Structure only; each theme sets the look
+ * under [data-theme='{key}'] and colours always come from --menu-*.
+ * ------------------------------------------------------------------------- */
+.menu-sr {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+}
+
+.menu-price {
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.menu-open-state {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.menu-open-state__dot {
+    width: 7px;
+    height: 7px;
+    flex: none;
+    border-radius: 999px;
+    background: currentColor;
+}
+
+.menu-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.menu-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    padding: 0 16px;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.menu-detail {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.menu-detail__section {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.menu-detail__title {
+    margin: 0;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 4px 8px;
+}
+
+.menu-detail__title small {
+    font-weight: 500;
+    color: var(--menu-muted);
+}
+
+.menu-detail__list {
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.menu-detail__row {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 0;
+}
+
+.menu-detail__row dt,
+.menu-detail__row dd {
+    margin: 0;
+}
+
+.menu-detail__row.is-muted {
+    color: var(--menu-muted);
+}
+
+.menu-detail__hint {
+    margin: 0;
+    font-size: 12.5px;
+    color: var(--menu-muted);
+}
+
+.menu-choices {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.menu-choice {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 44px;
+    padding: 0 14px;
+    font: inherit;
+    color: inherit;
+    background: transparent;
+    cursor: pointer;
+}
+
+.menu-choice:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.menu-choice small {
+    color: var(--menu-muted);
+}
+
+.menu-facts {
+    margin: 0;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.menu-fact {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.menu-fact--wide {
+    grid-column: 1 / -1;
+}
+
+.menu-fact dt {
+    font-size: 12px;
+    color: var(--menu-muted);
+}
+
+.menu-fact dd {
+    margin: 0;
+    font-weight: 600;
+}
+
+.menu-detail__labels {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+/* Detail sheet shell shared by the Phase 7 themes. */
+.menu-sheet {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    background: var(--menu-bg);
+    outline: none;
+}
+
+.menu-sheet__inner {
+    max-width: 560px;
+    margin: 0 auto;
+    min-height: 100%;
+}

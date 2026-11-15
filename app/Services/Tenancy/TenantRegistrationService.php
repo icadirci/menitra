@@ -8,6 +8,7 @@ use App\Enums\MenuTheme;
 use App\Enums\MenuType;
 use App\Enums\TenantRole;
 use App\Enums\TenantStatus;
+use App\Events\TenantRegistered;
 use App\Models\Location;
 use App\Models\Menu;
 use App\Models\Plan;
@@ -26,6 +27,8 @@ use RuntimeException;
  * user, tenant (+ name translation), owner membership, enabled locale,
  * default location, default menu attached to it, default QR code, default
  * theme settings (classic), trial subscription — or nothing. Every new tenant therefore starts trialing on the selected (active, public) plan or the default plan.
+ *
+ * After commit, TenantRegistered is fired (queued welcome mail).
  *
  * The user never receives a platform role here: platform roles are granted
  * only explicitly (platform:assign-role).
@@ -119,10 +122,14 @@ final class TenantRegistrationService
                 // Settings row of the starting theme (tenants.theme = classic).
                 $this->themes->createDefaults(MenuTheme::Classic);
 
-                $this->subscriptions->startTrial($tenant, $plan);
+                $subscription = $this->subscriptions->startTrial($tenant, $plan);
             } finally {
                 $previous !== null ? $this->context->set($previous) : $this->context->clear();
             }
+
+            // Fired after the transaction commits (ShouldDispatchAfterCommit),
+            // never after a rollback: welcome mail (SendWelcomeMail).
+            TenantRegistered::dispatch($user, $tenant, $businessName, $locale, $subscription->trial_ends_at);
 
             return $user;
         });

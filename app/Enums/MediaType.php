@@ -40,6 +40,20 @@ enum MediaType: string
         return array_keys(self::MIME_EXTENSIONS);
     }
 
+    /**
+     * Longest edge in pixels after upload (ImageNormalizer scales larger
+     * images down; smaller ones keep their size).
+     */
+    public function maxDimension(): int
+    {
+        return match ($this) {
+            self::Logo => 512,
+            self::Cover => 2000,
+            self::Location => 1600,
+            self::Category, self::Item => 1200,
+        };
+    }
+
     public function maxKilobytes(): int
     {
         return match ($this) {

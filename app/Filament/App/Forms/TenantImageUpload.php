@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Filament\App\Forms;
 
 use App\Enums\MediaType;
+use App\Services\Media\ImageNormalizer;
 use App\Services\Media\MediaCleaner;
 use App\Support\Media\TenantMediaPath;
 use App\Tenancy\TenantContext;
@@ -19,7 +20,8 @@ use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
  * per-type size limit. Validation runs on the server (Livewire): MIME
  * type, client extension and the file's actual bytes (finfo).
  *
- * Files are stored through MediaCleaner::store(), inside the page's save
+ * Every upload is re-encoded with gd (ImageNormalizer: orientation, size
+ * per MediaType, metadata stripped). Files are stored through MediaCleaner::store(), inside the page's save
  * transaction (the app panel runs with databaseTransactions()), so a failed
  * save removes the new file. The model's HasTenantMedia re-checks the path
  * and removes replaced files after commit.
@@ -46,6 +48,14 @@ final class TenantImageUpload
                     if (! $value instanceof UploadedFile
                         || ! in_array(TenantMediaPath::detectMimeType($value), $type->mimeTypes(), true)) {
                         $fail(__('panels.app.media.invalid_type'));
+
+                        return;
+                    }
+
+                    // Decoded size cap (gd re-encodes every upload): a small file
+                    // must not decompress into a memory-exhausting image.
+                    if (! ImageNormalizer::withinPixelLimit($value)) {
+                        $fail(__('panels.app.media.too_many_pixels', ['max' => '4096 × 4096']));
                     }
                 },
             ])

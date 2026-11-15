@@ -83,6 +83,7 @@ return [
     'closed' => 'Kapalı',
     'every_day' => 'Her gün',
     'directions' => 'Yol tarifi',
+    'address' => 'Adres',
     'call' => 'Ara',
     'whatsapp' => 'WhatsApp',
     'menus' => 'Menüler',

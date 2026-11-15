@@ -28,7 +28,7 @@
             <p class="max-w-[600px] text-[clamp(17px,1.5vw,19px)] text-pretty text-[#4C514E]">{{ __('marketing.features_page.lead') }}</p>
             <div class="flex flex-wrap justify-center gap-3">
                 <x-ui.button :href="route('register')" size="lg">{{ __('marketing.features_page.cta_primary') }}</x-ui.button>
-                <x-ui.button :href="MarketingUrl::to('home', fragment: 'examples')" variant="secondary" size="lg">{{ __('marketing.features_page.cta_secondary') }}</x-ui.button>
+                <x-ui.button :href="MarketingUrl::to('themes')" variant="secondary" size="lg">{{ __('marketing.features_page.cta_secondary') }}</x-ui.button>
             </div>
         </div>
     </section>

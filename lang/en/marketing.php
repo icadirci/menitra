@@ -13,6 +13,8 @@ return [
         'pricing_description' => 'Compare Restano plans, monthly and yearly prices and plan limits. Start with a free trial, no credit card needed.',
         'contact_title' => 'Contact — talk to the Restano team',
         'contact_description' => 'Questions about plans, setting up your menu or billing? Write to the Restano team and we’ll reply within one business day.',
+        'themes_title' => 'Menu themes — live demo menus',
+        'themes_description' => 'Five menu themes for cafés, restaurants and bakeries. Open a live demo menu for each and pick the one that fits your place.',
     ],
 
     'skip_to_content' => 'Skip to content',
@@ -191,6 +193,7 @@ return [
         'title' => 'One platform. Every kind of venue.',
         'lead' => 'From a third-wave espresso bar to a white-tablecloth dining room — every menu carries its own identity, and every one is built for the phone in your guest’s hand.',
         'note' => 'Sample venues',
+        'cta' => 'Open the live demo menus',
     ],
 
     'testimonials' => [
@@ -270,6 +273,9 @@ return [
         'social_label' => 'Social media',
         'social_link' => 'Restano on :network',
         'copyright' => '© :year Restano. Made for people who feed people.',
+        'privacy' => 'Privacy',
+        'terms' => 'Terms of use',
+        'themes' => 'Menu themes',
     ],
 
     'contact_page' => [
@@ -377,6 +383,28 @@ return [
                 ['name' => 'Brewed tea', 'note' => 'Tulip glass', 'price' => '₺45', 'dish' => 'tea'],
                 ['name' => 'Simit', 'note' => 'From the stone oven', 'price' => '₺35', 'dish' => 'simit'],
             ],
+        ],
+    ],
+
+    'showcase' => [
+        'eyebrow' => 'Menu themes',
+        'title' => 'Five looks. One menu behind them.',
+        'lead' => 'Every theme shows the same menu data — prices, sold-out items, allergens and languages — with its own identity. Open a live demo and try it on your phone.',
+        'list_label' => 'Menu themes',
+        'premium' => 'Premium',
+        'demo_venue' => 'Live demo: :venue',
+        'open_demo' => 'Open the live demo',
+        'new_tab' => 'opens in a new tab',
+        'no_demo' => 'The live demo for this theme is not available right now.',
+        'note' => 'Demo businesses are sample venues. You can change your theme, colours and fonts at any time in your panel; switching back restores your earlier settings.',
+        'cta_title' => 'Pick a theme and publish your menu today.',
+        'cta' => 'Start your free trial',
+        'themes' => [
+            'classic' => ['name' => 'Classic', 'description' => 'A clean list with a sticky category bar, warm café colours and arched pictures.'],
+            'minimal' => ['name' => 'Minimal', 'description' => 'Typography first: white space, hairline rows and small pictures.'],
+            'bistro' => ['name' => 'Bistro', 'description' => 'Dark and elegant, with serif headings and a signature dish up front.'],
+            'cafe' => ['name' => 'Café', 'description' => 'Warm tones, rounded product cards and today’s picks in a swipeable row.'],
+            'grid' => ['name' => 'Gallery', 'description' => 'Photo-first two-column grid in soft pastels — made for bakeries and desserts.'],
         ],
     ],
 

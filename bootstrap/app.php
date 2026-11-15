@@ -1,6 +1,7 @@
 <?php
 
 use App\Exceptions\MenuUnavailableException;
+use App\Http\Middleware\SecurityHeaders;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -23,6 +24,9 @@ return Application::configure(basePath: dirname(__DIR__))
         // signed-in users hitting `guest` routes (register, password reset) go to /app.
         $middleware->redirectGuestsTo(fn () => route('login'));
         $middleware->redirectUsersTo('/app');
+
+        // CSP and other security headers on every response, menus included.
+        $middleware->append(SecurityHeaders::class);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         // Tenant hosts serve only GET menu routes: any other method is a 404

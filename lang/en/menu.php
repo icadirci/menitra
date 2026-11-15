@@ -82,6 +82,7 @@ return [
     'closed' => 'Closed',
     'every_day' => 'Every day',
     'directions' => 'Directions',
+    'address' => 'Address',
     'call' => 'Call',
     'whatsapp' => 'WhatsApp',
     'menus' => 'Menus',

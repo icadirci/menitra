@@ -194,6 +194,9 @@
                 </li>
             @endforeach
         </ul>
+        <div class="mt-10 flex justify-center px-5">
+            <a href="{{ \App\Support\MarketingUrl::to('themes') }}" class="inline-flex min-h-11 items-center gap-2 rounded-input px-4 font-semibold text-saffron-500 underline-offset-4 hover:underline">{{ __('marketing.gallery.cta') }} →</a>
+        </div>
     </section>
 
     {{-- Testimonials (managed in /admin; hidden when none are published) --}}

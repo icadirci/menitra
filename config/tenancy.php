@@ -44,6 +44,7 @@ return [
         'www', 'app', 'api', 'admin', 'dashboard', 'account', 'q', 'm', 'mail', 'smtp',
         'static', 'cdn', 'assets', 'img', 'docs', 'help', 'support', 'status', 'blog',
         'billing', 'pricing', 'fiyatlar', 'features', 'ozellikler', 'contact', 'iletisim',
+        'themes', 'temalar', 'privacy', 'gizlilik', 'terms', 'kullanim-kosullari', 'sitemap',
         'login', 'register',
     ],
 
@@ -61,5 +62,18 @@ return [
         'resolution_ttl' => 3600,
         'snapshot_ttl' => 86400,
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Public menu rate limit
+    |--------------------------------------------------------------------------
+    |
+    | Requests per minute and IP on public menu pages (throttle:menu). Generous
+    | on purpose: guests of one venue often share the venue Wi-Fi's IP. QR
+    | redirects (/q/*) have their own limit (throttle:qr).
+    |
+    */
+
+    'menu_rate_limit' => (int) env('MENU_RATE_LIMIT', 300),
 
 ];

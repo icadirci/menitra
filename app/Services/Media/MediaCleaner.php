@@ -17,8 +17,9 @@ use Throwable;
  * Stores tenant images and removes files that are no longer referenced,
  * tied to the database transaction outcome:
  *
- * - store(): writes a new file and deletes it again if any open transaction
- *   rolls back, so a failed save leaves no orphan.
+ * - store(): re-encodes the image (ImageNormalizer), writes it and deletes
+ *   it again if any open transaction rolls back, so a failed save leaves no
+ *   orphan.
  * - deleteAfterCommit(): removes a replaced or force-deleted file only once
  *   the change is committed; a rollback keeps it.
  *
@@ -27,8 +28,13 @@ use Throwable;
  */
 final class MediaCleaner
 {
+    public function __construct(private readonly ImageNormalizer $images) {}
+
     public function store(Tenant $tenant, UploadedFile $file, MediaType $type): string
     {
+        // Re-encode with gd first: EXIF/GPS removed, scaled to the type's size.
+        $this->images->normalize($file, $type);
+
         $path = $file->storePubliclyAs(
             TenantMediaPath::directory($tenant, $type),
             TenantMediaPath::fileName($file),

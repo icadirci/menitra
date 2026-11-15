@@ -45,6 +45,10 @@ class AppServiceProvider extends ServiceProvider
         // Public QR redirects (/q/{code}): generous per-IP limit against enumeration.
         RateLimiter::for('qr', fn (Request $request) => Limit::perMinute(60)->by($request->ip()));
 
+        // Public menu pages: per-IP ceiling against slug/branch enumeration
+        // (unknown slugs are not cached, so each probe costs a query).
+        RateLimiter::for('menu', fn (Request $request) => Limit::perMinute((int) config('tenancy.menu_rate_limit'))->by('menu|'.$request->ip()));
+
         RateLimiter::for('contact', function (Request $request) {
             $back = fn () => redirect()
                 ->to(MarketingUrl::to('contact', fragment: 'contact-form'))

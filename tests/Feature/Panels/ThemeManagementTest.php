@@ -28,6 +28,8 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\View;
 use Illuminate\Validation\ValidationException;
+use Illuminate\View\FileViewFinder;
+use InvalidArgumentException;
 use Livewire\Features\SupportTesting\Testable;
 use Livewire\Livewire;
 use Tests\Support\BuildsMenus;
@@ -60,6 +62,41 @@ class ThemeManagementTest extends TestCase
         $this->cihangir = $this->location($this->tenant, 'cihangir');
         $menu = $this->menu($this->tenant, 'menu', [$this->moda, $this->cihangir]);
         $this->item($this->category($menu, 'Kahveler'), 'Türk Kahvesi', 15000);
+    }
+
+    /**
+     * Since Phase 7 every theme has views. To keep testing the "not built"
+     * rules, this swaps in a view finder that can't find one theme's views
+     * (MenuTheme::isBuilt() and ThemeRenderer then treat it as unbuilt).
+     */
+    private function hideTheme(MenuTheme $theme): void
+    {
+        $factory = app('view');
+        $current = $factory->getFinder();
+
+        $finder = new class($this->app['files'], $current->getPaths(), $current->getExtensions(), "themes.{$theme->value}.") extends FileViewFinder
+        {
+            public function __construct($files, array $paths, ?array $extensions, private readonly string $hidden)
+            {
+                parent::__construct($files, $paths, $extensions);
+            }
+
+            public function find($name)
+            {
+                if (str_starts_with($name, $this->hidden)) {
+                    throw new InvalidArgumentException("View [{$name}] not found.");
+                }
+
+                return parent::find($name);
+            }
+        };
+
+        foreach ($current->getHints() as $namespace => $paths) {
+            $finder->replaceNamespace($namespace, $paths);
+        }
+
+        $factory->setFinder($finder);
+        $this->assertFalse($theme->isBuilt());
     }
 
     private function buildMinimal(): void
@@ -124,6 +161,8 @@ class ThemeManagementTest extends TestCase
 
     public function test_owner_sees_the_page_with_coming_soon_themes(): void
     {
+        $this->hideTheme(MenuTheme::Grid);
+
         $this->actingAs($this->member())
             ->get('/app/konak/theme')
             ->assertOk()
@@ -239,11 +278,32 @@ class ThemeManagementTest extends TestCase
 
     public function test_themes_without_views_cannot_be_selected(): void
     {
+        $this->hideTheme(MenuTheme::Bistro);
         $this->enter($this->member());
 
         $this->expectException(ValidationException::class);
 
         app(ThemeService::class)->save($this->tenant, MenuTheme::Bistro, MenuTheme::Bistro->defaults());
+    }
+
+    public function test_every_built_theme_can_be_chosen_and_renders_publicly(): void
+    {
+        $this->enter($this->member());
+
+        foreach (MenuTheme::cases() as $theme) {
+            $this->assertTrue($theme->isBuilt(), $theme->value);
+
+            app(ThemeService::class)->save($this->tenant, $theme, $theme->defaults());
+            $this->assertSame($theme, $this->tenant->fresh()->theme);
+
+            $this->get(self::PATH.'/moda/menu')
+                ->assertOk()
+                ->assertSee('data-theme="'.$theme->value.'"', false)
+                ->assertSee('--menu-primary:'.$theme->defaults()['colors']['primary'], false);
+        }
+
+        // Nothing is shown as "coming soon" any more.
+        Livewire::test(ManageTheme::class)->assertDontSee(__('panels.app.theme.coming_soon'));
     }
 
     public function test_switching_back_to_a_theme_restores_its_settings(): void
@@ -355,6 +415,7 @@ class ThemeManagementTest extends TestCase
 
     public function test_the_branch_override_respects_built_themes_and_the_plan(): void
     {
+        $this->hideTheme(MenuTheme::Grid);
         $this->enter($this->member());
 
         try {

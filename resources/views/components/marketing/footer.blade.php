@@ -9,7 +9,7 @@
         __('marketing.footer.product') => [
             ['label' => __('marketing.nav.features'), 'href' => MarketingUrl::to('features')],
             ['label' => __('marketing.nav.pricing'), 'href' => MarketingUrl::to('pricing')],
-            ['label' => __('marketing.nav.examples'), 'href' => MarketingUrl::to('home', fragment: 'examples')],
+            ['label' => __('marketing.footer.themes'), 'href' => MarketingUrl::to('themes')],
         ],
         __('marketing.footer.account') => [
             ['label' => __('marketing.footer.register'), 'href' => route('register')],
@@ -83,6 +83,10 @@
 
         <div class="flex flex-wrap items-center justify-between gap-4 border-t border-white/10 pt-6 text-sm text-[#A9AEAA]">
             <span>{{ __('marketing.footer.copyright', ['year' => now()->year]) }}</span>
+            <nav class="flex flex-wrap gap-x-5 gap-y-2" aria-label="{{ __('legal.eyebrow') }}">
+                <a href="{{ MarketingUrl::to('privacy') }}" class="text-[#A9AEAA] no-underline hover:text-saffron-500">{{ __('marketing.footer.privacy') }}</a>
+                <a href="{{ MarketingUrl::to('terms') }}" class="text-[#A9AEAA] no-underline hover:text-saffron-500">{{ __('marketing.footer.terms') }}</a>
+            </nav>
             <x-marketing.language-switcher :page="$page" dark />
         </div>
     </div>

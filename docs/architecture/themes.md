@@ -1,6 +1,6 @@
 # Menu Themes
 
-> Status: **Approved — v0.4** (2026-11-15, B9: `theme_settings` with colours, font pair and layout options, contrast check, "Theme & appearance" page, owner-only branch override, themes without views listed as "coming soon"). v0.3 (2026-11-16: `classic` built in Phase 6; a theme without views falls back to `classic` until Phase 7). Themes are presentation layers only. All themes consume the same data contract and share all backend logic.
+> Status: **Approved — v0.5** (2026-11-15, Phase 7 — autorun: `minimal`, `bistro`, `cafe`, `grid` built; font pairs `inter` and `figtree`; shared detail components). v0.4 (2026-11-15, B9: `theme_settings` with colours, font pair and layout options, contrast check, "Theme & appearance" page, owner-only branch override, themes without views listed as "coming soon"). v0.3 (2026-11-16: `classic` built in Phase 6; a theme without views falls back to `classic` until Phase 7). Themes are presentation layers only. All themes consume the same data contract and share all backend logic.
 
 ## Contents
 
@@ -41,7 +41,7 @@ All writes go through `App\Services\Themes\ThemeService`; the panel only calls i
 | Choose the tenant theme and edit the selected theme's settings | **Theme & appearance** page (`ManageTheme`, `/app/{tenant}/theme`) | Owners (`TenantPolicy::manageSettings`, in `canAccess()` and again in `save()` / reset) | Theme must be built; a premium theme needs `premium_themes` when it is **newly** chosen; settings pass `MenuTheme::validator()` |
 | Branch override | Location form, "Appearance" section | Owners (`LocationPolicy::setTheme`); managers and branch staff see the field read-only, it is not dehydrated for them and a submitted value from them is a 403 | Same theme rules as above (`ThemeService::setLocationTheme`) |
 
-- **Built themes only.** `MenuTheme::isBuilt()` is true when both views exist. Until Phase 7 the other four themes are listed as **"coming soon"** (disabled option) and the server refuses them; they become selectable automatically when their views ship.
+- **Built themes only.** `MenuTheme::isBuilt()` is true when both views exist. A theme without views is listed as **"coming soon"** (disabled option) and the server refuses it. Since Phase 7 (2026-11-15) all five themes are built and selectable; the rule stays for future themes (tests simulate an unbuilt theme with a view finder that hides its views).
 - **Plan gating follows `FeatureGate`:** choosing a premium theme is a creation-like action (`ensureCanCreate(premium_themes)`, shown as the "not included" notification). Keeping or editing the theme already in use is never blocked, and nothing is deleted when the plan changes; the page shows a warning while the selected theme is rendered as `classic`.
 - Switching the theme in the form loads that theme's saved settings (or defaults). "Reset to defaults" only refills the form; nothing changes until saved.
 
@@ -49,13 +49,17 @@ All writes go through `App\Services\Themes\ThemeService`; the panel only calls i
 
 Themes are code (Blade and CSS), so they're registered in code rather than in a table. The `App\Enums\MenuTheme` string-backed enum is the registry:
 
-| Case | Character (working description) | Design reference (`docs/design/source/`) |
-|---|---|---|
-| `classic` | Reference theme. Clean list layout with a sticky category bar; warm Turkish-café palette, arched images | `MenuKonak`, `DetailKonak` (Young Serif / Figtree) |
-| `minimal` | Typography-first, lots of whitespace, few images | `MenuNoon`, `DetailNoon` (DM Sans / DM Mono) |
-| `bistro` | Dark, elegant, serif headings | `MenuArdoise`, `DetailArdoise` (Cormorant Garamond / Jost) |
-| `cafe` | Warm palette, rounded product cards | `MenuKiln`, `DetailKiln` (Manrope) |
-| `grid` | Photo-first grid layout, soft pastel palette | `MenuPetal`, `DetailPetal` (Fraunces / Nunito Sans) |
+| Case | Character | Design reference (`docs/design/source/`) | Default font pair · offered | Layout options |
+|---|---|---|---|---|
+| `classic` | Reference theme. Clean list layout with a sticky category bar; warm Turkish-café palette, arched images | `MenuKonak`, `DetailKonak` (Young Serif / Figtree) | `young_serif_figtree` · + `bricolage_inter`, `system` | `show_images`, `show_featured`, `image_shape` (`arch` \| `rounded`) |
+| `minimal` | Typography-first, white, hairline rows, small thumbnails, monospace prices | `MenuNoon`, `DetailNoon` (DM Sans / DM Mono) | `inter` · + `bricolage_inter`, `system` | `show_images`, `show_featured` |
+| `bistro` | Dark and elegant: framed cover, centred serif title, italic descriptions, round thumbnails, dotted price leaders, "signature" cards for featured items | `MenuArdoise`, `DetailArdoise` (Cormorant Garamond / Jost) | `system` (Georgia + system sans) · + `young_serif_figtree`, `bricolage_inter` | `show_images`, `show_featured` |
+| `cafe` | Warm palette, floating venue card over the cover, rounded product cards (text left, picture right), horizontal featured cards, rounded detail sheet | `MenuKiln`, `DetailKiln` (Manrope) | `figtree` · + `bricolage_inter`, `young_serif_figtree`, `system` | `show_images`, `show_featured` |
+| `grid` | Photo-first two-column grid, soft pastel palette, rounded cover with overlapping logo, detail as a floating card | `MenuPetal`, `DetailPetal` (Fraunces / Nunito Sans) | `young_serif_figtree` · + `figtree`, `bricolage_inter`, `system` | `show_featured`, `card_ratio` (`square` \| `portrait`) |
+
+**Decision (autorun, 2026-11-15) — fonts:** the design's fonts for the four new themes (DM Sans/Mono, Cormorant Garamond/Jost, Manrope, Fraunces/Nunito Sans) are not in `resources/fonts/`, and adding font files was not part of the unattended run. The themes therefore use only the already self-hosted families (Young Serif, Figtree, Bricolage Grotesque, Inter) plus system stacks; `MenuFontPair` gained `inter` (Inter/Inter) and `figtree` (Figtree/Figtree). `minimal` prints prices in the system monospace stack. Adding the design fonts later is a stylesheet + enum change only (new `MenuFontPair` cases, `@font-face` in the theme file).
+
+**Decision (autorun) — colours:** each theme's defaults follow its design palette and pass `MenuTheme::validator()` incl. the contrast check (`ThemeManagementTest` checks every case). Text is only ever placed on `bg`, `surface`, `primary` or `accent` (or a light mix of `text` into `surface`), so every text pair is covered by `contrastPairs()`; `ornament` is used only for decoration (covers, dots, borders, placeholders).
 
 The venue names in the design files (Kiln Coffee, Maison Ardoise, noon., Petal Bakehouse, Kahve Konağı) are sample content only; they become demo data, never theme keys or template strings (decided 2026-11-15).
 
@@ -126,6 +130,12 @@ resources/
 | `language-switcher` | `?lang=` links for the tenant's enabled locales |
 | `search` | Client-side filter over rendered items |
 | `branding-footer` | "Powered by Restano", hidden when the plan includes `remove_branding` |
+| `item-details` | Body of the detail sheet: variants, extra groups (Alpine display-only choices), preparation / calories / allergens, dietary labels (classes `menu-detail*`, `menu-choice`, `menu-fact`). Used by the four Phase 7 themes |
+| `item-status` | Popular and effective sold-out / unavailable badges (`$live->isSoldOut()`) |
+| `open-state` | "Open · until …" / "Closed · opens at …" from `LiveMenuState` |
+| `contact-actions` | WhatsApp or call, and directions links of a location |
+
+Implemented so far (2026-11-15): `price`, `badges`, `opening-hours`, `language-switcher`, `branding-footer`, `item-details`, `item-status`, `open-state`, `contact-actions`. Category navigation, menu switcher, item cards and the sheet shell are per theme (they carry most of each identity); `menu-base.css` holds the shared structure (`menu-sheet`, `menu-detail`, `menu-choices`, `menu-facts`, `menu-actions`).
 
 To override a component, a theme places a variant in `themes/{key}/components/` and uses it in its own views. It must take the same props.
 
@@ -140,7 +150,7 @@ To override a component, a theme places a variant in `themes/{key}/components/` 
   - `--menu-font-body`
   - `--menu-surface`, `--menu-muted`, `--menu-ornament` (cards, secondary text, decorative details)
 - Theme CSS uses these variables through Tailwind 4 (`@theme` / `var()`). There is one stylesheet per theme and no per-tenant CSS builds.
-- Fonts: a fixed, curated set of font pairs per theme (`MenuFontPair`: `young_serif_figtree`, `bricolage_inter`, `system`), self-hosted, never loaded from arbitrary user input. The font stacks come only from the enum and are emitted as `--menu-font-heading` / `--menu-font-body` on the menu root, overriding the theme stylesheet's defaults; a `@font-face` is downloaded only when its font is used.
+- Fonts: a fixed, curated set of font pairs per theme (`MenuFontPair`: `young_serif_figtree`, `bricolage_inter`, `inter`, `figtree`, `system`), self-hosted, never loaded from arbitrary user input. The font stacks come only from the enum and are emitted as `--menu-font-heading` / `--menu-font-body` on the menu root, overriding the theme stylesheet's defaults; a `@font-face` is downloaded only when its font is used.
 - Colors are validated as `#RRGGBB` by `settingsRules()`. Contrast (`App\Support\ColorContrast`, WCAG 2.x) must reach **4.5:1** for `text`, `muted` and `primary` on `bg` and `surface`, `accent` on `bg`, and `surface` text on `accent` (badges). `ornament` is decorative and not checked.
 - Settings shape (`theme_settings.settings`, jsonb):
 
@@ -151,13 +161,13 @@ To override a component, a theme places a variant in `themes/{key}/components/` 
    "layout": {"show_images": true, "show_featured": true, "image_shape": "arch"}}
   ```
 
-- Layout options are per theme. `classic`: `show_images` (pictures in the item list), `show_featured` (featured strip), `image_shape` (`arch` | `rounded`).
+- Layout options are per theme (see the [registry](#theme-registry)). `classic`: `show_images` (pictures in the item list), `show_featured` (featured strip), `image_shape` (`arch` | `rounded`); `grid`: `card_ratio` (`square` | `portrait`) instead of `show_images`, since it is photo-first (items without a picture get a pastel placeholder).
 - Mobile-first: every theme must work at 320px wide and with large text settings.
 
 ## Enforcing independence
 
 1. **Architecture test** (`tests/Architecture/ThemeIndependenceTest`): scans `resources/views/themes/**` and fails on `App\Models`, `App\Services`, `DB::`, `Cache::`, `auth(`, `request(`, `@php` blocks and `{!!`.
-2. **Contract test**: renders every `MenuTheme::cases()` theme, both the menu and the location view, from the same fake `MenuSnapshot`, with a query listener attached. It asserts **zero database queries** and a successful render.
+2. **Contract test**: renders every `MenuTheme::cases()` theme, both the menu and the location view, from the same fake `MenuSnapshot`, with a query listener attached. It asserts that **all five are built**, **zero database queries** and a successful render — also with every layout option flipped. A stylesheet test checks that each theme file is scoped, uses `@reference`, and declares `@font-face` for every font pair it offers.
 3. **Content test**: every theme renders all snapshot features (variants, extras, allergens, sold-out, featured, popular, hours, language switcher) or explicitly delegates to a shared component that does.
 
 ## Adding a theme

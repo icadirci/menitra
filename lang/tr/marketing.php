@@ -13,6 +13,8 @@ return [
         'pricing_description' => 'Restano paketlerini, aylık ve yıllık fiyatları ve paket limitlerini karşılaştırın. Ücretsiz denemeyle başlayın, kredi kartı gerekmez.',
         'contact_title' => 'İletişim — Restano ekibine yazın',
         'contact_description' => 'Paketler, menü kurulumu ya da faturalandırma hakkında sorunuz mu var? Restano ekibine yazın, bir iş günü içinde yanıtlayalım.',
+        'themes_title' => 'Menü temaları — canlı demo menüler',
+        'themes_description' => 'Kafe, restoran ve fırınlar için beş menü teması. Her birinin canlı demo menüsünü açın, mekânınıza uyanı seçin.',
     ],
 
     'skip_to_content' => 'İçeriğe geç',
@@ -191,6 +193,7 @@ return [
         'title' => 'Tek platform. Her türlü mekân.',
         'lead' => 'Üçüncü dalga bir espresso barından beyaz örtülü bir restorana kadar her menü kendi kimliğini taşır ve misafirin elindeki telefon için tasarlanır.',
         'note' => 'Örnek işletmeler',
+        'cta' => 'Canlı demo menüleri açın',
     ],
 
     'testimonials' => [
@@ -270,6 +273,9 @@ return [
         'social_label' => 'Sosyal medya',
         'social_link' => 'Restano :network hesabı',
         'copyright' => '© :year Restano. İnsanları doyuranlar için yapıldı.',
+        'privacy' => 'Gizlilik',
+        'terms' => 'Kullanım koşulları',
+        'themes' => 'Menü temaları',
     ],
 
     'contact_page' => [
@@ -377,6 +383,28 @@ return [
                 ['name' => 'Demleme Çay', 'note' => 'İnce belli bardak', 'price' => '₺45', 'dish' => 'tea'],
                 ['name' => 'Simit', 'note' => 'Taş fırından', 'price' => '₺35', 'dish' => 'simit'],
             ],
+        ],
+    ],
+
+    'showcase' => [
+        'eyebrow' => 'Menü temaları',
+        'title' => 'Beş görünüm. Arkasında tek menü.',
+        'lead' => 'Her tema aynı menü verisini — fiyatları, tükenen ürünleri, alerjenleri ve dilleri — kendi kimliğiyle gösterir. Canlı demoyu açın, telefonunuzda deneyin.',
+        'list_label' => 'Menü temaları',
+        'premium' => 'Premium',
+        'demo_venue' => 'Canlı demo: :venue',
+        'open_demo' => 'Canlı demoyu aç',
+        'new_tab' => 'yeni sekmede açılır',
+        'no_demo' => 'Bu temanın canlı demosu şu anda kullanılamıyor.',
+        'note' => 'Demo işletmeler örnek mekânlardır. Temanızı, renklerinizi ve yazı tiplerinizi panelden istediğiniz zaman değiştirebilirsiniz; bir temaya geri döndüğünüzde önceki ayarlarınız geri gelir.',
+        'cta_title' => 'Temanızı seçin, menünüzü bugün yayınlayın.',
+        'cta' => 'Ücretsiz denemeyi başlat',
+        'themes' => [
+            'classic' => ['name' => 'Klasik', 'description' => 'Yapışkan kategori çubuklu sade liste, sıcak kafe renkleri ve kemerli görseller.'],
+            'minimal' => ['name' => 'Minimal', 'description' => 'Önce tipografi: ferah boşluklar, ince çizgili satırlar ve küçük görseller.'],
+            'bistro' => ['name' => 'Bistro', 'description' => 'Koyu ve şık; serif başlıklar ve en önde imza tabak.'],
+            'cafe' => ['name' => 'Kafe', 'description' => 'Sıcak tonlar, yuvarlak ürün kartları ve kaydırılabilir günün önerileri.'],
+            'grid' => ['name' => 'Galeri', 'description' => 'Pastel tonlarda, fotoğraf öncelikli iki sütunlu ızgara — fırın ve tatlıcılar için.'],
         ],
     ],
 

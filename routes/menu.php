@@ -32,7 +32,7 @@ Route::domain($central)->group(function () use ($slug, $segment): void {
 
     Route::prefix('m/{tenant}')
         ->where(['tenant' => $slug, 'location' => $segment, 'menu' => $segment])
-        ->middleware([ResolveTenantFromRequest::class, ResolveMenuLocale::class])
+        ->middleware(['throttle:menu', ResolveTenantFromRequest::class, ResolveMenuLocale::class])
         ->name('menu.path.')
         ->group(function (): void {
             Route::get('/', TenantHomeController::class)->name('home');
@@ -43,7 +43,7 @@ Route::domain($central)->group(function () use ($slug, $segment): void {
 
 Route::domain('{tenant}.'.$central)
     ->where(['tenant' => $slug, 'location' => $segment, 'menu' => $segment])
-    ->middleware([ResolveTenantFromRequest::class, ResolveMenuLocale::class])
+    ->middleware(['throttle:menu', ResolveTenantFromRequest::class, ResolveMenuLocale::class])
     ->name('menu.subdomain.')
     ->group(function (): void {
         Route::get('/', TenantHomeController::class)->name('home');

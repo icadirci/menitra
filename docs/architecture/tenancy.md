@@ -69,7 +69,7 @@ Route model binding goes through the scope. A record that belongs to another ten
 | Central site | Host equals `config('tenancy.central_domain')` (`restano.app`) | v1 |
 | Subdomain | `{slug}.restano.app` | v1 |
 | Path | `restano.app/m/{slug}/…` | v1 |
-| Custom domain | `tenant_domains.domain` (verified) | Later. The table exists now; `DomainTenantResolver` is a reserved slot |
+| Custom domain | `tenant_domains.domain` (verified) | Later. The table exists (created 2026-11-15, `TenantDomain`, unused); `DomainTenantResolver` is a reserved slot |
 | Business panel | `restano.app/app/{tenant-slug}` — slug in the URL, **verified against the user's active membership** (Filament tenancy) | v1 |
 | `/account` | The logged-in user's membership (first active one until a selector exists): `ResolveAccountTenant` prefers active tenants, then the oldest membership, and sets `TenantContext` only after `membershipFor()` grants access. Request input is never used. Suspended-only → 403 page, no context; no membership → `/admin` for platform users, otherwise a 403 page | v1 (done 2026-11-15) |
 | QR code | `restano.app/q/{code}` → `qr_codes.tenant_id` → redirect | v1 |
@@ -77,7 +77,7 @@ Route model binding goes through the scope. A record that belongs to another ten
 Rules:
 
 - **A tenant ID sent by the client is never trusted.** Tenants are identified only by host, path slug, QR code or authenticated membership. A slug in a URL is only an identifier; in authenticated areas it is authorized against the membership before use.
-- Slugs are lowercase, match `^[a-z0-9](-?[a-z0-9])*$`, are 3–40 characters long, are globally unique, and are not on the reserved list in `config/tenancy.php`: `www, app, api, admin, dashboard, account, q, m, mail, smtp, static, cdn, assets, img, docs, help, support, status, blog, billing, pricing, login, register`.
+- Slugs are lowercase, match `^[a-z0-9](-?[a-z0-9])*$`, are 3–40 characters long, are globally unique, and are not on the reserved list in `config/tenancy.php`: `www, app, api, admin, dashboard, account, q, m, mail, smtp, static, cdn, assets, img, docs, help, support, status, blog, billing, login, register`, plus every localised marketing path (`pricing`/`fiyatlar`, `features`/`ozellikler`, `contact`/`iletisim`, `themes`/`temalar`, `privacy`/`gizlilik`, `terms`/`kullanim-kosullari`) and `sitemap` (enforced by `FeaturesPageTest`).
 - A slug can change. Printed QR codes remain valid because `/q/{code}` computes its target at scan time.
 - Public menu URLs are built only by `MenuUrlGenerator`. It chooses the tenant's canonical form: subdomain in v1, a verified primary custom domain later. Adding custom domains changes only this class and adds one resolver.
 
@@ -132,7 +132,7 @@ Livewire is used only by the panels, so its endpoints follow the panels:
 
 ## Allowed scope bypasses
 
-`withoutTenantScope()` may appear only in the places below. Each one must have a test.
+`withoutTenantScope()` may appear only in the places below. Each one must have a test. `TenantScopeBypassTest` (architecture, 2026-11-15) fails on any other file that calls it, on commands/jobs among them that aren't `TenantAgnostic`, and on removing `TenantScope` through `withoutGlobalScope(s)`.
 
 | Location | Reason |
 |---|---|
@@ -171,7 +171,23 @@ Livewire is used only by the panels, so its endpoints follow the panels:
   - Newly stored upload → `MediaCleaner::store()` is the only way files are written; it registers the new file for deletion on **rollback** of every open transaction level (`afterRollBack`, so an outer rollback after a committed savepoint also counts). A failed save therefore never leaves an orphan. `TenantImageUpload` stores inside the save transaction (the `app` panel runs with `databaseTransactions()`). Rollback cleanup is tied to the moment a file is written, never to a model's `saving`, so a rolled-back save can't delete a file that another record still references.
   - Deletes are idempotent; failures are logged and never break the request.
 - **Access:** menu images are public by nature. Isolation comes from unguessable UUID paths, ownership checks on every write and delete, and no directory listing.
-- Images are re-encoded and resized in Phase 8 (dependency approval pending).
+- **Re-encoding (Phase 8, done 2026-11-15 — autorun, with the bundled `gd` extension, no new dependency):** `MediaCleaner::store()` first runs `App\Services\Media\ImageNormalizer`: JPEG EXIF orientation is applied, the image is scaled down to `MediaType::maxDimension()` (logo 512, cover 2000, location 1600, category/item 1200 px on the longest edge; smaller images keep their size) and written again **in the same format** (JPEG q82, PNG with alpha, WebP q80), which drops all metadata (EXIF incl. GPS, comments, appended payloads). The stored extension is unchanged (still from the sniffed MIME type). `TenantImageUpload` additionally rejects images over 4096 × 4096 decoded pixels (`ImageNormalizer::MAX_PIXELS`, read from the header with `getimagesize`, never decoded) so a small file can't exhaust PHP memory. A file gd can't decode after passing validation (e.g. animated WebP) is kept as uploaded and logged. No format conversion (e.g. to WebP) and no thumbnails yet.
+
+## Security headers
+
+`App\Http\Middleware\SecurityHeaders` (global, Phase 8 — 2026-11-15, autorun) adds to every response, menus and error pages included, unless a header is already set: `Content-Security-Policy`, `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy: strict-origin-when-cross-origin`, `Permissions-Policy` (camera, microphone, geolocation, payment, usb off) and, over HTTPS only, `Strict-Transport-Security: max-age=31536000` (no `includeSubDomains`).
+
+| CSP directive | Public profile (marketing, auth, `/account`, QR menus) | Panel profile (`/admin`, `/app`, Livewire) |
+|---|---|---|
+| `default-src` | `'self'` | same |
+| `script-src` | `'self' 'unsafe-eval'` | `'self' 'unsafe-inline' 'unsafe-eval'` |
+| `style-src` | `'self' 'unsafe-inline'` | same |
+| `img-src` | `'self' data:` + media disk origin | + `blob:` (upload previews) |
+| `font-src` / `connect-src` | `'self'` (+ `data:` fonts) | same |
+| `worker-src` | `'self'` | + `blob:` |
+| `form-action` · `frame-ancestors` · `base-uri` · `object-src` | `'self'` · `'none'` · `'self'` · `'none'` | same |
+
+**Decisions / exceptions (autorun, review):** `'unsafe-eval'` everywhere because Alpine's standard build evaluates expressions with `new Function` (Alpine's CSP build would be a new npm dependency). `'unsafe-inline'` styles because the menu root carries the tenant's CSS custom properties in a `style` attribute (ETag-cached pages can't use nonces) and marketing views use inline style attributes. Panels additionally allow inline scripts because Filament and Livewire inject them; nonces for them are a possible later hardening. The Vite dev server origin (and its `ws:` origin) is added only while `public/hot` exists. Tests (`SecurityHeadersTest`) render every marketing page, the auth pages, `/account` and menus of all five themes and fail on any inline `<script>`, inline event handler or third-party script, so the strict public profile can't silently break a page.
 
 ## Security controls
 
@@ -192,6 +208,8 @@ Livewire is used only by the panels, so its endpoints follow the panels:
 | Branch overreach | `location_user` composite FKs + `TenantMembership::canAccessLocation()` in policies |
 | Slug squatting / route collision | Reserved list and format rule |
 | QR enumeration | Random 10-character Crockford base32 codes; `/q/*` rate limited; inactive codes don't reveal the tenant |
+| Slug / branch enumeration on public menus | `throttle:menu` on both menu route groups (`tenancy.menu_rate_limit`, default 300/min per IP — generous because guests share venue Wi-Fi); unknown slugs are not cached, so the limit bounds their query cost (`RateLimitTest`, which also requires every unauthenticated POST route to be throttled) |
+| Clickjacking, MIME sniffing, injected scripts | `SecurityHeaders` (see [Security headers](#security-headers)) |
 | Public data exposure | Allow-listed `MenuSnapshot` (see [menu-system.md](menu-system.md)) |
 | Data loss | Soft deletes; tenant data is never purged automatically |
 

@@ -13,6 +13,8 @@ enum MenuFontPair: string
 {
     case YoungSerifFigtree = 'young_serif_figtree';
     case BricolageInter = 'bricolage_inter';
+    case Inter = 'inter';
+    case Figtree = 'figtree';
     case System = 'system';
 
     public function heading(): string
@@ -20,6 +22,8 @@ enum MenuFontPair: string
         return match ($this) {
             self::YoungSerifFigtree => "'Young Serif', Georgia, serif",
             self::BricolageInter => "'Bricolage Grotesque', ui-sans-serif, system-ui, sans-serif",
+            self::Inter => "'Inter', ui-sans-serif, system-ui, sans-serif",
+            self::Figtree => "'Figtree', ui-sans-serif, system-ui, sans-serif",
             self::System => 'Georgia, "Times New Roman", serif',
         };
     }
@@ -28,7 +32,8 @@ enum MenuFontPair: string
     {
         return match ($this) {
             self::YoungSerifFigtree => "'Figtree', ui-sans-serif, system-ui, sans-serif",
-            self::BricolageInter => "'Inter', ui-sans-serif, system-ui, sans-serif",
+            self::BricolageInter, self::Inter => "'Inter', ui-sans-serif, system-ui, sans-serif",
+            self::Figtree => "'Figtree', ui-sans-serif, system-ui, sans-serif",
             self::System => 'ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif',
         };
     }

@@ -3,6 +3,9 @@
 use App\Http\Controllers\Marketing\ContactController;
 use App\Http\Controllers\Marketing\HomeController;
 use App\Http\Controllers\Marketing\PricingController;
+use App\Http\Controllers\Marketing\SitemapController;
+use App\Http\Controllers\Marketing\ThemeShowcaseController;
+use App\Http\Middleware\PreventSharedCaching;
 use App\Http\Middleware\SetMarketingLocale;
 use App\Support\MarketingUrl;
 use Illuminate\Support\Facades\Route;
@@ -27,21 +30,30 @@ $marketingPaths = [
     'features' => ['tr' => 'ozellikler', 'en' => 'features'],
     'pricing' => ['tr' => 'fiyatlar', 'en' => 'pricing'],
     'contact' => ['tr' => 'iletisim', 'en' => 'contact'],
+    'themes' => ['tr' => 'temalar', 'en' => 'themes'],
+    'privacy' => ['tr' => 'gizlilik', 'en' => 'privacy'],
+    'terms' => ['tr' => 'kullanim-kosullari', 'en' => 'terms'],
 ];
 
 Route::domain(config('tenancy.central_domain'))->group(function () use ($marketingPaths): void {
+    Route::get('sitemap.xml', SitemapController::class)->name('sitemap');
+
     foreach (array_keys(config('locales.supported')) as $locale) {
         Route::prefix(MarketingUrl::prefix($locale))
-            ->middleware(SetMarketingLocale::class.':'.$locale)
+            ->middleware([SetMarketingLocale::class.':'.$locale, PreventSharedCaching::class])
             ->name("marketing.{$locale}.")
             ->group(function () use ($locale, $marketingPaths): void {
                 Route::get('/', HomeController::class)->name('home');
                 Route::view($marketingPaths['features'][$locale] ?? 'features', 'marketing.features')->name('features');
                 Route::get($marketingPaths['pricing'][$locale] ?? 'pricing', PricingController::class)->name('pricing');
+                Route::get($marketingPaths['themes'][$locale] ?? 'themes', ThemeShowcaseController::class)->name('themes');
                 Route::get($marketingPaths['contact'][$locale] ?? 'contact', [ContactController::class, 'show'])->name('contact');
                 Route::post($marketingPaths['contact'][$locale] ?? 'contact', [ContactController::class, 'store'])
                     ->middleware('throttle:contact')
                     ->name('contact.store');
+                // Legal drafts (lang/{locale}/legal.php; legal review pending).
+                Route::view($marketingPaths['privacy'][$locale] ?? 'privacy', 'marketing.legal', ['document' => 'privacy'])->name('privacy');
+                Route::view($marketingPaths['terms'][$locale] ?? 'terms', 'marketing.legal', ['document' => 'terms'])->name('terms');
             });
     }
 });

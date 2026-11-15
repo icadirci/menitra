@@ -292,15 +292,19 @@ return [
             'font_pairs' => [
                 'young_serif_figtree' => 'Young Serif / Figtree',
                 'bricolage_inter' => 'Bricolage Grotesque / Inter',
+                'inter' => 'Inter',
+                'figtree' => 'Figtree',
                 'system' => 'Sistem yazı tipleri (en hızlı)',
             ],
             'layout' => [
                 'show_images' => 'Ürün listesinde görseller',
                 'show_featured' => 'Öne çıkanlar bölümü',
                 'image_shape' => 'Görsel biçimi',
+                'card_ratio' => 'Kart biçimi',
             ],
             'layout_choices' => [
                 'image_shape' => ['arch' => 'Kemerli', 'rounded' => 'Yuvarlatılmış köşe'],
+                'card_ratio' => ['square' => 'Kare', 'portrait' => 'Dikey'],
             ],
             'location_field' => 'Tema',
             'location_field_help' => 'Boş bırakılırsa işletmenin teması kullanılır. Renk ve yazı tipi ayarları Tema ve görünüm sayfasından gelir.',
@@ -588,6 +592,7 @@ return [
             'default' => 'Varsayılan',
         ],
         'media' => [
+            'too_many_pixels' => 'Görsel çok büyük: en fazla :max piksel olabilir.',
             'invalid_type' => 'Yalnızca JPEG, PNG veya WebP görselleri yükleyebilirsiniz.',
         ],
         'money' => [

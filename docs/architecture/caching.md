@@ -88,7 +88,8 @@ Version bumps come from one model observer, `App\Observers\MenuCacheObserver` (r
 ## HTTP caching
 
 - Menu pages send `ETag: "{tv}.{lv}.{locale}.{theme}"` and `Cache-Control: public, max-age=60`. Requests with `If-None-Match` get a 304.
-- Pages with a session or CSRF token (marketing forms, auth) are not marked public.
+- Pages with a session or CSRF token (marketing forms, auth) are not marked public. Marketing pages additionally run `PreventSharedCaching` (`private, no-cache`, any `public`/`s-maxage` removed): the nav shows "My account" to signed-in users, so a shared cache must never store them (Phase 8, `SecurityHeadersTest`).
+- Performance budget (`QueryBudgetTest`, 2026-11-15): a cold menu render runs a constant number of queries whatever the menu size (38 today, budget 40 — no N+1); warm menu, location and tenant pages run zero; the theme showcase resolves demo businesses from `qrmenu:slug:*` without querying tenants.
 - Menu routes don't start a session. They run without `StartSession` and the cookie middleware, so they can be cached and never set cookies.
 
 ## Rules
@@ -104,7 +105,7 @@ Version bumps come from one model observer, `App\Observers\MenuCacheObserver` (r
 - Editing an item bumps the tenant version, and both locations sharing the menu show the change.
 - Marking an item sold-out at location A bumps only A's version; location B's snapshot is reused.
 - Tenant A's changes never alter tenant B's versions or keys.
-- `CacheKeyTest`: every `MenuCacheKeys` method that takes tenant data produces a key containing the tenant ID.
+- `CacheKeyTest` (`tests/Feature/Architecture`): every `MenuCacheKeys` method that takes tenant data produces a key containing the tenant ID (and the location ID for branch keys), every key starts with `qrmenu:`, and no other file in `app/` builds a `qrmenu:` string.
 - A slug change invalidates the old slug entry; the QR redirect resolves the new URL.
 - A rolled-back transaction does not bump versions (`afterCommit`).
 - Saving theme settings bumps the tenant version and clears the slug entry; every location shows the new settings; a warm request with saved settings still runs zero queries (`ThemeManagementTest`).

@@ -292,15 +292,19 @@ return [
             'font_pairs' => [
                 'young_serif_figtree' => 'Young Serif / Figtree',
                 'bricolage_inter' => 'Bricolage Grotesque / Inter',
+                'inter' => 'Inter',
+                'figtree' => 'Figtree',
                 'system' => 'System fonts (fastest)',
             ],
             'layout' => [
                 'show_images' => 'Images in the item list',
                 'show_featured' => 'Featured section',
                 'image_shape' => 'Image shape',
+                'card_ratio' => 'Card shape',
             ],
             'layout_choices' => [
                 'image_shape' => ['arch' => 'Arched', 'rounded' => 'Rounded corners'],
+                'card_ratio' => ['square' => 'Square', 'portrait' => 'Portrait'],
             ],
             'location_field' => 'Theme',
             'location_field_help' => 'Leave empty to use the business theme. Colours and fonts come from the Theme & appearance page.',
@@ -588,6 +592,7 @@ return [
             'default' => 'Default',
         ],
         'media' => [
+            'too_many_pixels' => 'The image is too large: at most :max pixels.',
             'invalid_type' => 'Only JPEG, PNG or WebP images can be uploaded.',
         ],
         'money' => [

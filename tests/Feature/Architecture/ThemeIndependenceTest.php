@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Architecture;
 
+use App\Enums\MenuFontPair;
 use App\Enums\MenuTheme;
 use App\Support\Menu\Data\CategoryData;
 use App\Support\Menu\Data\ExtraData;
@@ -25,7 +26,6 @@ use App\Support\Menu\ThemeSettings;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
-use Illuminate\Support\Facades\View;
 use Tests\TestCase;
 
 /**
@@ -59,9 +59,7 @@ class ThemeIndependenceTest extends TestCase
         $rendered = 0;
 
         foreach (MenuTheme::cases() as $theme) {
-            if (! View::exists($theme->view())) {
-                continue; // Built in Phase 7; ThemeRenderer falls back to classic.
-            }
+            $this->assertTrue($theme->isBuilt(), "{$theme->value} has no views (all five are built since Phase 7).");
 
             $settings = ThemeSettings::defaults($theme);
             $html = view($theme->view(), ['menu' => $snapshot, 'live' => $live, 'theme' => $settings])->render();
@@ -74,8 +72,72 @@ class ThemeIndependenceTest extends TestCase
             $rendered++;
         }
 
-        $this->assertGreaterThanOrEqual(1, $rendered);
+        $this->assertSame(count(MenuTheme::cases()), $rendered);
         $this->assertSame(0, $queries);
+    }
+
+    public function test_every_theme_renders_with_its_layout_options_switched_and_images(): void
+    {
+        $queries = 0;
+        DB::listen(function () use (&$queries): void {
+            $queries++;
+        });
+
+        $snapshot = $this->snapshot();
+        $live = LiveMenuState::for($snapshot->location, CarbonImmutable::parse('2026-11-16 10:00', 'Europe/Istanbul'));
+
+        foreach (MenuTheme::cases() as $theme) {
+            $defaults = $theme->defaults();
+            $flipped = $defaults['layout'];
+
+            foreach ($flipped as $name => $value) {
+                $flipped[$name] = is_bool($value) ? ! $value : (array_values(array_diff($theme->layoutChoices()[$name], [$value]))[0] ?? $value);
+            }
+
+            foreach ([$defaults['layout'], $flipped] as $layout) {
+                $settings = ThemeSettings::fromStored($theme, ['layout' => $layout] + $defaults);
+                $html = view($theme->view(), ['menu' => $snapshot, 'live' => $live, 'theme' => $settings])->render();
+
+                $this->assertStringContainsString('data-theme="'.$theme->value.'"', $html);
+                $this->assertStringContainsString('Türk Kahvesi', $html);
+            }
+
+            // Featured strip follows show_featured where the theme offers it.
+            if (array_key_exists('show_featured', $defaults['layout'])) {
+                $off = ThemeSettings::fromStored($theme, ['layout' => ['show_featured' => false] + $defaults['layout']] + $defaults);
+                $html = view($theme->view(), ['menu' => $snapshot, 'live' => $live, 'theme' => $off])->render();
+                $this->assertStringNotContainsString('-featured-title', $html, "{$theme->value} ignores show_featured.");
+            }
+        }
+
+        $this->assertSame(0, $queries);
+    }
+
+    public function test_every_theme_stylesheet_declares_the_fonts_it_offers(): void
+    {
+        $families = [
+            'young_serif_figtree' => ['Young Serif', 'Figtree'],
+            'bricolage_inter' => ['Bricolage Grotesque', 'Inter'],
+            'inter' => ['Inter'],
+            'figtree' => ['Figtree'],
+            'system' => [],
+        ];
+
+        foreach (MenuTheme::cases() as $theme) {
+            $css = File::get(resource_path("css/themes/{$theme->value}.css"));
+
+            $this->assertStringContainsString("[data-theme='{$theme->value}']", $css);
+            $this->assertStringContainsString("@reference '../menu-base.css';", $css);
+            $this->assertContains(MenuFontPair::from($theme->defaults()['font_pair']), $theme->fontPairs());
+
+            foreach ($theme->fontPairs() as $pair) {
+                $this->assertArrayHasKey($pair->value, $families, "Map the families of {$pair->value} in this test.");
+
+                foreach ($families[$pair->value] as $family) {
+                    $this->assertStringContainsString("font-family: '{$family}'", $css, "{$theme->value}.css lacks @font-face for {$family}.");
+                }
+            }
+        }
     }
 
     public function test_live_state_handles_midnight_and_special_days(): void

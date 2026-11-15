@@ -10,6 +10,14 @@ namespace App\Support;
  */
 final class MarketingUrl
 {
+    /**
+     * Public marketing pages (GET), in sitemap order. Every page exists in
+     * every platform locale (routes/web.php).
+     *
+     * @var list<string>
+     */
+    public const array PAGES = ['home', 'features', 'themes', 'pricing', 'contact', 'privacy', 'terms'];
+
     public static function to(string $page, ?string $locale = null, ?string $fragment = null): string
     {
         $locale ??= app()->getLocale();

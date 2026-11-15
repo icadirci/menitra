@@ -57,15 +57,45 @@ enum MenuTheme: string
                 'font_pair' => MenuFontPair::YoungSerifFigtree->value,
                 'layout' => ['show_images' => true, 'show_featured' => true, 'image_shape' => 'arch'],
             ],
-            // Placeholders until the theme is built (Phase 7); like every
-            // theme's defaults they must pass validator() (contrast included).
-            default => [
+            // Design reference: MenuNoon / DetailNoon (DM Sans / DM Mono in the
+            // design; self-hosted Inter here, prices in the system monospace).
+            self::Minimal => [
                 'colors' => [
-                    'primary' => '#1F4D3B', 'accent' => '#9A5B13', 'bg' => '#FAF7F2', 'surface' => '#FFFFFF',
-                    'text' => '#1C1917', 'muted' => '#57534E', 'ornament' => '#E7A33E',
+                    'primary' => '#111111', 'accent' => '#B5401C', 'bg' => '#FFFFFF', 'surface' => '#F4F4F2',
+                    'text' => '#111111', 'muted' => '#62625F', 'ornament' => '#1D6B3A',
                 ],
-                'font_pair' => MenuFontPair::BricolageInter->value,
-                'layout' => [],
+                'font_pair' => MenuFontPair::Inter->value,
+                'layout' => ['show_images' => true, 'show_featured' => true],
+            ],
+            // Design reference: MenuArdoise / DetailArdoise (Cormorant Garamond /
+            // Jost in the design; Georgia + system sans by default here).
+            self::Bistro => [
+                'colors' => [
+                    'primary' => '#E5D7BC', 'accent' => '#C9A96E', 'bg' => '#0F0E0C', 'surface' => '#17150F',
+                    'text' => '#EDE6D8', 'muted' => '#A79F90', 'ornament' => '#3A352D',
+                ],
+                'font_pair' => MenuFontPair::System->value,
+                'layout' => ['show_images' => true, 'show_featured' => true],
+            ],
+            // Design reference: MenuKiln / DetailKiln (Manrope in the design;
+            // self-hosted Figtree here).
+            self::Cafe => [
+                'colors' => [
+                    'primary' => '#3B2A20', 'accent' => '#7A4E2F', 'bg' => '#F3ECE2', 'surface' => '#FBF7F1',
+                    'text' => '#3B2A20', 'muted' => '#6E5C50', 'ornament' => '#CDB79E',
+                ],
+                'font_pair' => MenuFontPair::Figtree->value,
+                'layout' => ['show_images' => true, 'show_featured' => true],
+            ],
+            // Design reference: MenuPetal / DetailPetal (Fraunces / Nunito Sans in
+            // the design; Young Serif / Figtree here).
+            self::Grid => [
+                'colors' => [
+                    'primary' => '#3D2A35', 'accent' => '#B23A62', 'bg' => '#FFF6F3', 'surface' => '#FFFFFF',
+                    'text' => '#3D2A35', 'muted' => '#6E5763', 'ornament' => '#F6C9D0',
+                ],
+                'font_pair' => MenuFontPair::YoungSerifFigtree->value,
+                'layout' => ['show_featured' => true, 'card_ratio' => 'square'],
             ],
         };
     }
@@ -79,7 +109,10 @@ enum MenuTheme: string
     {
         return match ($this) {
             self::Classic => [MenuFontPair::YoungSerifFigtree, MenuFontPair::BricolageInter, MenuFontPair::System],
-            default => [MenuFontPair::BricolageInter, MenuFontPair::System],
+            self::Minimal => [MenuFontPair::Inter, MenuFontPair::BricolageInter, MenuFontPair::System],
+            self::Bistro => [MenuFontPair::System, MenuFontPair::YoungSerifFigtree, MenuFontPair::BricolageInter],
+            self::Cafe => [MenuFontPair::Figtree, MenuFontPair::BricolageInter, MenuFontPair::YoungSerifFigtree, MenuFontPair::System],
+            self::Grid => [MenuFontPair::YoungSerifFigtree, MenuFontPair::Figtree, MenuFontPair::BricolageInter, MenuFontPair::System],
         };
     }
 
@@ -93,6 +126,7 @@ enum MenuTheme: string
     {
         return match ($this) {
             self::Classic => ['image_shape' => ['arch', 'rounded']],
+            self::Grid => ['card_ratio' => ['square', 'portrait']],
             default => [],
         };
     }
@@ -199,8 +233,8 @@ enum MenuTheme: string
     }
 
     /**
-     * Built = both views exist. Themes without views can't be selected and
-     * render as `classic` until Phase 7.
+     * Built = both views exist. A theme without views can't be selected and
+     * renders as `classic` (all five are built since Phase 7).
      */
     public function isBuilt(): bool
     {

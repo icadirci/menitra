@@ -70,6 +70,14 @@ class Tenant extends Model implements HasName
     /**
      * Enabled locales (tenant-scoped: read inside this tenant's context).
      */
+    /**
+     * Custom domains (reserved, later phase).
+     */
+    public function domains(): HasMany
+    {
+        return $this->hasMany(TenantDomain::class);
+    }
+
     public function locales(): HasMany
     {
         return $this->hasMany(TenantLocale::class);

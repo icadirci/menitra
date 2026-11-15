@@ -58,7 +58,10 @@ class TenantQueueTest extends TestCase
 
     private function work(): void
     {
-        $this->artisan('queue:work', ['connection' => 'database', '--stop-when-empty' => true, '--tries' => 1, '--sleep' => 0])
+        // The worker runs inside the PHPUnit process, so its memory check
+        // (default 128 MB) would measure the whole test run; the limit is
+        // not what these tests are about.
+        $this->artisan('queue:work', ['connection' => 'database', '--stop-when-empty' => true, '--tries' => 1, '--sleep' => 0, '--memory' => 1024])
             ->assertSuccessful();
     }
 
