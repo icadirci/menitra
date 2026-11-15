@@ -176,6 +176,70 @@ return [
                 'cancel_at_period_end_yes' => 'Cancels at the end of the period',
             ],
         ],
+        'theme' => [
+            'navigation' => 'Theme & appearance',
+            'title' => 'Theme & appearance',
+            'saved' => 'Theme settings saved.',
+            'coming_soon' => 'Coming soon',
+            'not_in_plan' => 'Not in your plan',
+            'premium_lost' => [
+                'title' => 'The selected theme is not included in your plan',
+                'body' => 'Your menu is currently shown with the Classic theme. Your settings were not deleted; the selected theme comes back when you move to a plan with premium themes.',
+            ],
+            'sections' => [
+                'theme' => 'Theme',
+                'theme_help' => 'All your locations use this theme; a location can pick a different one in its settings. Switching back to a theme restores its earlier settings.',
+                'colors' => 'Colours',
+                'colors_help' => 'Text colours need a contrast ratio of at least 4.5:1 with their background to stay readable.',
+                'typography' => 'Typography',
+                'layout' => 'Layout',
+            ],
+            'fields' => [
+                'font_pair' => 'Font pair (headings / text)',
+            ],
+            'themes' => [
+                'classic' => ['name' => 'Classic', 'description' => 'Clean list layout, warm café colours and arched images'],
+                'minimal' => ['name' => 'Minimal', 'description' => 'Typography-first, airy, few images'],
+                'bistro' => ['name' => 'Bistro', 'description' => 'Dark and elegant with serif headings'],
+                'cafe' => ['name' => 'Café', 'description' => 'Warm tones and rounded product cards'],
+                'grid' => ['name' => 'Gallery', 'description' => 'Photo-first grid layout, pastel colours'],
+            ],
+            'colors' => [
+                'primary' => 'Primary',
+                'accent' => 'Accent',
+                'bg' => 'Background',
+                'surface' => 'Card surface',
+                'text' => 'Text',
+                'muted' => 'Secondary text',
+                'ornament' => 'Ornament',
+            ],
+            'font_pairs' => [
+                'young_serif_figtree' => 'Young Serif / Figtree',
+                'bricolage_inter' => 'Bricolage Grotesque / Inter',
+                'system' => 'System fonts (fastest)',
+            ],
+            'layout' => [
+                'show_images' => 'Images in the item list',
+                'show_featured' => 'Featured section',
+                'image_shape' => 'Image shape',
+            ],
+            'layout_choices' => [
+                'image_shape' => ['arch' => 'Arched', 'rounded' => 'Rounded corners'],
+            ],
+            'location_field' => 'Theme',
+            'location_field_help' => 'Leave empty to use the business theme. Colours and fonts come from the Theme & appearance page.',
+            'location_inherit' => 'Business theme (:theme)',
+            'actions' => [
+                'reset' => 'Reset to defaults',
+            ],
+            'confirm' => [
+                'reset' => 'Fills this theme\'s colours, font and layout with the default values. Nothing changes until you save.',
+            ],
+            'errors' => [
+                'not_built' => 'This theme is not available yet.',
+                'contrast' => 'The contrast between :foreground and :background is :ratio:1; it must be at least :minimum:1.',
+            ],
+        ],
         'locations' => [
             'navigation' => 'Locations',
             'singular' => 'location',
@@ -188,6 +252,7 @@ return [
                 'contact' => 'Contact',
                 'address' => 'Address and position',
                 'cover' => 'Cover image',
+                'appearance' => 'Appearance',
             ],
             'fields' => [
                 'name' => 'Location name',

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Filament\App\Resources\Locations;
 
 use App\Enums\MediaType;
+use App\Enums\MenuTheme;
 use App\Filament\App\Forms\TenantImageUpload;
 use App\Filament\App\Forms\TranslatableFields;
 use App\Filament\App\Navigation\AppNavigationGroup;
@@ -18,6 +19,7 @@ use App\Filament\App\Support\ServiceCall;
 use App\Models\Location;
 use App\Models\TenantMembership;
 use App\Services\Locations\LocationService;
+use App\Services\Themes\ThemeService;
 use App\Tenancy\TenantContext;
 use BackedEnum;
 use Filament\Actions\Action;
@@ -43,6 +45,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Validation\Rules\Unique;
+use Illuminate\Validation\ValidationException;
 use UnitEnum;
 
 /**
@@ -187,6 +190,9 @@ class LocationResource extends Resource
                         ->label(__('panels.app.locations.fields.cover'))
                         ->helperText(__('panels.app.locations.fields.cover_help')),
                 ]),
+            Section::make(__('panels.app.locations.sections.appearance'))
+                ->columnSpanFull()
+                ->schema([self::themeField()]),
             Section::make(__('panels.app.hours.weekly'))
                 ->description(__('panels.app.hours.weekly_help'))
                 ->columnSpanFull()
@@ -250,6 +256,68 @@ class LocationResource extends Resource
                 self::deleteAction(),
                 self::restoreAction(),
             ]);
+    }
+
+    /**
+     * Theme override (owner-only, LocationPolicy::setTheme). Other roles see
+     * it read-only and it is never dehydrated for them; the pages re-check
+     * the policy and ThemeService enforces built themes and premium_themes.
+     */
+    public static function themeField(): Select
+    {
+        $canSet = fn (?Location $record): bool => $record === null
+            ? (self::membership()?->isOwner() ?? false)
+            : (auth()->user()?->can('setTheme', $record) ?? false);
+
+        return Select::make('theme')
+            ->label(__('panels.app.theme.location_field'))
+            ->helperText(__('panels.app.theme.location_field_help'))
+            ->placeholder(fn (): string => __('panels.app.theme.location_inherit', [
+                'theme' => app(TenantContext::class)->tenant()->theme->label(),
+            ]))
+            ->options(collect(MenuTheme::cases())->mapWithKeys(fn (MenuTheme $theme): array => [
+                $theme->value => $theme->isBuilt() ? $theme->label() : $theme->label().' · '.__('panels.app.theme.coming_soon'),
+            ])->all())
+            ->disableOptionWhen(fn (string $value, ?Location $record): bool => ! self::themeSelectable(MenuTheme::from($value), $record))
+            ->disabled(fn (?Location $record): bool => ! $canSet($record))
+            ->dehydrated(fn (?Location $record): bool => $canSet($record));
+    }
+
+    /**
+     * Applies a submitted theme override (form key `theme`) through
+     * ThemeService. Only owners' forms carry the key; a key from anyone else
+     * is refused, not ignored.
+     *
+     * @param  array<string, mixed>  $data
+     */
+    public static function saveTheme(Location $location, array $data): void
+    {
+        if (! array_key_exists('theme', $data)) {
+            return;
+        }
+
+        $value = $data['theme'] instanceof MenuTheme ? $data['theme']->value : (string) ($data['theme'] ?? '');
+        $theme = $value === '' ? null : MenuTheme::tryFrom($value);
+
+        if ($theme === null && $value !== '') {
+            throw ValidationException::withMessages(['theme' => __('panels.app.theme.errors.not_built')]);
+        }
+
+        if ($theme === $location->theme) {
+            return;
+        }
+
+        abort_unless(auth()->user()?->can('setTheme', $location) ?? false, 403);
+
+        app(ThemeService::class)->setLocationTheme($location, $theme);
+    }
+
+    private static function themeSelectable(MenuTheme $theme, ?Location $record): bool
+    {
+        $tenant = app(TenantContext::class)->tenant();
+
+        return $theme->isBuilt()
+            && ($theme === $record?->theme || app(ThemeService::class)->planAllows($tenant, $theme));
     }
 
     public static function makeDefaultAction(): Action

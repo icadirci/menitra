@@ -12,6 +12,7 @@ use App\Services\Locations\LocationService;
 use Filament\Actions\ViewAction;
 use Filament\Resources\Pages\EditRecord;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 
 class EditLocation extends EditRecord
 {
@@ -41,6 +42,11 @@ class EditLocation extends EditRecord
     protected function handleRecordUpdate(Model $record, array $data): Model
     {
         /** @var Location $record */
-        return ServiceCall::run(fn () => app(LocationService::class)->update($record, $data));
+        return ServiceCall::run(fn () => DB::transaction(function () use ($record, $data): Location {
+            $location = app(LocationService::class)->update($record, $data);
+            LocationResource::saveTheme($location, $data);
+
+            return $location;
+        }));
     }
 }

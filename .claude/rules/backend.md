@@ -42,6 +42,7 @@
 - Use PHP enums for fixed sets (roles — `PlatformRole`, `TenantRole` —, statuses, menu types, themes, allergens, dietary labels, plan features, billing intervals).
 - Customer-facing text lives in translation tables and is read through `HasTranslations`; UI strings use `__()` with `lang/{locale}` files.
 - Public menu URLs are generated only by `MenuUrlGenerator`.
+- Theme choice, `theme_settings` and the branch theme override are written only through `ThemeService`; settings are validated with `MenuTheme::validator()`.
 - Subscription state changes go only through `SubscriptionService` and are recorded in `subscription_events`.
 - Plan restrictions are checked through `FeatureGate`, not ad-hoc comparisons, and **always inside the backend service that creates the resource** (`ensureCanCreate()`); a disabled panel button is only information. `FeatureGate` restricts creation, never viewing, editing or deleting existing records.
 - Registration logic lives in `TenantRegistrationService`; Fortify actions only validate and delegate to it.

@@ -49,7 +49,7 @@ PostgreSQL Row-Level Security is an optional fourth layer for a later phase.
 | Component | Responsibility |
 |---|---|
 | `App\Tenancy\TenantContext` | Scoped singleton (`$this->app->scoped()`) holding the current tenant. The **only** source of the current tenant. Reset per request and per job. It holds the `Tenant` model (decision 2026-11-15); whether a cached `ResolvedTenant` is needed is reassessed when public QR menu routing is built |
-| `App\Tenancy\ResolvedTenant` | Cached value object of public resolution (id, slug, status, default locale, enabled locales, theme, `access_until`, names, `premium_themes` / `remove_branding` flags). **Introduced in Phase 6** (built by `ResolvedTenantFactory`): public menu requests use it instead of `TenantContext`, which `PublicMenuService` sets only while a snapshot is rebuilt — so a warm request needs no query. Plan-limit changes in `/admin` reach it within the resolution TTL (1h) |
+| `App\Tenancy\ResolvedTenant` | Cached value object of public resolution (id, slug, status, default locale, enabled locales, theme, saved `theme_settings` per theme (B9), `access_until`, names, `premium_themes` / `remove_branding` flags). **Introduced in Phase 6** (built by `ResolvedTenantFactory`): public menu requests use it instead of `TenantContext`, which `PublicMenuService` sets only while a snapshot is rebuilt — so a warm request needs no query. Plan-limit changes in `/admin` reach it within the resolution TTL (1h) |
 | `App\Models\Concerns\BelongsToTenant` | Adds the global scope `where tenant_id = TenantContext::id()`, sets `tenant_id` on `creating`, keeps `tenant_id` out of `$fillable` |
 | `App\Tenancy\Resolvers\TenantResolverPipeline` | Runs `SubdomainTenantResolver`, then `PathTenantResolver` (custom domains later) |
 | `ResolveTenantFromRequest` middleware | Public menu routes: runs the pipeline and sets the context, or returns 404 |
@@ -99,7 +99,7 @@ Request
   └─ Host = custom domain ──────── DomainTenantResolver (later) ─────────────────┘
 ```
 
-- Lookups are cached as `qrmenu:host:{host}` and `qrmenu:slug:{slug}`, both holding a `ResolvedTenant`. With a warm cache, resolution needs zero queries. The entries are cleared when the slug, status, locales, theme or subscription changes (see [caching.md](caching.md)).
+- Lookups are cached as `qrmenu:host:{host}` and `qrmenu:slug:{slug}`, both holding a `ResolvedTenant`. With a warm cache, resolution needs zero queries. The entries are cleared when the slug, status, locales, theme, theme settings or subscription changes (see [caching.md](caching.md)).
 - A suspended tenant resolves, but `PublicMenuService` renders the unavailable page. An unknown slug or host returns 404.
 - Marketing, auth and panel routes are registered only for the central domain. Tenant subdomains serve only public menu routes; until those exist, every path on a tenant subdomain (including `/`) is 404.
 

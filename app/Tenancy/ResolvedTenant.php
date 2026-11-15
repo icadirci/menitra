@@ -16,6 +16,7 @@ final readonly class ResolvedTenant
     /**
      * @param  list<string>  $locales  enabled locales, default first
      * @param  array<string, string>  $names  locale => business name
+     * @param  array<string, array<string, mixed>>  $themeSettings  theme key => saved theme_settings.settings (validated again by ThemeSettings::fromStored())
      */
     public function __construct(
         public int $id,
@@ -28,6 +29,7 @@ final readonly class ResolvedTenant
         public array $names,
         public bool $premiumThemes,
         public bool $removeBranding,
+        public array $themeSettings = [],
     ) {}
 
     public function isOnline(?int $now = null): bool

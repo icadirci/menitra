@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Auth;
 
+use App\Enums\MenuTheme;
 use App\Enums\MenuType;
 use App\Enums\SubscriptionEventType;
 use App\Enums\SubscriptionStatus;
@@ -15,6 +16,7 @@ use App\Models\Plan;
 use App\Models\Subscription;
 use App\Models\SubscriptionEvent;
 use App\Models\Tenant;
+use App\Models\ThemeSetting;
 use App\Models\User;
 use App\Services\Subscription\SubscriptionService;
 use App\Services\Tenancy\TenantRegistrationService;
@@ -93,6 +95,11 @@ class RegistrationTest extends TestCase
         $this->assertFalse($menu->is_published);
         $this->assertSame([$location->id], $menu->locations()->pluck('locations.id')->all());
 
+        $this->assertSame(MenuTheme::Classic, $tenant->theme);
+        $themeSetting = ThemeSetting::query()->sole();
+        $this->assertSame(MenuTheme::Classic, $themeSetting->theme);
+        $this->assertEquals(MenuTheme::Classic->defaults(), $themeSetting->settings);
+
         $subscription = Subscription::query()->sole();
         $this->assertSame(SubscriptionStatus::Trialing, $subscription->status);
         $this->assertSame($this->plan->id, $subscription->plan_id);
@@ -159,7 +166,7 @@ class RegistrationTest extends TestCase
             // expected
         }
 
-        foreach (['users', 'tenants', 'tenant_translations', 'tenant_locales', 'tenant_user', 'locations', 'menus', 'location_menu', 'subscriptions'] as $table) {
+        foreach (['users', 'tenants', 'tenant_translations', 'tenant_locales', 'tenant_user', 'locations', 'menus', 'location_menu', 'theme_settings', 'subscriptions'] as $table) {
             $this->assertDatabaseCount($table, 0);
         }
         $this->assertFalse(app(TenantContext::class)->check());

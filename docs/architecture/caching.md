@@ -29,7 +29,7 @@ All keys are built **only** by `App\Services\Menu\MenuCacheKeys`. Ad-hoc string 
 
 | Key | Value | TTL |
 |---|---|---|
-| `qrmenu:host:{host}` | `ResolvedTenant` (subdomain or custom-domain lookup) | 1h |
+| `qrmenu:host:{host}` | `ResolvedTenant` (subdomain or custom-domain lookup; includes the saved `theme_settings` of every theme) | 1h |
 | `qrmenu:slug:{slug}` | `ResolvedTenant` (path lookup) | 1h |
 | `qrmenu:qr:{code}` | `{tenant_id, location_id, menu_id, is_active}` | 1h |
 | `qrmenu:tenant:{t}:version` | int, tenant content version | none |
@@ -71,7 +71,7 @@ Version bumps come from one model observer, `App\Observers\MenuCacheObserver` (r
 | Opening or special hours | `tenant:{t}:location:{l}:version` | Only that branch |
 | Location details, location translations, location theme | `tenant:{t}:version` | Location names/addresses also appear in the tenant location index |
 | Location created, deleted or (de)activated | `tenant:{t}:version` | Tenant location index |
-| Tenant brand, translations, theme, theme settings, locales | `tenant:{t}:version` + `host:*`/`slug:*` entries for the tenant | |
+| Tenant brand, translations, theme, theme settings, locales | `tenant:{t}:version` + `host:*`/`slug:*` entries for the tenant | Theme settings are carried in `ResolvedTenant`, so `ThemeSetting` writes clear the resolution entries too (`MenuCacheObserver`) |
 | Tenant slug change | old and new `slug:` / `host:` entries + `tenant:{t}:version` | |
 | Tenant status or subscription change | `host:` / `slug:` entries (they hold `access_until`) | |
 | QR code change | `qr:{code}` | |
@@ -107,3 +107,4 @@ Version bumps come from one model observer, `App\Observers\MenuCacheObserver` (r
 - `CacheKeyTest`: every `MenuCacheKeys` method that takes tenant data produces a key containing the tenant ID.
 - A slug change invalidates the old slug entry; the QR redirect resolves the new URL.
 - A rolled-back transaction does not bump versions (`afterCommit`).
+- Saving theme settings bumps the tenant version and clears the slug entry; every location shows the new settings; a warm request with saved settings still runs zero queries (`ThemeManagementTest`).

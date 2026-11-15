@@ -2,7 +2,9 @@
 <li class="k-item" data-item x-show="matches($el.dataset.search)" data-search="{{ mb_strtolower($item->name.' '.$item->description) }}">
     <button type="button" id="row-{{ $item->publicId }}" class="k-item__button {{ $live->isSoldOut($item) || ! $item->isAvailable ? 'is-muted' : '' }}"
             @click="show('{{ $item->publicId }}')" aria-haspopup="dialog">
-        @include('themes.classic.partials.picture', ['url' => $item->imageUrl, 'label' => $item->name, 'width' => 76, 'height' => 95, 'class' => 'k-pic--row'])
+        @if ($theme->option('show_images') !== false)
+            @include('themes.classic.partials.picture', ['url' => $item->imageUrl, 'label' => $item->name, 'width' => 76, 'height' => 95, 'class' => 'k-pic--row'])
+        @endif
         <span class="k-item__body">
             <span class="k-item__head">
                 <span class="k-item__name">{{ $item->name }}</span>

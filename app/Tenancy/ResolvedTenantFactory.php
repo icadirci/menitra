@@ -53,6 +53,12 @@ final class ResolvedTenantFactory
             ->map(fn ($name): string => (string) $name)
             ->all();
 
+        $themeSettings = DB::table('theme_settings')
+            ->where('tenant_id', $tenant->getKey())
+            ->pluck('settings', 'theme')
+            ->map(fn ($settings): array => (array) json_decode((string) $settings, true))
+            ->all();
+
         $subscription = Subscription::withoutTenantScope()
             ->where('tenant_id', $tenant->getKey())
             ->whereNull('ended_at')
@@ -80,6 +86,7 @@ final class ResolvedTenantFactory
             names: $names,
             premiumThemes: $enabled(PlanFeature::PremiumThemes),
             removeBranding: $enabled(PlanFeature::RemoveBranding),
+            themeSettings: $themeSettings,
         );
     }
 }

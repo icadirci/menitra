@@ -15,6 +15,7 @@ use App\Models\Tenant;
 use App\Models\TenantMembership;
 use App\Models\User;
 use App\Services\Subscription\SubscriptionService;
+use App\Services\Themes\ThemeService;
 use App\Tenancy\TenantContext;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -23,9 +24,8 @@ use RuntimeException;
 /**
  * Public business registration. Creates, in one transaction, either all of:
  * user, tenant (+ name translation), owner membership, enabled locale,
- * default location, default menu attached to it, default QR code, trial
- * subscription — or
- * nothing. Every new tenant therefore starts trialing on the default plan.
+ * default location, default menu attached to it, default QR code, default
+ * theme settings (classic), trial subscription — or nothing. Every new tenant therefore starts trialing on the default plan.
  *
  * The user never receives a platform role here: platform roles are granted
  * only explicitly (platform:assign-role).
@@ -35,6 +35,7 @@ final class TenantRegistrationService
     public function __construct(
         private readonly TenantContext $context,
         private readonly SubscriptionService $subscriptions,
+        private readonly ThemeService $themes,
     ) {}
 
     public function register(
@@ -98,6 +99,9 @@ final class TenantRegistrationService
 
                 // Default QR code (stable /q/{code}) for the default location.
                 $location->qrCodes()->create(['label' => $businessName]);
+
+                // Settings row of the starting theme (tenants.theme = classic).
+                $this->themes->createDefaults(MenuTheme::Classic);
 
                 $this->subscriptions->startTrial($tenant, $plan);
             } finally {

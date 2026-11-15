@@ -176,6 +176,70 @@ return [
                 'cancel_at_period_end_yes' => 'Dönem sonunda iptal edilecek',
             ],
         ],
+        'theme' => [
+            'navigation' => 'Tema ve görünüm',
+            'title' => 'Tema ve görünüm',
+            'saved' => 'Tema ayarları kaydedildi.',
+            'coming_soon' => 'Yakında',
+            'not_in_plan' => 'Paketinizde yok',
+            'premium_lost' => [
+                'title' => 'Seçili tema paketinizde yer almıyor',
+                'body' => 'Menünüz şu anda Klasik tema ile gösteriliyor. Ayarlarınız silinmedi; premium temaları içeren bir pakete geçtiğinizde seçtiğiniz tema geri gelir.',
+            ],
+            'sections' => [
+                'theme' => 'Tema',
+                'theme_help' => 'Tüm şubelerinizin menüsü bu temayla gösterilir; şube bazında farklı bir tema şube ayarlarından seçilebilir. Bir temaya geri döndüğünüzde önceki ayarları geri gelir.',
+                'colors' => 'Renkler',
+                'colors_help' => 'Metin renkleri, okunabilirlik için arka planla en az 4.5:1 kontrast oranına sahip olmalıdır.',
+                'typography' => 'Yazı tipi',
+                'layout' => 'Düzen',
+            ],
+            'fields' => [
+                'font_pair' => 'Yazı tipi çifti (başlık / metin)',
+            ],
+            'themes' => [
+                'classic' => ['name' => 'Klasik', 'description' => 'Sade liste düzeni, sıcak kafe renkleri ve kemerli görseller'],
+                'minimal' => ['name' => 'Minimal', 'description' => 'Tipografi odaklı, ferah ve az görselli'],
+                'bistro' => ['name' => 'Bistro', 'description' => 'Koyu, şık ve serif başlıklı'],
+                'cafe' => ['name' => 'Kafe', 'description' => 'Sıcak tonlar ve yuvarlak ürün kartları'],
+                'grid' => ['name' => 'Galeri', 'description' => 'Fotoğraf öncelikli ızgara düzeni, pastel renkler'],
+            ],
+            'colors' => [
+                'primary' => 'Ana renk',
+                'accent' => 'Vurgu rengi',
+                'bg' => 'Arka plan',
+                'surface' => 'Kart zemini',
+                'text' => 'Metin',
+                'muted' => 'İkincil metin',
+                'ornament' => 'Süsleme',
+            ],
+            'font_pairs' => [
+                'young_serif_figtree' => 'Young Serif / Figtree',
+                'bricolage_inter' => 'Bricolage Grotesque / Inter',
+                'system' => 'Sistem yazı tipleri (en hızlı)',
+            ],
+            'layout' => [
+                'show_images' => 'Ürün listesinde görseller',
+                'show_featured' => 'Öne çıkanlar bölümü',
+                'image_shape' => 'Görsel biçimi',
+            ],
+            'layout_choices' => [
+                'image_shape' => ['arch' => 'Kemerli', 'rounded' => 'Yuvarlatılmış köşe'],
+            ],
+            'location_field' => 'Tema',
+            'location_field_help' => 'Boş bırakılırsa işletmenin teması kullanılır. Renk ve yazı tipi ayarları Tema ve görünüm sayfasından gelir.',
+            'location_inherit' => 'İşletme teması (:theme)',
+            'actions' => [
+                'reset' => 'Varsayılanlara dön',
+            ],
+            'confirm' => [
+                'reset' => 'Bu temanın renk, yazı tipi ve düzen ayarları varsayılan değerlerle doldurulur. Kaydetmeden değişiklik uygulanmaz.',
+            ],
+            'errors' => [
+                'not_built' => 'Bu tema henüz kullanıma açılmadı.',
+                'contrast' => ':foreground ile :background arasındaki kontrast :ratio:1; en az :minimum:1 olmalı.',
+            ],
+        ],
         'locations' => [
             'navigation' => 'Şubeler',
             'singular' => 'şube',
@@ -188,6 +252,7 @@ return [
                 'contact' => 'İletişim',
                 'address' => 'Adres ve konum',
                 'cover' => 'Kapak görseli',
+                'appearance' => 'Görünüm',
             ],
             'fields' => [
                 'name' => 'Şube adı',

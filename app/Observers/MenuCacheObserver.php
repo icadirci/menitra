@@ -23,6 +23,7 @@ use App\Models\QrCode;
 use App\Models\Subscription;
 use App\Models\Tenant;
 use App\Models\TenantLocale;
+use App\Models\ThemeSetting;
 use App\Models\Translations\ExtraGroupTranslation;
 use App\Models\Translations\ExtraTranslation;
 use App\Models\Translations\LocationTranslation;
@@ -79,7 +80,7 @@ final class MenuCacheObserver
             ...self::TENANT_MODELS,
             ...self::LOCATION_MODELS,
             ...array_keys(self::TRANSLATIONS),
-            LocationMenuHour::class, Tenant::class, TenantTranslation::class, Subscription::class, QrCode::class,
+            LocationMenuHour::class, Tenant::class, TenantTranslation::class, ThemeSetting::class, Subscription::class, QrCode::class,
         ];
     }
 
@@ -113,7 +114,8 @@ final class MenuCacheObserver
             isset(self::TRANSLATIONS[$class]) => $this->translation($model, ...self::TRANSLATIONS[$class]),
             $model instanceof LocationMenuHour => $this->menuHour($model),
             $model instanceof Tenant => $this->tenant($model),
-            $model instanceof TenantTranslation => $this->tenantId((int) $model->getAttribute('tenant_id')),
+            // Theme settings travel in the resolution entries (ResolvedTenant::$themeSettings).
+            $model instanceof TenantTranslation, $model instanceof ThemeSetting => $this->tenantId((int) $model->getAttribute('tenant_id')),
             // Resolution entries hold access_until.
             $model instanceof Subscription => $this->cache->forgetTenant(
                 (string) DB::table('tenants')->where('id', $model->getAttribute('tenant_id'))->value('slug'),

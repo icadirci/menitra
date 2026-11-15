@@ -15,7 +15,8 @@ use App\Tenancy\TenantContext;
  * the user's membership in the current tenant (TenantContext); without a
  * context, or for a location of another tenant, everything is denied.
  *
- * owner: everything on every location of the tenant (incl. the default branch).
+ * owner: everything on every location of the tenant (incl. the default branch
+ * and the branch theme override).
  * manager: view and update assigned locations (details, hours, special days).
  * branch_staff: view assigned locations.
  */
@@ -69,6 +70,15 @@ class LocationPolicy
      * Choosing the default branch is tenant-wide: owners only.
      */
     public function setDefault(User $user, Location $location): bool
+    {
+        return $this->ownerOf($user, $location);
+    }
+
+    /**
+     * The branch theme override is brand identity, a tenant-wide setting:
+     * owners only (managers may still edit the branch's other details).
+     */
+    public function setTheme(User $user, Location $location): bool
     {
         return $this->ownerOf($user, $location);
     }

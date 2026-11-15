@@ -88,7 +88,7 @@
 | `users` | Laravel default (`name`, `email`, `password`, `email_verified_at`, `remember_token`), `platform_role` nullable (`PlatformRole`) | unique `email`. `platform_role` is null for business users and never mass-assignable |
 | `tenant_user` (membership) | `id`, `tenant_id` FK cascade, `user_id` FK cascade, `role` (`TenantRole`), `is_active` boolean default true | unique (`tenant_id`, `user_id`); **unique (`tenant_id`, `id`)** (target of `location_user`); index `user_id`. Not globally tenant-scoped: it is always read from the user side (`$user->memberships()`) |
 | `location_user` (branch assignment) | `id`, `tenant_id`, `tenant_user_id`, `location_id` | unique (`tenant_user_id`, `location_id`); composite FKs to `tenant_user (tenant_id, id)` and `locations (tenant_id, id)`, both cascade. Rows are needed only for `manager` and `branch_staff`; owners reach every branch implicitly |
-| `theme_settings` 🔒 | `theme` (`MenuTheme`), `settings` jsonb | unique (`tenant_id`, `theme`) |
+| `theme_settings` 🔒 | `theme` (`MenuTheme`), `settings` jsonb (`colors`, `font_pair`, `layout`; validated by `MenuTheme::validator()`, see [themes.md](themes.md#styling-and-customisation)) | unique (`tenant_id`, `theme`). No row = the theme's defaults; registration writes the `classic` row. Created in B9 (no backfill) |
 
 ### Locations
 

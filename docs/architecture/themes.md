@@ -1,6 +1,6 @@
 # Menu Themes
 
-> Status: **Approved — v0.3** (2026-11-16: `classic` built in Phase 6; settings come from `defaults()` until `theme_settings` (B9); a theme without views falls back to `classic` until Phase 7). Themes are presentation layers only. All themes consume the same data contract and share all backend logic.
+> Status: **Approved — v0.4** (2026-11-15, B9: `theme_settings` with colours, font pair and layout options, contrast check, "Theme & appearance" page, owner-only branch override, themes without views listed as "coming soon"). v0.3 (2026-11-16: `classic` built in Phase 6; a theme without views falls back to `classic` until Phase 7). Themes are presentation layers only. All themes consume the same data contract and share all backend logic.
 
 ## Contents
 
@@ -29,8 +29,21 @@
 - Brand identity is set **per tenant** (`tenants.theme`). A location can override it (`locations.theme`, nullable).
 - Effective theme = `location.theme ?? tenant.theme`.
 - All menus at one location use the same theme, so breakfast and dinner never look different.
-- Per-theme customisation lives in `theme_settings` (unique per tenant and theme). Switching back to a theme restores the settings it had.
+- Per-theme customisation lives in `theme_settings` (unique per tenant and theme). Switching back to a theme restores the settings it had. A location override uses the tenant's settings of that theme; there are no per-location settings. A missing row means the theme's defaults; registration writes the `classic` row with defaults.
 - Plan gating: if the effective theme requires a feature the current plan lacks (`premium_themes`), `ThemeRenderer` falls back to `classic`. **Settings are not deleted.**
+
+### Managing themes (business panel, B9)
+
+All writes go through `App\Services\Themes\ThemeService`; the panel only calls it.
+
+| Action | Where | Who | Server rules |
+|---|---|---|---|
+| Choose the tenant theme and edit the selected theme's settings | **Theme & appearance** page (`ManageTheme`, `/app/{tenant}/theme`) | Owners (`TenantPolicy::manageSettings`, in `canAccess()` and again in `save()` / reset) | Theme must be built; a premium theme needs `premium_themes` when it is **newly** chosen; settings pass `MenuTheme::validator()` |
+| Branch override | Location form, "Appearance" section | Owners (`LocationPolicy::setTheme`); managers and branch staff see the field read-only, it is not dehydrated for them and a submitted value from them is a 403 | Same theme rules as above (`ThemeService::setLocationTheme`) |
+
+- **Built themes only.** `MenuTheme::isBuilt()` is true when both views exist. Until Phase 7 the other four themes are listed as **"coming soon"** (disabled option) and the server refuses them; they become selectable automatically when their views ship.
+- **Plan gating follows `FeatureGate`:** choosing a premium theme is a creation-like action (`ensureCanCreate(premium_themes)`, shown as the "not included" notification). Keeping or editing the theme already in use is never blocked, and nothing is deleted when the plan changes; the page shows a warning while the selected theme is rendered as `classic`.
+- Switching the theme in the form loads that theme's saved settings (or defaults). "Reset to defaults" only refills the form; nothing changes until saved.
 
 ## Theme registry
 
@@ -53,8 +66,14 @@ Each case provides:
 | `view()` | `themes.{key}.menu` |
 | `locationView()` | `themes.{key}.location` |
 | `stylesheet()` | `resources/css/themes/{key}.css` (Vite entry) |
-| `defaults()` | Default settings (colors, font pair, layout options) |
+| `defaults()` | Default settings: `colors`, `font_pair`, `layout` (must pass `validator()`, enforced by a test for every case) |
+| `fontPairs()` | Offered `MenuFontPair` cases (the stylesheet declares their `@font-face`) |
+| `layoutChoices()` | Allowed values of non-boolean layout options |
+| `contrastPairs()` | Colour pairs `[foreground, background]` that must reach WCAG AA |
 | `settingsRules()` | Validation rules for `theme_settings.settings` |
+| `validator()` / `normalize()` | Rules + contrast check; canonical form (known keys only, upper-case hex, real booleans) |
+| `isBuilt()` | Both views exist (selectable) |
+| `label()` | Panel label (`panels.app.theme.themes.*`) |
 | `requiredFeature()` | `?PlanFeature`, e.g. `premium_themes` |
 
 ## Theme inputs
@@ -65,7 +84,7 @@ A theme view receives exactly these three variables:
 |---|---|---|
 | `$menu` | `MenuSnapshot` | Cached, locale-resolved, allow-listed data ([menu-system.md](menu-system.md#menusnapshot-contract)) |
 | `$live` | `LiveMenuState` | Per request: open now, serving now, effective sold-out (`$live->isSoldOut($item)`) |
-| `$theme` | `ThemeSettings` | Merged `defaults()` and tenant `theme_settings`, validated |
+| `$theme` | `ThemeSettings` | Merged `defaults()` and tenant `theme_settings`, validated again (`ThemeSettings::fromStored()`: a section that fails the current rules falls back to its defaults). Saved settings travel in the cached `ResolvedTenant`, so rendering runs no query. Layout options are read with `$theme->option('name')` |
 
 UI strings come from `__('menu.*')`. No other data source is allowed.
 
@@ -121,8 +140,18 @@ To override a component, a theme places a variant in `themes/{key}/components/` 
   - `--menu-font-body`
   - `--menu-surface`, `--menu-muted`, `--menu-ornament` (cards, secondary text, decorative details)
 - Theme CSS uses these variables through Tailwind 4 (`@theme` / `var()`). There is one stylesheet per theme and no per-tenant CSS builds.
-- Fonts: a fixed, curated set of font pairs per theme, self-hosted, never loaded from arbitrary user input.
-- Colors are validated as hex values by `settingsRules()`. Contrast is checked against the background to meet accessibility requirements.
+- Fonts: a fixed, curated set of font pairs per theme (`MenuFontPair`: `young_serif_figtree`, `bricolage_inter`, `system`), self-hosted, never loaded from arbitrary user input. The font stacks come only from the enum and are emitted as `--menu-font-heading` / `--menu-font-body` on the menu root, overriding the theme stylesheet's defaults; a `@font-face` is downloaded only when its font is used.
+- Colors are validated as `#RRGGBB` by `settingsRules()`. Contrast (`App\Support\ColorContrast`, WCAG 2.x) must reach **4.5:1** for `text`, `muted` and `primary` on `bg` and `surface`, `accent` on `bg`, and `surface` text on `accent` (badges). `ornament` is decorative and not checked.
+- Settings shape (`theme_settings.settings`, jsonb):
+
+  ```json
+  {"colors": {"primary": "#23443A", "accent": "#9C4A2F", "bg": "#F4EBDD", "surface": "#FBF5EA",
+              "text": "#2B1D16", "muted": "#6B5446", "ornament": "#C49A45"},
+   "font_pair": "young_serif_figtree",
+   "layout": {"show_images": true, "show_featured": true, "image_shape": "arch"}}
+  ```
+
+- Layout options are per theme. `classic`: `show_images` (pictures in the item list), `show_featured` (featured strip), `image_shape` (`arch` | `rounded`).
 - Mobile-first: every theme must work at 320px wide and with large text settings.
 
 ## Enforcing independence
@@ -133,8 +162,8 @@ To override a component, a theme places a variant in `themes/{key}/components/` 
 
 ## Adding a theme
 
-1. Add a case to `MenuTheme` with `defaults()`, `settingsRules()` and `requiredFeature()`.
+1. Add a case to `MenuTheme` with `defaults()` (passing the contrast check), `fontPairs()`, `layoutChoices()` and `requiredFeature()`; add panel labels for its name, description and any new layout option in `lang/*/panels.php`.
 2. Create `resources/views/themes/{key}/menu.blade.php` and `location.blade.php`, composing the shared components.
-3. Create `resources/css/themes/{key}.css` and register it as a Vite input.
+3. Create `resources/css/themes/{key}.css` (with `@font-face` for every offered font pair) and register it as a Vite input. Once the views exist the theme is selectable in the panel.
 4. Add translations to `lang/*/menu.php` for any new UI strings.
 5. Run the theme test suite. No controller, service or schema change should be needed. If one seems necessary, it's an architectural change and needs review.

@@ -1,6 +1,7 @@
 {{--
     Classic theme — menu page. Design reference: docs/design/source/MenuKonak + DetailKonak.
     Inputs: $menu (MenuSnapshot), $live (LiveMenuState), $theme (ThemeSettings). No other data source.
+    Layout options ($theme->option()): show_images, show_featured, image_shape (arch | rounded).
 --}}
 @extends('layouts.menu')
 
@@ -8,7 +9,7 @@
 @section('description', \Illuminate\Support\Str::limit((string) $menu->brand->description, 160))
 
 @section('content')
-    <div class="k-page" x-data="menuPage" data-search="{{ collect($menu->menu->categories)->flatMap(fn ($c) => $c->items)->map(fn ($i) => mb_strtolower($i->name.' '.$i->description))->implode('|') }}">
+    <div class="k-page k-page--{{ $theme->option('image_shape') === 'rounded' ? 'rounded' : 'arch' }}" x-data="menuPage" data-search="{{ collect($menu->menu->categories)->flatMap(fn ($c) => $c->items)->map(fn ($i) => mb_strtolower($i->name.' '.$i->description))->implode('|') }}">
         @include('themes.classic.partials.header')
         @include('themes.classic.partials.info')
 
@@ -40,7 +41,7 @@
             @endif
         </div>
 
-        @if ($menu->menu->featured !== [])
+        @if ($menu->menu->featured !== [] && $theme->option('show_featured') !== false)
             <section class="k-featured" x-show="query === ''" aria-labelledby="k-featured-title">
                 <div class="k-heading"><h2 id="k-featured-title">{{ __('menu.featured') }}</h2><span aria-hidden="true"></span></div>
                 <ul class="k-featured__list">

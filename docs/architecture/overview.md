@@ -128,8 +128,9 @@ Details: [tenancy.md](tenancy.md), [menu-system.md](menu-system.md).
   5. Default menu (type `all_day`, unpublished), attached to the location via `location_menu`
   6. Trial subscription for the default plan, plus a `trial_started` `subscription_events` entry. Every new tenant therefore starts with a live `trialing` subscription, so the plan limits apply from the first request (see [subscriptions.md § Plan features and limits](subscriptions.md#plan-features-and-limits))
   7. A `tenant_locales` row for the registration locale (= `tenants.default_locale`)
+  8. The default QR code of the default location and the `theme_settings` row of `classic` with its defaults (B9)
 
-  Added to the same transaction when their tables exist: default `theme_settings`, the default QR code, and `?plan=` selection.
+  Added to the same transaction when it exists: `?plan=` selection.
 - After commit, `TenantRegistered` is fired.
 - Registration fields: name, email, password, business name, slug (auto-suggested, editable).
 - Rate limits: Filament login (5/min), registration (`registration`: 5/min per IP), password reset (`password-reset`: 5/min per email+IP, 20/min per IP), verification links and resends (6/min). The session is regenerated on login.
@@ -208,13 +209,13 @@ Business          Business profile · Languages · Theme & appearance · Subscri
 | B0 | Scope and architecture documents |
 | B1 | Panel foundation: navigation groups, `Money`, `TranslatableFields` + `TranslationWriter`, `media` disk + `HasTenantMedia`, `tenant_locales` + `TenantLocaleService`, `plan_limits` + `FeatureGate`, `TenantPolicy`, Languages page |
 | B2 | Business profile, subscription page (read-only). **Done 2026-11-15:** `EditBusinessProfile` (name/tagline/description per enabled locale, logo + cover; slug and currency read-only — a slug change is a support task for now) and `ViewSubscription` (plan, status, dates, `Subscription::accessUntil()`, limits with usage from `FeatureGate`), both owner-only |
-| B3 | Locations: resource, opening hours, special hours. **Done 2026-11-15:** `LocationResource` (list/create/view/edit; query limited to `accessibleLocations()`, so another branch is a 404), weekly hours as a repeater on the form, special days as a relation manager. Writes go through `LocationService` (plan limit on create and restore, translations, default-branch rules: exactly one default, which can't be deactivated or deleted; switching it is owner-only via `LocationPolicy::setDefault`) and `LocationHoursService` (server-side time, overlap and closed-day rules). Panel glue `App\Filament\App\Support\ServiceCall` maps service validation errors onto form fields and plan limits onto notifications. The location theme override comes with B9 |
+| B3 | Locations: resource, opening hours, special hours. **Done 2026-11-15:** `LocationResource` (list/create/view/edit; query limited to `accessibleLocations()`, so another branch is a 404), weekly hours as a repeater on the form, special days as a relation manager. Writes go through `LocationService` (plan limit on create and restore, translations, default-branch rules: exactly one default, which can't be deactivated or deleted; switching it is owner-only via `LocationPolicy::setDefault`) and `LocationHoursService` (server-side time, overlap and closed-day rules). Panel glue `App\Filament\App\Support\ServiceCall` maps service validation errors onto form fields and plan limits onto notifications. The location theme override came with B9 |
 | B4 | Menus, location attachment (`LocationMenu` pivot model), categories. **Done 2026-11-16:** `MenuResource` (list limited by `Menu::scopeEditableBy()`, the manager content rule), `CategoriesRelationManager`, `LocationsRelationManager` (owner-only, with serving hours); `MenuService` (plan limit on create/restore), `MenuPolicy` |
 | B5 | Items, allergens, dietary labels. **Done 2026-11-16:** `MenuItemResource`, `MenuContentService` (`max_items` on create), `MenuItemPolicy` (follows the item's menu; the submitted category is re-authorized) |
 | B6 | Variants, extra groups. **Done 2026-11-16:** `VariantsRelationManager` (one default per item), `ExtraGroupResource` + `ExtrasRelationManager` (owner-only, `ExtraGroupService`) |
 | B7 | Branch operations: stock status (`location_item_states`), menu serving hours. **Done 2026-11-16:** `ManageStock` page for every role on its accessible branches (`LocationPolicy::manageStock`, `StockService`: for today / until a time / indefinitely); serving hours on the menu ↔ location attachment |
 | B8 | QR codes (`chillerlan/php-qrcode`, SVG + PNG). **Done 2026-11-15:** `QrCodeResource` (list/create/edit; query limited to codes of `accessibleLocations()`, so another branch's code is a 404). Target branch from `accessibleLocations()`, optional deep-linked menu only among menus attached to that branch; the submitted branch is re-checked (`QrCodePolicy::manageAt`, also when a code is moved) and `QrCodeService` enforces `max_qr_codes` on create, the branch (current tenant, not deleted) and the menu attachment. The `code` never changes. `QrCodeImage` renders SVG and PNG on demand from the stable `/q/{code}` URL (nothing is stored); download actions for every role on its branches, SVG preview on the edit page. Deactivation takes effect at once (the `qrmenu:qr:{code}` entry is forgotten by `MenuCacheObserver`); delete is owner-only |
-| B9 | Theme & appearance (`theme_settings`) |
+| B9 | Theme & appearance (`theme_settings`). **Done 2026-11-15:** `theme_settings` (one jsonb row per tenant and theme: colours, `MenuFontPair`, layout options) and `ManageTheme` (owner-only): theme choice plus the selected theme's settings, validated on the server by `MenuTheme::validator()` incl. WCAG AA contrast (`ColorContrast`); switching back restores a theme's settings. `ThemeService` allows only built themes (the other four are shown as "coming soon" until Phase 7) and gates newly choosing a premium theme with `FeatureGate` (`premium_themes`); keeping the current theme is never blocked and settings are never deleted. Branch override on the location form, owner-only (`LocationPolicy::setTheme`). Settings travel in `ResolvedTenant` (warm requests stay query-free); writes bump the tenant version and clear resolution entries. Registration writes the default `classic` row |
 | B10 | Dashboard widgets and onboarding checklist |
 | later | Team management / invitations, menu duplication, bulk price updates |
 
@@ -240,14 +241,14 @@ app/
   Actions/Fortify/           CreateNewUser, ResetUserPassword, UpdateUserPassword
   Console/Commands/          ProcessSubscriptionLifecycle
   Contracts/                 PaymentGateway
-  Enums/                     PlatformRole, TenantRole, TenantStatus, MenuType, MenuTheme, Allergen, DietaryLabel,
+  Enums/                     PlatformRole, TenantRole, TenantStatus, MenuType, MenuTheme, MenuFontPair, Allergen, DietaryLabel,
                              ExtraSelectionType, SubscriptionStatus, SubscriptionEventType,
                              BillingInterval, PlanFeature
   Events/                    TenantRegistered, QrCodeScanned
   Exceptions/                TenantNotResolvedException, MenuUnavailableException
   Filament/
     Admin/                   Pages/ (Dashboard, ManageSiteSettings), Resources/ (Plans, Faqs, Testimonials)
-    App/                     Pages/ (Dashboard, ManageLocales, EditBusinessProfile, ViewSubscription, …),
+    App/                     Pages/ (Dashboard, ManageLocales, EditBusinessProfile, ManageTheme, ViewSubscription, …),
                              Resources/ (Locations, Menus, MenuItems, ExtraGroups), Widgets/,
                              Support/ (ServiceCall, PanelContext), Pages/ManageStock,
                              Forms/ (TranslatableFields, MoneyInput, TenantImageUpload)
@@ -281,11 +282,12 @@ app/
     Menu/                    PublicMenuService, MenuSnapshotBuilder, MenuCache, MenuCacheKeys,
                              LiveMenuState, MenuUrlGenerator, ThemeRenderer, QrCodeResolver
     QrCodes/                 QrCodeService (panel writes), QrCodeImage (SVG/PNG)
+    Themes/                  ThemeService (theme choice, theme_settings, branch override)
   Support/
     Menu/Data/               MenuSnapshot, TenantBrand, LocationInfo, MenuData, CategoryData,
                              ItemData, VariantData, ExtraGroupData, ExtraData, ThemeSettings
     Media/                   TenantMediaPath
-    Money.php
+    Money.php, ColorContrast.php
   Tenancy/
     TenantContext.php, ResolvedTenant.php, TenantResolverPipeline.php
     Resolvers/               TenantResolver (interface), SubdomainTenantResolver,
