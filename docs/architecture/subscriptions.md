@@ -133,6 +133,7 @@ menu is online  ⇔  tenant.status = active  AND  access_until ≠ null  AND  no
 | `max_items` | count | Number of items across all menus |
 | `max_languages` | count | Enabled tenant locales |
 | `max_qr_codes` | count | Number of QR codes |
+| `max_members` | count | Active team members (owner included) plus pending invitations; checked when inviting and when reactivating a member (launch plan Faz 7) |
 | `premium_themes` | boolean | Access to themes that require it |
 | `custom_domain` | boolean | Custom domains (later phase) |
 | `remove_branding` | boolean | Hide the "Powered by Restano" footer |

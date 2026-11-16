@@ -10,6 +10,7 @@ return [
         'max_items' => 'Ürün sayısı',
         'max_languages' => 'Dil sayısı',
         'max_qr_codes' => 'QR kod sayısı',
+        'max_members' => 'Ekip üyesi sayısı',
         'premium_themes' => 'Premium temalar',
         'custom_domain' => 'Özel alan adı',
         'remove_branding' => 'Restano markasını gizleme',
@@ -22,6 +23,7 @@ return [
         'max_items' => ':count ürün',
         'max_languages' => ':count dil',
         'max_qr_codes' => ':count QR kod',
+        'max_members' => ':count ekip üyesi',
     ],
 
     'allowance_unlimited' => [
@@ -30,6 +32,7 @@ return [
         'max_items' => 'Sınırsız ürün',
         'max_languages' => 'Sınırsız dil',
         'max_qr_codes' => 'Sınırsız QR kod',
+        'max_members' => 'Sınırsız ekip üyesi',
     ],
 
     'errors' => [

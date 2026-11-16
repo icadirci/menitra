@@ -15,6 +15,7 @@ enum PlanFeature: string
     case MaxItems = 'max_items';
     case MaxLanguages = 'max_languages';
     case MaxQrCodes = 'max_qr_codes';
+    case MaxMembers = 'max_members';
     case PremiumThemes = 'premium_themes';
     case CustomDomain = 'custom_domain';
     case RemoveBranding = 'remove_branding';

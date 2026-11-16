@@ -27,6 +27,7 @@ class PlanSeeder extends Seeder
         'max_items' => 100,
         'max_languages' => 2,
         'max_qr_codes' => 5,
+        'max_members' => 3,
         'premium_themes' => 0,
         'custom_domain' => 0,
         'remove_branding' => 0,

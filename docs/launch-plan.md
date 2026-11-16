@@ -24,7 +24,7 @@ Oturum kuralları:
 | 5 | İzleme (Sentry, kontroller) | S | ✅ 2026-11-16 |
 | 6 | Temalar vitrini için canlı seed | S | ✅ 2026-11-16 |
 | 9 | İki adımlı doğrulama (MFA) | S | ✅ 2026-11-16 |
-| 7 | Ekip yönetimi `/app` | L | ⬜ |
+| 7 | Ekip yönetimi `/app` | L | ✅ 2026-11-16 |
 | 8 | Kapsamlı admin + impersonation | L | ⬜ |
 | 10 | Hukuk ve KVKK | S + kullanıcı | ⬜ |
 | 11 | Plan ve fiyatlar | kullanıcı | ⬜ |
@@ -213,6 +213,20 @@ Bağlam: üyelikler `tenant_user` tablosunda (`role`, `is_active`, `UNIQUE (tena
 - **Davet maili:** kuyrukta, tr/en, işletme adı escape'li.
 - **Kurallar:** tek owner; owner kendini çıkaramaz veya rolünü düşüremez; `manager` ve `branch_staff` için en az bir şube zorunlu; pasifleştirilen üyenin erişimi anında kesilir. Owner devri ve müdürün personel davet etmesi **ilk sürümde yok**.
 - **Testler:** yetki matrisi (owner / manager / branch_staff), başka işletmenin şubesine atama (DB reddeder), token güvenliği (süresi geçmiş, iptal edilmiş, tekrar kullanılmış, yanlış e-posta), `max_members` limiti, rate limit, askıdaki işletme.
+
+**Notlar (2026-11-16, tamamlandı):**
+- **Karar (kullanıcı):** oturumu kapalı, hesabı olan kişi davet sayfasında **mevcut şifresiyle** kabul eder. Oturum açılmaz, sonra `/app/login`'den girer (MFA orada sorulur). Sebep: Filament login'i aktif üyeliği olmayan hesabı içeri almıyor, yani çıkarılıp yeniden davet edilen biri başka türlü kabul edemezdi. Oturumu açık ve e-postası eşleşen kişi tek tıkla kabul eder; eşleşmiyorsa hata alır ve üyelik oluşmaz. Yeni hesap ad + şifre belirler, e-postası doğrulanmış sayılır ve kayıttaki gibi oturum açılır. CLAUDE.md §3.16 ve security.md buna göre güncellendi.
+- Tablolar: `tenant_invitations` (ek olarak `locale` ve `sent_at`; açık davet için partial unique index; davet eden için composite FK `ON DELETE SET NULL (invited_by_membership_id)`, PG15) ve `tenant_invitation_location`. Model `TenantInvitation` (tenant-scoped, fillable boş, `token_hash` hidden).
+- Token: 32 byte, URL-safe base64 (43 karakter), sadece SHA-256 hash'i saklanıyor; 7 gün (`config('tenancy.team.invitation_days')`). Tek kullanım, kabulde satır kilidiyle tekrar kontrol ediliyor. Tekrar gönderme yeni token üretir (eski link ölür; 60 sn bekleme). Süresi dolmuş açık davet, aynı adrese yeni davette iptal edilip değiştirilir.
+- Yeni dokümante bypass: `App\Services\Team\InvitationTokenResolver` (token işletmeyi belirler; tenancy.md + `TenantScopeBypassTest`). Geçersiz, kullanılmış, iptal edilmiş, süresi dolmuş token ve askıdaki işletme aynı genel 404 sayfasını alır.
+- Servisler: `TeamInvitationService`, `TeamService`, ortak şube doğrulaması `BranchSelection`. `max_members` = aktif üyelikler (owner dahil) + bekleyen davetler (tek sorgu); davette ve **üyeyi tekrar aktifleştirmede** kontrol ediliyor. Çıkarma üyeliği ve şube atamalarını siler, hesap kalır.
+- Panel: `TeamMemberResource` (`/app/{tenant}/team`) ve `TeamInvitationResource` (`/app/{tenant}/team-invitations`), işlemler modal. Policy'ler `TenantMembershipPolicy`, `TenantInvitationPolicy`. **Dikkat:** Filament, resource modeline global tenant scope ve `creating` hook'u ekliyor; `TenantMembership` için bu, başka işletmedeki üyelik kontrollerini bozuyordu (`canAccessTenant`, switcher). Bu yüzden `TeamMemberResource::$isScopedToTenant = false`; sorgu `TenantContext`'e açıkça bağlı. **Faz 8:** admin'de `TenantMembership` (veya `User`) için resource yazarken aynı tuzak var.
+- `TenantMembership::locations()` / `TenantInvitation::locations()`: eager loading'de `withPivotValue` boş modelde patladığı için pivot değeri sadece `tenant_id` doluyken ekleniyor.
+- Route'lar: `GET /invitations/accepted`, `GET/POST /invitations/{token}` (`throttle:invitations`: görüntüleme 30/dk/IP; kabul 5/dk/IP + 10/dk/token). Sayfalar `no-store`, `noindex`, `no-referrer`. Dil davetin `locale`'i (davet edenin panel dili). Sentry scrubber `/invitations/…` yolunu zaten maskeliyordu.
+- `PlanFeature::MaxMembers`: admin plan formu ve fiyat sayfası enum'dan otomatik okuyor. `PlanSeeder` starter = 3, vitrin `demo` planı = 10. **Mevcut planlarda `max_members` satırı yoksa limit 0 olur ve davet gönderilemez:** canlıda Faz 11'de planlara değer girilmeli; yerelde `php artisan db:seed --class=PlanSeeder` starter'a ekler (demo planı seeder tarafından ezilmez, admin'den girilmeli).
+- `DashboardTest` sorgu tavanı 12 → 13 (`PlanUsageWidget` sayılan her özellik için bir sorgu çalıştırıyor; şube/menü sayısıyla büyümüyor).
+- Testler: `tests/Feature/Panels/TeamManagementTest.php` (15), `tests/Feature/Auth/TeamInvitationAcceptTest.php` (11). Süit: 698 test yeşil.
+- **Faz 10 için:** davet kabul ekranındaki yeni hesap formuna kullanım koşulları onayı eklenmeli (`resources/views/invitations/show.blade.php`, `AcceptInvitationRequest` register modu).
 
 ## Faz 8: Kapsamlı admin + impersonation (L)
 

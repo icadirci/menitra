@@ -85,7 +85,7 @@ class ShowcaseSeeder extends Seeder
         }
 
         $limits = [
-            'max_locations' => 5, 'max_menus' => 10, 'max_items' => 500, 'max_languages' => 3, 'max_qr_codes' => 50,
+            'max_locations' => 5, 'max_menus' => 10, 'max_items' => 500, 'max_languages' => 3, 'max_qr_codes' => 50, 'max_members' => 10,
             'premium_themes' => 1, 'custom_domain' => 0, 'remove_branding' => 0, 'qr_analytics' => 0,
         ];
 

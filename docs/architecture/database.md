@@ -2,7 +2,7 @@
 
 > Status: **Approved — v0.4** (2026-11-15: `tenant_locales` without `is_default`, `location_item_states.sold_out_until`, `PlanFeature::max_qr_codes`). v0.3: platform roles, `TenantRole.branch_staff`, `location_user`.
 >
-> **Implemented so far:** `users.platform_role`, `tenants`, `tenant_translations`, `tenant_locales`, `tenant_user`, `locations`, `location_translations`, `location_opening_hours`, `location_special_hours`, `location_user`, `location_item_states`, `location_menu_hours`, `menu_categories` (+ translations), `menu_items` (+ translations), `menu_item_allergens`, `menu_item_dietary_labels`, `menu_item_variants` (+ translations), `extra_groups` (+ translations), `extras` (+ translations), `menu_item_extra_group`, `qr_codes`, `menus`, `menu_translations`, `location_menu`, `plans` (+ `is_featured`), `plan_translations`, `plan_prices`, `plan_limits`, `subscriptions` (+ `plan_price_id`), `subscription_events`, `faqs`, `faq_translations`, `testimonials`, `testimonial_translations`, `site_settings`, `site_setting_translations`. The rest of this document is the approved target schema. PostgreSQL. Every change goes through a migration; this document must be updated with it.
+> **Implemented so far:** `users.platform_role`, `tenants`, `tenant_translations`, `tenant_locales`, `tenant_user`, `locations`, `location_translations`, `location_opening_hours`, `location_special_hours`, `location_user`, `location_item_states`, `location_menu_hours`, `menu_categories` (+ translations), `menu_items` (+ translations), `menu_item_allergens`, `menu_item_dietary_labels`, `menu_item_variants` (+ translations), `extra_groups` (+ translations), `extras` (+ translations), `menu_item_extra_group`, `qr_codes`, `menus`, `menu_translations`, `location_menu`, `plans` (+ `is_featured`), `plan_translations`, `plan_prices`, `plan_limits`, `subscriptions` (+ `plan_price_id`), `subscription_events`, `faqs`, `faq_translations`, `testimonials`, `testimonial_translations`, `site_settings`, `site_setting_translations`, `tenant_invitations`, `tenant_invitation_location`. The rest of this document is the approved target schema. PostgreSQL. Every change goes through a migration; this document must be updated with it.
 
 ## Contents
 
@@ -88,6 +88,8 @@
 | `users` | Laravel default (`name`, `email`, `password`, `email_verified_at`, `remember_token`), `platform_role` nullable (`PlatformRole`) | unique `email`. `platform_role` is null for business users and never mass-assignable |
 | `tenant_user` (membership) | `id`, `tenant_id` FK cascade, `user_id` FK cascade, `role` (`TenantRole`), `is_active` boolean default true | unique (`tenant_id`, `user_id`); **unique (`tenant_id`, `id`)** (target of `location_user`); index `user_id`. Not globally tenant-scoped: it is always read from the user side (`$user->memberships()`) |
 | `location_user` (branch assignment) | `id`, `tenant_id`, `tenant_user_id`, `location_id` | unique (`tenant_user_id`, `location_id`); composite FKs to `tenant_user (tenant_id, id)` and `locations (tenant_id, id)`, both cascade. Rows are needed only for `manager` and `branch_staff`; owners reach every branch implicitly |
+| `tenant_invitations` (team invitation, model `TenantInvitation`, tenant-scoped) | `id`, `tenant_id` FK cascade, `email` (lower case), `role` (`TenantRole`, never `owner`), `token_hash` (SHA-256 hex, unique; the raw token is never stored), `locale`, `invited_by_membership_id` nullable, `expires_at`, `sent_at`, `accepted_at`, `revoked_at`, timestamps | **unique (`tenant_id`, `id`)**; index (`tenant_id`, `email`); partial unique index (`tenant_id`, `email`) `WHERE accepted_at IS NULL AND revoked_at IS NULL` (one open invitation per address); composite FK (`tenant_id`, `invited_by_membership_id`) → `tenant_user (tenant_id, id)` `ON DELETE SET NULL (invited_by_membership_id)` (PostgreSQL 15 column list) |
+| `tenant_invitation_location` | `id`, `tenant_id`, `tenant_invitation_id`, `location_id` | unique (`tenant_invitation_id`, `location_id`); composite FKs to `tenant_invitations (tenant_id, id)` and `locations (tenant_id, id)`, both cascade |
 | `theme_settings` 🔒 | `theme` (`MenuTheme`), `settings` jsonb (`colors`, `font_pair`, `layout`; validated by `MenuTheme::validator()`, see [themes.md](themes.md#styling-and-customisation)) | unique (`tenant_id`, `theme`). No row = the theme's defaults; registration writes the `classic` row. Created in B9 (no backfill) |
 
 ### Locations
@@ -184,6 +186,8 @@ Composite foreign keys:
 | `location_menu` | `locations (tenant_id, id)`, `menus (tenant_id, id)` |
 | `tenant_user` | `tenants (id)` via `tenant_id`; carries `UNIQUE (tenant_id, id)` |
 | `location_user` | `tenant_user (tenant_id, id)`, `locations (tenant_id, id)`. A membership of tenant A can't be assigned a branch of tenant B |
+| `tenant_invitations` | `tenant_user (tenant_id, id)` (inviter, nullable) |
+| `tenant_invitation_location` | `tenant_invitations (tenant_id, id)`, `locations (tenant_id, id)` |
 | `location_menu_hours` | `location_menu (tenant_id, id)` |
 | `location_item_states` | `locations (tenant_id, id)`, `menu_items (tenant_id, id)` |
 | `menu_categories` | `menus (tenant_id, id)` |
@@ -237,7 +241,7 @@ Composite foreign keys:
 | `SubscriptionStatus` | `trialing`, `active`, `past_due`, `grace`, `expired` |
 | `SubscriptionEventType` | `trial_started`, `activated`, `renewed`, `payment_failed`, `cancel_requested`, `cancel_reverted`, `grace_started`, `expired`, `plan_changed`, `reactivated` |
 | `BillingInterval` | `monthly`, `yearly` |
-| `PlanFeature` | `max_locations`, `max_menus`, `max_items`, `max_languages`, `max_qr_codes`, `premium_themes`, `custom_domain`, `remove_branding`, `qr_analytics` |
+| `PlanFeature` | `max_locations`, `max_menus`, `max_items`, `max_languages`, `max_qr_codes`, `max_members`, `premium_themes`, `custom_domain`, `remove_branding`, `qr_analytics` |
 
 Display names for enums come from `lang/{locale}/…`.
 

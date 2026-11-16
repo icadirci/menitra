@@ -43,6 +43,19 @@ class FortifyServiceProvider extends ServiceProvider
 
         RateLimiter::for('registration', fn (Request $request) => Limit::perMinute(5)->by($request->ip()));
 
+        // /invitations/{token}: viewing is cheap; accepting (password checks,
+        // account creation) is limited per IP and per token.
+        RateLimiter::for('invitations', function (Request $request) {
+            if (! $request->isMethod('post')) {
+                return Limit::perMinute(30)->by('invitations|'.$request->ip());
+            }
+
+            return [
+                Limit::perMinute(5)->by('invitations-accept|'.$request->ip()),
+                Limit::perMinute(10)->by('invitations-token|'.hash('sha256', (string) $request->route('token'))),
+            ];
+        });
+
         RateLimiter::for('password-reset', function (Request $request) {
             $email = Str::transliterate(Str::lower((string) $request->input('email')));
 

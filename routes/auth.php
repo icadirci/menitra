@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Http\Controllers\Account\AccountController;
 use App\Http\Controllers\Account\AccountQrCodeController;
+use App\Http\Controllers\Team\InvitationController;
 use App\Http\Middleware\ResolveAccountTenant;
 use Illuminate\Routing\RedirectController;
 use Illuminate\Support\Facades\Route;
@@ -64,6 +65,15 @@ Route::domain(config('tenancy.central_domain'))->group(function (): void {
             ->name('verification.send');
 
         Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
+    });
+
+    // Team invitations (launch plan Faz 7): reachable signed in or out. The
+    // token is checked by InvitationTokenResolver, so the path isn't
+    // constrained and every invalid token gets the same page.
+    Route::get('/invitations/accepted', [InvitationController::class, 'accepted'])->name('invitations.accepted');
+    Route::middleware('throttle:invitations')->group(function (): void {
+        Route::get('/invitations/{token}', [InvitationController::class, 'show'])->name('invitations.show');
+        Route::post('/invitations/{token}', [InvitationController::class, 'accept'])->name('invitations.accept');
     });
 
     // Minimal read-only account page. The tenant comes only from the user's

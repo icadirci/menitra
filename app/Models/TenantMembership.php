@@ -55,9 +55,11 @@ class TenantMembership extends Model
      */
     public function locations(): BelongsToMany
     {
-        return $this->belongsToMany(Location::class, 'location_user', 'tenant_user_id', 'location_id')
-            ->withPivotValue('tenant_id', $this->tenant_id)
-            ->withTimestamps();
+        $relation = $this->belongsToMany(Location::class, 'location_user', 'tenant_user_id', 'location_id')->withTimestamps();
+
+        // Eager loading builds the relation on a blank instance (no tenant_id);
+        // the pivot value is needed only for writes from a loaded record.
+        return $this->tenant_id === null ? $relation : $relation->withPivotValue('tenant_id', $this->tenant_id);
     }
 
     /**

@@ -138,6 +138,7 @@ Livewire is used only by the panels, so its endpoints follow the panels:
 |---|---|
 | Tenant resolvers (`ResolvedTenantFactory`) | The tenant isn't known yet |
 | `QrCodeResolver` | The QR code identifies the tenant |
+| `InvitationTokenResolver` (launch plan Faz 7) | The invitation token identifies the tenant. Looks up one invitation by token hash; `TeamInvitationService` then sets the context to that tenant only for the acceptance |
 | `ResolveTenantFromMembership` / membership lookups | The tenant is derived from the user's verified membership |
 | Commands and jobs implementing `TenantAgnostic` | Cross-tenant maintenance, e.g. subscription lifecycle |
 | `TenantRegistrationService` | Creates the tenant, then sets the context for the remaining inserts and restores the previous context afterwards |

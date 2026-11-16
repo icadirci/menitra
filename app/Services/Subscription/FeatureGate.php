@@ -14,6 +14,8 @@ use App\Models\MenuItem;
 use App\Models\QrCode;
 use App\Models\Subscription;
 use App\Models\Tenant;
+use App\Models\TenantInvitation;
+use App\Models\TenantMembership;
 use App\Tenancy\TenantContext;
 use LogicException;
 
@@ -102,8 +104,27 @@ class FeatureGate
             PlanFeature::MaxLanguages => $tenant->locales()->count(),
             PlanFeature::MaxItems => MenuItem::query()->count(),
             PlanFeature::MaxQrCodes => QrCode::query()->count(),
+            PlanFeature::MaxMembers => $this->memberUsage($tenant),
             default => throw new LogicException("[{$feature->value}] is not a count feature."),
         };
+    }
+
+    /**
+     * Active memberships (the owner included) plus pending invitations, in
+     * one query. Memberships aren't tenant-scoped, hence the explicit
+     * tenant_id; invitations go through the tenant scope.
+     */
+    private function memberUsage(Tenant $tenant): int
+    {
+        $row = TenantMembership::query()
+            ->where('tenant_id', $tenant->getKey())
+            ->where('is_active', true)
+            ->selectRaw('count(*) as members')
+            ->selectSub(TenantInvitation::query()->pending()->selectRaw('count(*)'), 'invitations')
+            ->toBase()
+            ->first();
+
+        return (int) $row->members + (int) $row->invitations;
     }
 
     /**

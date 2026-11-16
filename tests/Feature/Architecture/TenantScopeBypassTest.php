@@ -24,6 +24,7 @@ class TenantScopeBypassTest extends TestCase
         'app/Models/Concerns/BelongsToTenant.php' => 'defines it',
         'app/Tenancy/ResolvedTenantFactory.php' => 'tenant resolver: the tenant is not known yet',
         'app/Services/Menu/QrCodeResolver.php' => 'the QR code identifies the tenant',
+        'app/Services/Team/InvitationTokenResolver.php' => 'the invitation token identifies the tenant',
         'app/Console/Commands/ProcessSubscriptionLifecycle.php' => 'TenantAgnostic command',
     ];
 

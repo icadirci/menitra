@@ -76,4 +76,18 @@ return [
 
     'menu_rate_limit' => (int) env('MENU_RATE_LIMIT', 300),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Team invitations
+    |--------------------------------------------------------------------------
+    |
+    | Days an invitation link stays valid (launch plan Faz 7). Resending issues
+    | a new link with a new expiry.
+    |
+    */
+
+    'team' => [
+        'invitation_days' => 7,
+    ],
+
 ];
