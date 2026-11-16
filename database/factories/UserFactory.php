@@ -18,6 +18,9 @@ class UserFactory extends Factory
      */
     protected static ?string $password;
 
+    /** Base32 TOTP secret used by withTwoFactor() (tests only). */
+    public const TWO_FACTOR_SECRET = 'JBSWY3DPEHPK3PXPJBSWY3DPEHPK3PXP';
+
     /**
      * Define the model's default state.
      *
@@ -34,17 +37,44 @@ class UserFactory extends Factory
         ];
     }
 
+    /**
+     * Platform users have two-factor set up, as /admin requires it; use
+     * withoutTwoFactor() for one that hasn't set it up yet.
+     */
     public function superAdmin(): static
     {
         return $this->state(fn (array $attributes) => [
             'platform_role' => PlatformRole::SuperAdmin,
-        ]);
+        ])->withTwoFactor();
     }
 
     public function platformStaff(): static
     {
         return $this->state(fn (array $attributes) => [
             'platform_role' => PlatformRole::PlatformStaff,
+        ])->withTwoFactor();
+    }
+
+    /**
+     * Two-factor (TOTP) set up with a known test secret and recovery codes
+     * `recovery-code-1` … `recovery-code-8` (stored hashed, like Filament does).
+     */
+    public function withTwoFactor(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'app_authentication_secret' => self::TWO_FACTOR_SECRET,
+            'app_authentication_recovery_codes' => array_map(
+                fn (int $i): string => Hash::make("recovery-code-{$i}"),
+                range(1, 8),
+            ),
+        ]);
+    }
+
+    public function withoutTwoFactor(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'app_authentication_secret' => null,
+            'app_authentication_recovery_codes' => null,
         ]);
     }
 

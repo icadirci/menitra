@@ -6,6 +6,8 @@ namespace App\Providers\Filament;
 
 use App\Filament\App\Navigation\AppNavigationGroup;
 use App\Filament\App\Pages\Dashboard;
+use App\Filament\Shared\Auth\EditProfile;
+use App\Filament\Shared\Auth\MultiFactor;
 use App\Http\Middleware\ResolveTenantFromMembership;
 use App\Models\Tenant;
 use Filament\Http\Middleware\Authenticate;
@@ -47,6 +49,10 @@ class AppPanelProvider extends PanelProvider
             ->path('app')
             ->domain(config('tenancy.central_domain'))
             ->login()
+            // Two-factor is optional here, managed on the profile page. The
+            // providers must match /admin (see MultiFactor).
+            ->multiFactorAuthentication(MultiFactor::providers())
+            ->profile(EditProfile::class, isSimple: false)
             // Saves and actions run in a DB transaction, so uploads stored during
             // a failed save are removed (MediaCleaner) and writes stay atomic.
             ->databaseTransactions()

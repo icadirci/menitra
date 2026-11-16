@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Providers\Filament;
 
 use App\Filament\Admin\Pages\Dashboard;
+use App\Filament\Shared\Auth\EditProfile;
+use App\Filament\Shared\Auth\MultiFactor;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -34,6 +36,11 @@ class AdminPanelProvider extends PanelProvider
             ->path('admin')
             ->domain(config('tenancy.central_domain'))
             ->login()
+            // Two-factor is mandatory: a platform user without it is sent to the
+            // set-up page and reaches nothing else. Same providers as /app
+            // (MultiFactor), so neither login skips the challenge.
+            ->multiFactorAuthentication(MultiFactor::providers(), isRequired: true)
+            ->profile(EditProfile::class, isSimple: false)
             ->brandName(fn (): string => __('panels.admin.brand'))
             ->brandLogo(fn () => view('filament.brand-logo', ['name' => __('panels.admin.brand')]))
             ->brandLogoHeight('2rem')

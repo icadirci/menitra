@@ -23,7 +23,7 @@ Oturum kuralları:
 | 4 | Yedekleme | M | ⬜ |
 | 5 | İzleme (Sentry, kontroller) | S | ✅ 2026-11-16 |
 | 6 | Temalar vitrini için canlı seed | S | ✅ 2026-11-16 |
-| 9 | İki adımlı doğrulama (MFA) | S | ⬜ |
+| 9 | İki adımlı doğrulama (MFA) | S | ✅ 2026-11-16 |
 | 7 | Ekip yönetimi `/app` | L | ⬜ |
 | 8 | Kapsamlı admin + impersonation | L | ⬜ |
 | 10 | Hukuk ve KVKK | S + kullanıcı | ⬜ |
@@ -183,6 +183,16 @@ Bulgular: `/temalar` (`ThemeShowcaseController`, `config/marketing.php` → `sho
 - `AdminPanelProvider`: MFA **zorunlu** (platform rolü olan herkes ilk girişte kurmak zorunda). `AppPanelProvider`: isteğe bağlı.
 - Gerekli kolonlar için migration (Filament'in beklediği alanlar, şifreli cast'ler).
 - Testler: MFA kurmamış platform kullanıcısı admin'e giremez / kuruluma yönlenir; `/app` MFA'sız çalışır.
+
+**Notlar (2026-11-16, tamamlandı):**
+- Filament 5.11 yerleşik `AppAuthentication` (TOTP + kurtarma kodları), yeni paket yok (`pragmarx/google2fa-qrcode`, `bacon/bacon-qr-code` zaten kurulu; QR SVG data URI olarak üretiliyor). Kolonlar: `users.app_authentication_secret` (`encrypted`) ve `app_authentication_recovery_codes` (`encrypted:array`; Filament kodları ayrıca hash'liyor). İkisi de `$hidden` ve fillable değil.
+- **İki panelin sağlayıcıları aynı olmak zorunda** (`App\Filament\Shared\Auth\MultiFactor::providers()`): paneller oturumu paylaşıyor ve Filament login'i sadece o panelin sağlayıcılarına göre kod soruyor. `/app`'te MFA tanımlı olmasaydı MFA'sı açık bir admin `/app/login`'den kodsuz girip `/admin`'e geçebilirdi. Bu durum test ediliyor.
+- Zorunluluk Filament'in route middleware'i ile (`EnsureMultiFactorAuthenticationIsEnabled`): MFA'sız platform kullanıcısı her admin sayfasından `/admin/multi-factor-authentication/set-up`'a gidiyor. Bu middleware "kullanıcının MFA'sı açık mı" diye bakıyor, "bu oturum kodu girdi mi" diye değil. Güvence, tüm giriş yollarının kod sorması (yukarıdaki madde). Fortify'ın giriş yaptıran tek yolu public kayıt (platform rolü olamaz).
+- Profil sayfası (`/admin/profile`, `/app/profile`, `App\Filament\Shared\Auth\EditProfile`) **sadece MFA yönetimi** içeriyor: form boş, `save()` 403. Ad/e-posta/şifre değişikliği bilinçli olarak yok (e-posta değişikliği yeniden doğrulama gerektirir, şifre için sıfırlama akışı var). Admin MFA'yı kapatabilir (kod ister); kapatınca tekrar kuruluma yönlenir.
+- Kilitlenme: `php artisan platform:reset-two-factor {email}` (README'de).
+- Factory: `superAdmin()` / `platformStaff()` artık MFA'lı geliyor (sabit test secret'ı `UserFactory::TWO_FACTOR_SECRET`, kurtarma kodları `recovery-code-1..8`); `withoutTwoFactor()` / `withTwoFactor()` state'leri var. `DemoSeeder` platform kullanıcıları MFA'sız, yerelde ilk `/admin` girişinde kurulum istenir.
+- **Faz 8 için:** impersonation sırasında MFA değişikliği engellenmeli: `EditProfile` (MFA action'ları: kurulum, kapatma, kod yenileme) ve `platform:reset-two-factor` dışında MFA yazan yer yok. Profil sayfasının erişimi (`canAccess()` veya mount) impersonation'da kapatılabilir. `UserResource`'ta "MFA sıfırla" istenirse audit'e yazılmalı.
+- Testler: `tests/Feature/Panels/TwoFactorAuthenticationTest.php` (16 test).
 
 ## Faz 7: Ekip yönetimi `/app` (L)
 

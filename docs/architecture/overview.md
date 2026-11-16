@@ -158,7 +158,10 @@ Two independent Filament 5 panels, registered only on the central domain (`confi
 | Code | `app/Filament/Admin/{Pages,Resources,Widgets}` | `app/Filament/App/{Pages,Resources,Widgets}` |
 | Look | Filament defaults; Restano logo, Forest primary, Stone gray | Filament defaults; Restano logo, Forest primary, Stone gray |
 | Resources | Plans (`PlanPolicy`: super admins only; saved by `PlanService`; never deleted), FAQ and testimonials (`FaqPolicy`, `TestimonialPolicy`: any platform role); page **Site settings** (`/admin/site-settings`, `ManageSiteSettings`, `SiteSettingPolicy`: super admins only). Planned for launch: tenants, users, audit log, impersonation ([Platform management](#platform-management-launch)) | Phase B modules; team management ([Team management](#team-management-launch)) |
-| Two-factor | Mandatory (Filament MFA: TOTP + recovery codes; launch plan Faz 9) | Optional |
+| Two-factor | Mandatory (Filament MFA: TOTP + recovery codes): without it a platform user only reaches `/admin/multi-factor-authentication/set-up` | Optional |
+| Profile | `/admin/profile` and `/app/profile` (`App\Filament\Shared\Auth\EditProfile`): two-factor management only (set up, new recovery codes, disable); name, email and password are not editable there | |
+
+Both panels use the same MFA providers (`App\Filament\Shared\Auth\MultiFactor`). They must stay identical: the panels share the session and Filament's login challenges only for the providers of the panel being logged into, so a weaker `/app` login would open `/admin` without the second factor. A user who lost both the authenticator and the recovery codes is reset with `php artisan platform:reset-two-factor {email}` (after verifying their identity out of band).
 
 Authorization layers:
 

@@ -40,7 +40,7 @@
 - Public registration never accepts `platform_role`, `tenant_id` or `role`; only the validated fields reach `TenantRegistrationService`.
 - There is a single login per panel (Filament). Fortify's own routes are ignored; do not add another `POST /login`. The central `POST /logout` exists only because the verification page can't reach the panel's logout.
 - The business panel requires a verified email (`EnsureEmailIsVerified`, Livewire-persistent); the admin panel doesn't.
-- `/admin` requires two-factor authentication (Filament MFA, TOTP + recovery codes): a platform user without MFA is sent to set it up and reaches nothing else. MFA secrets and recovery codes are stored with encrypted casts. In `/app` MFA is optional.
+- `/admin` requires two-factor authentication (Filament MFA, TOTP + recovery codes): a platform user without MFA is sent to set it up and reaches nothing else. MFA secrets and recovery codes are stored with encrypted casts (recovery codes hashed first) and hidden from serialization; they are never mass-assignable. In `/app` MFA is optional. Both panels must use the same providers (`App\Filament\Shared\Auth\MultiFactor`), otherwise the weaker login opens the other panel through the shared session. The panel profile page manages MFA only (`EditProfile`: empty form, `save()` refused). The only out-of-band reset is `php artisan platform:reset-two-factor {email}`.
 
 ## Admin platform management (launch plan Faz 8)
 - Every admin resource and action is authorized by its policy (`super_admin` everything; `platform_staff` only what its policy lists). Only super admins assign `platform_role`, soft-delete tenants or impersonate. No hard deletes of tenants or users.

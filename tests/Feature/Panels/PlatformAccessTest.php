@@ -58,7 +58,8 @@ class PlatformAccessTest extends TestCase
 
     public function test_platform_user_can_log_in_through_the_admin_login_page(): void
     {
-        User::factory()->platformStaff()->create(['email' => 'staff@example.com']);
+        // Without two-factor, so the password alone logs in (set-up comes next).
+        User::factory()->platformStaff()->withoutTwoFactor()->create(['email' => 'staff@example.com']);
         Filament::setCurrentPanel('admin');
 
         Livewire::test(Login::class)
