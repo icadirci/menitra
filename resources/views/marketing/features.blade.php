@@ -23,10 +23,10 @@
     {{-- Hero --}}
     <section class="px-5 pt-[clamp(56px,8vw,104px)] pb-[clamp(48px,6vw,80px)] text-center sm:px-6">
         <div class="mx-auto flex max-w-[860px] flex-col items-center gap-[22px]">
-            <p class="text-[13px] font-semibold tracking-[0.12em] text-forest-700 uppercase">{{ __('marketing.features_page.eyebrow') }}</p>
-            <h1 class="font-display text-[clamp(40px,5.6vw,72px)] leading-none font-bold tracking-[-0.045em] text-balance">{{ __('marketing.features_page.title') }}</h1>
-            <p class="max-w-[600px] text-[clamp(17px,1.5vw,19px)] text-pretty text-[#4C514E]">{{ __('marketing.features_page.lead') }}</p>
-            <div class="flex flex-wrap justify-center gap-3">
+            <p class="animated fadeInUp text-[13px] font-semibold tracking-[0.12em] text-forest-700 uppercase">{{ __('marketing.features_page.eyebrow') }}</p>
+            <h1 class="animated fadeInUp [animation-delay:80ms] font-display text-[clamp(40px,5.6vw,72px)] leading-none font-bold tracking-[-0.045em] text-balance">{{ __('marketing.features_page.title') }}</h1>
+            <p class="animated fadeInUp [animation-delay:160ms] max-w-[600px] text-[clamp(17px,1.5vw,19px)] text-pretty text-[#4C514E]">{{ __('marketing.features_page.lead') }}</p>
+            <div class="animated fadeInUp [animation-delay:240ms] flex flex-wrap justify-center gap-3">
                 <x-ui.button :href="route('register')" size="lg">{{ __('marketing.features_page.cta_primary') }}</x-ui.button>
                 <x-ui.button :href="MarketingUrl::to('themes')" variant="secondary" size="lg">{{ __('marketing.features_page.cta_secondary') }}</x-ui.button>
             </div>
@@ -149,10 +149,10 @@
     {{-- Details --}}
     <section class="border-y border-line bg-white px-5 py-[clamp(56px,7vw,96px)] sm:px-6">
         <div class="mx-auto flex max-w-[1200px] flex-col gap-10">
-            <h2 class="max-w-[640px] font-display text-[clamp(30px,3.4vw,44px)] leading-[1.06] font-bold tracking-[-0.03em] text-balance">{{ __('marketing.features_page.details.title') }}</h2>
+            <h2 class="max-w-[640px] font-display text-[clamp(30px,3.4vw,44px)] leading-[1.06] font-bold tracking-[-0.03em] text-balance" data-animate="fadeInUp">{{ __('marketing.features_page.details.title') }}</h2>
             <ul class="grid grid-cols-[repeat(auto-fit,minmax(min(340px,100%),1fr))] gap-4">
                 @foreach (__('marketing.features_page.details.items') as $detail)
-                    <li class="flex flex-col gap-4 rounded-[22px] border border-[#ECEAE3] bg-paper p-7">
+                    <li class="flex flex-col gap-4 rounded-[22px] border border-[#ECEAE3] bg-paper p-7" data-animate="fadeInUp" data-animate-delay="{{ ($loop->index % 3) * 100 }}">
                         <span class="inline-flex size-12 items-center justify-center rounded-[14px] border border-line bg-white text-forest-700">
                             <x-ui.icon :name="$detail['icon']" :size="24" :stroke="1.7" />
                         </span>
@@ -173,7 +173,7 @@
 
     {{-- CTA --}}
     <section class="px-5 py-[clamp(56px,7vw,96px)] sm:px-6">
-        <div class="mx-auto flex max-w-[1200px] flex-wrap items-center justify-between gap-7 rounded-[36px] bg-forest-700 p-[clamp(40px,6vw,72px)] text-paper">
+        <div data-animate="fadeInUp" class="mx-auto flex max-w-[1200px] flex-wrap items-center justify-between gap-7 rounded-[36px] bg-forest-700 p-[clamp(40px,6vw,72px)] text-paper">
             <div class="flex max-w-[600px] flex-col gap-2.5">
                 <h2 class="font-display text-[clamp(30px,3.6vw,46px)] leading-[1.04] font-bold tracking-[-0.035em] text-balance">{{ __('marketing.features_page.cta.title') }}</h2>
                 <p class="text-[#CFE0D6]">{{ __('marketing.features_page.cta.lead', ['days' => $trialDays]) }}</p>

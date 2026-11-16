@@ -25,7 +25,7 @@
 @section('content')
     <section class="px-5 pt-[clamp(48px,7vw,88px)] pb-[clamp(56px,7vw,96px)] sm:px-6">
         <div class="mx-auto flex max-w-[1200px] flex-col gap-12">
-            <div class="flex max-w-[680px] flex-col gap-4">
+            <div class="animated fadeInUp flex max-w-[680px] flex-col gap-4">
                 <p class="text-[13px] font-semibold tracking-[0.12em] text-forest-700 uppercase">{{ __('marketing.contact_page.eyebrow') }}</p>
                 <h1 class="font-display text-[clamp(40px,5.4vw,64px)] leading-none font-bold tracking-[-0.045em] text-balance">{{ __('marketing.contact_page.title') }}</h1>
                 <p class="text-lg text-pretty text-[#4C514E]">{{ __('marketing.contact_page.lead') }}</p>
@@ -33,7 +33,7 @@
 
             <div class="flex flex-wrap items-start gap-6">
                 {{-- Form --}}
-                <div id="contact-form" class="min-w-0 flex-[3_1_520px] scroll-mt-24 rounded-panel border border-line bg-white p-[clamp(24px,4vw,40px)]">
+                <div id="contact-form" class="animated fadeInUp [animation-delay:120ms] min-w-0 flex-[3_1_520px] scroll-mt-24 rounded-panel border border-line bg-white p-[clamp(24px,4vw,40px)]">
                     @if ($sent)
                         <div role="status" class="flex flex-col items-start gap-4 py-6">
                             <span class="inline-flex size-14 items-center justify-center rounded-full bg-forest-100 text-forest-700">
@@ -121,7 +121,7 @@
                 </div>
 
                 {{-- Contact channels (site settings in /admin) and quick answers --}}
-                <aside class="flex min-w-0 flex-[2_1_340px] flex-col gap-4">
+                <aside class="animated fadeInUp [animation-delay:220ms] flex min-w-0 flex-[2_1_340px] flex-col gap-4">
                     @if ($contact->hasChannels())
                         <div class="flex flex-col gap-5 rounded-panel bg-ink p-7 text-paper">
                             <h2 class="font-display text-[22px] font-bold tracking-[-0.02em]">{{ __('marketing.contact_page.channels_title') }}</h2>

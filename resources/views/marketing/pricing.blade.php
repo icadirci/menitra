@@ -16,9 +16,9 @@
         {{-- Hero + billing toggle --}}
         <section class="px-5 pt-[clamp(56px,8vw,96px)] pb-10 text-center sm:px-6">
             <div class="mx-auto flex max-w-[820px] flex-col items-center gap-5">
-                <p class="text-[13px] font-semibold tracking-[0.12em] text-forest-700 uppercase">{{ __('marketing.pricing_page.eyebrow') }}</p>
-                <h1 class="font-display text-[clamp(40px,5.6vw,68px)] leading-none font-bold tracking-[-0.045em] text-balance">{{ __('marketing.pricing_page.title') }}</h1>
-                <p class="max-w-[560px] text-lg text-pretty text-[#4C514E]">{{ __('marketing.pricing_page.lead', ['days' => $trialDays]) }}</p>
+                <p class="animated fadeInUp text-[13px] font-semibold tracking-[0.12em] text-forest-700 uppercase">{{ __('marketing.pricing_page.eyebrow') }}</p>
+                <h1 class="animated fadeInUp [animation-delay:80ms] font-display text-[clamp(40px,5.6vw,68px)] leading-none font-bold tracking-[-0.045em] text-balance">{{ __('marketing.pricing_page.title') }}</h1>
+                <p class="animated fadeInUp [animation-delay:160ms] max-w-[560px] text-lg text-pretty text-[#4C514E]">{{ __('marketing.pricing_page.lead', ['days' => $trialDays]) }}</p>
 
                 @if ($hasYearly)
                     <div
@@ -97,8 +97,8 @@
                             }
                             $highlights = $plan->highlights();
                         @endphp
-                        <article @class([
-                            'flex flex-col gap-5 rounded-[28px] px-8 py-9',
+                        <article style="animation-delay: {{ 240 + $loop->index * 100 }}ms" @class([
+                            'animated fadeInUp flex flex-col gap-5 rounded-[28px] px-8 py-9',
                             'bg-ink text-paper shadow-[0_40px_70px_-36px_rgb(21_25_26/0.7)] outline-[3px] -outline-offset-[3px] outline-saffron-500' => $plan->featured,
                             'border border-line bg-white text-ink' => ! $plan->featured,
                         ])>
@@ -166,8 +166,8 @@
     @if ($plans->isNotEmpty() && $comparisonGroups !== [])
         <section id="compare" class="scroll-mt-20 border-y border-line bg-white px-5 py-[clamp(56px,7vw,96px)] sm:px-6">
             <div class="mx-auto flex max-w-[1200px] flex-col gap-8">
-                <h2 class="font-display text-[clamp(30px,3.4vw,44px)] leading-[1.06] font-bold tracking-[-0.03em]">{{ __('marketing.pricing_page.compare.title') }}</h2>
-                <div class="overflow-x-auto rounded-[20px] border border-line" role="region" aria-label="{{ __('marketing.pricing_page.compare.label') }}" tabindex="0">
+                <h2 class="font-display text-[clamp(30px,3.4vw,44px)] leading-[1.06] font-bold tracking-[-0.03em]" data-animate="fadeInUp">{{ __('marketing.pricing_page.compare.title') }}</h2>
+                <div class="overflow-x-auto rounded-[20px] border border-line" data-animate="fadeInUp" data-animate-delay="100" role="region" aria-label="{{ __('marketing.pricing_page.compare.label') }}" tabindex="0">
                     <table class="w-full border-collapse text-[15px]" style="min-width: {{ 240 + $plans->count() * 150 }}px">
                         <caption class="sr-only">{{ __('marketing.pricing_page.compare.label') }}</caption>
                         <thead class="bg-paper">
@@ -216,13 +216,13 @@
     @if ($faqs->isNotEmpty())
         <section id="faq" class="scroll-mt-20 px-5 py-[clamp(56px,7vw,96px)] sm:px-6">
             <div class="mx-auto flex max-w-[1200px] flex-wrap gap-12">
-                <div class="flex flex-[1_1_300px] flex-col gap-3.5">
+                <div class="flex flex-[1_1_300px] flex-col gap-3.5" data-animate="fadeInUp">
                     <h2 class="font-display text-[clamp(30px,3.4vw,44px)] leading-[1.06] font-bold tracking-[-0.03em]">{{ __('marketing.pricing_page.faq.title') }}</h2>
                     <p class="text-graphite">{{ __('marketing.pricing_page.faq.lead') }}</p>
                 </div>
                 <div class="flex min-w-0 flex-[2_1_560px] flex-col gap-3">
                     @foreach ($faqs as $faq)
-                        <details class="group rounded-[18px] border border-line bg-white">
+                        <details class="group rounded-[18px] border border-line bg-white" data-animate="fadeInUp" data-animate-delay="{{ min($loop->index * 60, 300) }}">
                             <summary class="flex cursor-pointer list-none items-center justify-between gap-4 px-6 py-[22px] text-[17px] font-semibold [&::-webkit-details-marker]:hidden">
                                 {{ $faq['question'] }}
                                 <span class="inline-flex size-8 shrink-0 items-center justify-center rounded-full bg-[#F1EFE9] transition-transform group-open:rotate-45" aria-hidden="true">

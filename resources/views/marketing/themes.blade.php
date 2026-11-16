@@ -13,16 +13,16 @@
 @section('content')
     <section class="px-5 pt-[clamp(56px,8vw,104px)] pb-[clamp(40px,5vw,64px)] text-center sm:px-6">
         <div class="mx-auto flex max-w-[860px] flex-col items-center gap-[22px]">
-            <p class="text-[13px] font-semibold tracking-[0.12em] text-forest-700 uppercase">{{ __('marketing.showcase.eyebrow') }}</p>
-            <h1 class="font-display text-[clamp(40px,5.6vw,72px)] leading-none font-bold tracking-[-0.045em] text-balance">{{ __('marketing.showcase.title') }}</h1>
-            <p class="max-w-[620px] text-[clamp(17px,1.5vw,19px)] text-pretty text-[#4C514E]">{{ __('marketing.showcase.lead') }}</p>
+            <p class="animated fadeInUp text-[13px] font-semibold tracking-[0.12em] text-forest-700 uppercase">{{ __('marketing.showcase.eyebrow') }}</p>
+            <h1 class="animated fadeInUp [animation-delay:80ms] font-display text-[clamp(40px,5.6vw,72px)] leading-none font-bold tracking-[-0.045em] text-balance">{{ __('marketing.showcase.title') }}</h1>
+            <p class="animated fadeInUp [animation-delay:160ms] max-w-[620px] text-[clamp(17px,1.5vw,19px)] text-pretty text-[#4C514E]">{{ __('marketing.showcase.lead') }}</p>
         </div>
     </section>
 
     <section class="px-5 pb-[clamp(64px,8vw,112px)] sm:px-6" aria-label="{{ __('marketing.showcase.list_label') }}">
         <ul class="mx-auto grid max-w-[1200px] grid-cols-[repeat(auto-fit,minmax(min(300px,100%),1fr))] gap-5">
             @foreach ($themes as $entry)
-                <li class="flex flex-col overflow-hidden rounded-3xl border border-line bg-white">
+                <li class="flex flex-col overflow-hidden rounded-3xl border border-line bg-white" data-animate="fadeInUp" data-animate-delay="{{ ($loop->index % 3) * 100 }}">
                     <div class="flex h-36 items-end gap-2 p-5" style="background: {{ $entry->colors['bg'] }}" aria-hidden="true">
                         @foreach (['primary', 'accent', 'surface', 'text', 'ornament'] as $swatch)
                             <span class="size-9 rounded-full border border-black/10" style="background: {{ $entry->colors[$swatch] }}"></span>
@@ -55,7 +55,7 @@
     </section>
 
     <section class="px-5 pb-[clamp(72px,9vw,128px)] sm:px-6">
-        <div class="mx-auto flex max-w-[860px] flex-col items-center gap-5 rounded-3xl bg-forest-700 px-6 py-12 text-center text-paper">
+        <div data-animate="fadeInUp" class="mx-auto flex max-w-[860px] flex-col items-center gap-5 rounded-3xl bg-forest-700 px-6 py-12 text-center text-paper">
             <h2 class="font-display text-[clamp(28px,3.4vw,40px)] leading-tight font-bold tracking-[-0.03em] text-balance">{{ __('marketing.showcase.cta_title') }}</h2>
             <x-ui.button :href="route('register')" size="lg">{{ __('marketing.showcase.cta') }}</x-ui.button>
         </div>

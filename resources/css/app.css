@@ -1,5 +1,16 @@
 @import 'tailwindcss';
 
+/*
+ * animate.css (MIT) — only the base and the two entrances the public site uses,
+ * not the whole library. Triggered by resources/js/lib/reveal.js
+ * (data-animate) or directly with the `animated fadeIn|fadeInUp` classes.
+ * Its base already shortens every animation to 1ms for prefers-reduced-motion.
+ */
+@import 'animate.css/source/_vars.css';
+@import 'animate.css/source/_base.css';
+@import 'animate.css/source/fading_entrances/fadeIn.css';
+@import 'animate.css/source/fading_entrances/fadeInUp.css';
+
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../storage/framework/views/*.php';
 @source '../**/*.blade.php';
@@ -105,4 +116,40 @@
         border-color: var(--color-forest-700);
         box-shadow: 0 0 0 4px rgb(31 77 59 / 0.12);
     }
+}
+
+/*
+ * Entrance tuning: shorter and softer than animate.css's defaults (1s, a full
+ * element height of travel), so content settles in without drawing attention.
+ */
+:root {
+    --animate-duration: 0.7s;
+}
+
+.animated {
+    animation-timing-function: cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translate3d(0, 24px, 0);
+    }
+
+    to {
+        opacity: 1;
+        transform: translate3d(0, 0, 0);
+    }
+}
+
+/* animate.css shortens the animation for reduced motion; drop the stagger delays too. */
+@media (prefers-reduced-motion: reduce) {
+    .animated {
+        animation-delay: 0s !important;
+    }
+}
+
+/* Set by reveal.js on elements below the fold until they scroll into view. */
+.reveal-pending {
+    opacity: 0;
 }
