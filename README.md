@@ -1,59 +1,101 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Restano
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Multi-tenant SaaS for cafes, restaurants and bakeries to publish digital menus reached through QR codes (Laravel 12, PostgreSQL, Redis, Filament 5, Blade + Tailwind + Alpine).
 
-## About Laravel
+- Rules and architecture decisions: [CLAUDE.md](CLAUDE.md) and [docs/architecture/](docs/architecture/)
+- Launch work, phase by phase: [docs/launch-plan.md](docs/launch-plan.md)
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Development
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+Everything runs in Docker Compose (`docker-compose.yml`). Never run PHP, Composer, Artisan or npm on the host. The services, the container names and every command are in [CLAUDE.md §9](CLAUDE.md#9-docker-execution-strategy). First-time setup:
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+```bash
+cp .env.example .env
+docker compose up -d --build
+docker exec restano-php-fpm-1 composer install
+docker exec -u www-data -e HOME=/tmp restano-php-fpm-1 php artisan key:generate
+docker exec restano-postgres-1 createdb -U root restano_test
+docker exec -u www-data -e HOME=/tmp restano-php-fpm-1 php artisan migrate --seed
+docker compose run --rm node npm ci
+docker compose run --rm node npm run build
+```
 
-## Learning Laravel
+- Site: http://localhost:37000. Mail catcher: http://localhost:8025.
+- Local seeding also creates demo tenants and users (`DemoSeeder`, password `password`).
+- Grant yourself `/admin` access: `php artisan platform:assign-role you@example.com super_admin` (in the php-fpm container, as `www-data`).
+- Tests: `php artisan test` (sequential, about 2.5 minutes).
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+## Production
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+One VPS, Docker Compose with [docker-compose.prod.yml](docker-compose.prod.yml), code bind-mounted from a git checkout on the server.
 
-## Laravel Sponsors
+| Service | What it does |
+|---|---|
+| `webserver` | nginx ([phpdocker/nginx/nginx.prod.conf.template](phpdocker/nginx/nginx.prod.conf.template)), port `${HTTP_PORT:-80}`, serves `${CENTRAL_DOMAIN}` and `*.${CENTRAL_DOMAIN}`, drops other hosts |
+| `php-fpm` | PHP runtime image ([phpdocker/php-fpm/Dockerfile.prod](phpdocker/php-fpm/Dockerfile.prod)): OPcache without timestamp checks, production `php.ini` |
+| `queue` / `scheduler` | `queue:work redis` and `schedule:work` as `www-data` |
+| `postgres` / `redis` | no ports outside the Compose network; Redis requires `REDIS_PASSWORD` and keeps an append-only file |
+| `node` | only for the asset build inside `deploy.sh` (profile `tools`) |
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+Compose takes the database and Redis credentials from the same `.env` that Laravel reads. Data lives in the volumes `restano_postgres-data` and `restano_redis-data`, plus uploads in `storage/app/public` inside the checkout.
 
-### Premium Partners
+> **Never run `docker compose -f docker-compose.prod.yml down -v`**: it deletes the database.
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+TLS, HSTS and proxy headers aren't set up yet (separate proxy / HTTPS work). Until a TLS proxy sits in front of nginx, the generated URLs use `http://`.
 
-## Contributing
+### First deploy
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+Requirements on the server: Docker Engine with the Compose plugin, git, and DNS for `restano.app` and `*.restano.app` pointing at the server.
 
-## Code of Conduct
+```bash
+git clone <repository-url> /srv/restano && cd /srv/restano
+cp .env.production.example .env
+chmod 600 .env
+```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+Fill in `.env`:
 
-## Security Vulnerabilities
+- `APP_KEY`: generate it with `echo "base64:$(openssl rand -base64 32)"`.
+- `DB_PASSWORD`, `REDIS_PASSWORD`: long random values, e.g. `openssl rand -hex 24`. Postgres creates the user with this password only when the volume is first created; changing it later needs `ALTER USER` as well.
+- `MAIL_*`: the SMTP provider (launch plan Faz 3).
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+Then deploy, seed the base data once, and create the first super admin:
 
-## License
+```bash
+scripts/deploy.sh
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+alias dc='docker compose -f docker-compose.prod.yml'
+# Only on the first deploy: PlanSeeder uses updateOrCreate and would overwrite
+# plans edited in /admin. Production seeding creates plans and FAQ, no demo data.
+dc exec -u www-data -e HOME=/tmp php-fpm php artisan db:seed --force
+```
+
+The super admin needs an account first: register through the public site, then grant the role with `platform:assign-role` as above (`dc exec -u www-data -e HOME=/tmp php-fpm php artisan platform:assign-role ...`).
+
+### Every deploy
+
+```bash
+cd /srv/restano && scripts/deploy.sh
+```
+
+[scripts/deploy.sh](scripts/deploy.sh) runs: maintenance mode on → `git pull --ff-only` → PHP image build (cached) → `composer install --no-dev --optimize-autoloader` → `npm ci && npm run build` in the `node` container → ownership of `storage/` and `bootstrap/cache` → containers up → `storage:link` (first time) → `optimize` (config, events, routes, views) and `filament:optimize` → `migrate --force` → `queue:restart` and a restart of `php-fpm`, `queue` and `scheduler` (OPcache doesn't notice changed files) → maintenance mode off.
+
+It stops at the first error and **leaves the site in maintenance mode**. Fix the cause and run it again, or bring the site back on the current code:
+
+```bash
+docker compose -f docker-compose.prod.yml exec -u www-data php-fpm php artisan up
+```
+
+### Day-to-day
+
+```bash
+alias dc='docker compose -f docker-compose.prod.yml'
+dc ps                                   # status and health
+dc logs -f --tail 100 webserver php-fpm queue
+dc exec -u www-data -e HOME=/tmp php-fpm php artisan <command>
+tail -f storage/logs/laravel-$(date +%F).log   # application log (daily, 14 days)
+```
+
+- Changes in `phpdocker/php-fpm/` are picked up by the next `scripts/deploy.sh` (it rebuilds the image).
+- Changing `.env` needs `artisan optimize` and a restart of `php-fpm queue scheduler`, because the config is cached. The simplest way is to run `scripts/deploy.sh` again.
+- Upload limit: 8 MB per request in nginx, 6 MB per file in PHP; the largest image type allows 5 MB (`MediaType::maxKilobytes()`).

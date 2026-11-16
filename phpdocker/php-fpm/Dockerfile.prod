@@ -1,0 +1,21 @@
+# Production PHP runtime (docker-compose.prod.yml). The application code is not
+# baked in: it is bind-mounted from the server's git checkout, and
+# scripts/deploy.sh installs vendor/ and builds public/build there.
+# OPcache never re-checks files (validate_timestamps=0), so php-fpm must be
+# restarted after every code change (deploy.sh does this).
+FROM phpdockerio/php:8.5-fpm
+WORKDIR "/application"
+
+RUN apt-get update \
+    && apt-get -y --no-install-recommends install \
+        php8.5-bcmath \
+        php8.5-gd \
+        php8.5-intl \
+        php8.5-pgsql \
+        php8.5-redis \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /usr/share/doc/*
+
+COPY production/php.ini /etc/php/8.5/fpm/conf.d/99-production.ini
+COPY production/php.ini /etc/php/8.5/cli/conf.d/99-production.ini
+COPY production/fpm-pool.conf /etc/php/8.5/fpm/pool.d/zz-production.conf

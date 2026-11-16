@@ -1,0 +1,138 @@
+# Production stack for a single VPS. Use it only with -f:
+#   docker compose -f docker-compose.prod.yml <command>
+# Deploys run through scripts/deploy.sh (runbook: README.md).
+#
+# - Credentials come from the checkout's .env (Compose reads it for ${...}),
+#   the same file Laravel reads: DB_*, REDIS_PASSWORD, CENTRAL_DOMAIN.
+# - Postgres and Redis are reachable only inside the Compose network.
+# - The code is bind-mounted from this checkout; the PHP image holds only the
+#   runtime (phpdocker/php-fpm/Dockerfile.prod).
+# - Never run `down -v`: it deletes the database and Redis volumes.
+
+name: restano
+
+x-logging: &logging
+    logging:
+        driver: json-file
+        options:
+            max-size: '10m'
+            max-file: '5'
+
+x-php-worker: &php-worker
+    image: 'restano-php-prod'
+    pull_policy: never
+    init: true
+    user: 'www-data'
+    working_dir: /application
+    environment:
+        - HOME=/tmp
+    volumes:
+        - '.:/application'
+    depends_on:
+        postgres:
+            condition: service_healthy
+        redis:
+            condition: service_healthy
+        php-fpm:
+            condition: service_started
+    restart: unless-stopped
+    <<: *logging
+
+services:
+    postgres:
+        image: 'postgres:15-alpine'
+        environment:
+            POSTGRES_USER: '${DB_USERNAME:?set DB_USERNAME in .env}'
+            POSTGRES_PASSWORD: '${DB_PASSWORD:?set DB_PASSWORD in .env}'
+            POSTGRES_DB: '${DB_DATABASE:?set DB_DATABASE in .env}'
+        volumes:
+            - 'postgres-data:/var/lib/postgresql/data'
+        healthcheck:
+            test: ['CMD-SHELL', 'pg_isready -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"']
+            interval: 10s
+            timeout: 5s
+            retries: 5
+            start_period: 20s
+        restart: unless-stopped
+        <<: *logging
+
+    # Cache (db 1), queue (db 2) and sessions (db 3). Append-only file so
+    # queued jobs and sessions survive a restart; no eviction policy, so queue
+    # and session keys are never dropped silently.
+    redis:
+        image: 'redis:7-alpine'
+        command: ['sh', '-c', 'exec redis-server --requirepass "$$REDIS_PASSWORD" --appendonly yes']
+        environment:
+            REDIS_PASSWORD: '${REDIS_PASSWORD:?set REDIS_PASSWORD in .env}'
+            REDISCLI_AUTH: '${REDIS_PASSWORD}'
+        volumes:
+            - 'redis-data:/data'
+        healthcheck:
+            test: ['CMD-SHELL', 'redis-cli ping | grep -q PONG']
+            interval: 10s
+            timeout: 5s
+            retries: 5
+        restart: unless-stopped
+        <<: *logging
+
+    php-fpm:
+        build:
+            context: phpdocker/php-fpm
+            dockerfile: Dockerfile.prod
+        image: 'restano-php-prod'
+        working_dir: /application
+        volumes:
+            - '.:/application'
+        depends_on:
+            postgres:
+                condition: service_healthy
+            redis:
+                condition: service_healthy
+        restart: unless-stopped
+        <<: *logging
+
+    webserver:
+        image: 'nginx:1.28-alpine'
+        environment:
+            CENTRAL_DOMAIN: '${CENTRAL_DOMAIN:?set CENTRAL_DOMAIN in .env}'
+        volumes:
+            - '.:/application:ro'
+            - './phpdocker/nginx/nginx.prod.conf.template:/etc/nginx/templates/default.conf.template:ro'
+        ports:
+            # TLS termination is out of scope for now (launch plan: proxy / HTTPS).
+            - '${HTTP_PORT:-80}:80'
+        depends_on:
+            - php-fpm
+        healthcheck:
+            test: ['CMD-SHELL', 'wget -q -O /dev/null --header "Host: $$CENTRAL_DOMAIN" http://127.0.0.1/up']
+            interval: 30s
+            timeout: 5s
+            retries: 3
+            start_period: 10s
+        restart: unless-stopped
+        <<: *logging
+
+    # Redis queue worker as www-data (writes into storage/). Picks up new code
+    # only after a restart; deploy.sh runs queue:restart and restarts it.
+    queue:
+        <<: *php-worker
+        command: ['php', 'artisan', 'queue:work', 'redis', '--queue=default', '--tries=3', '--backoff=10', '--sleep=3', '--max-time=3600']
+        stop_grace_period: 70s
+
+    scheduler:
+        <<: *php-worker
+        command: ['php', 'artisan', 'schedule:work']
+
+    # Asset build only (npm ci && npm run build in deploy.sh); never started by `up`.
+    node:
+        image: 'node:24-bookworm-slim'
+        init: true
+        working_dir: /application
+        volumes:
+            - '.:/application'
+        profiles:
+            - tools
+
+volumes:
+    postgres-data:
+    redis-data:

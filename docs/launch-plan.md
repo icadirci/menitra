@@ -18,7 +18,7 @@ Oturum kuralları:
 |---|---|---|---|
 | 0 | Kapsam ve doküman güncellemesi | S | ✅ 2026-11-16 |
 | 1 | Hızlı işler: hata sayfaları, log, env örneği, robots | S | ✅ 2026-11-16 |
-| 2 | Canlı ortam altyapısı (Compose, image, nginx, deploy) | M | ⬜ |
+| 2 | Canlı ortam altyapısı (Compose, image, nginx, deploy) | M | ✅ 2026-11-16 |
 | 3 | E-posta | S | ⬜ |
 | 4 | Yedekleme | M | ⬜ |
 | 5 | İzleme (Sentry, kontroller) | S | ⬜ |
@@ -93,6 +93,15 @@ Bulgular: geliştirme Compose'unda Postgres `37004` portundan dışarı açık; 
 - **`scripts/deploy.sh`:** `php artisan down` → `git pull` → `composer install --no-dev` → node container'ında `npm ci && npm run build` → `migrate --force` → `optimize` + `filament:optimize` + `view:cache` → `queue:restart` (ve queue container'ını yeniden başlat) → `up`. Hata olursa durur (`set -euo pipefail`).
 - **`README.md`:** Laravel'in varsayılan metnini, projenin kurulum (geliştirme) ve deploy (canlı) runbook'u ile değiştir. CLAUDE.md §9'daki komutlara referans ver, tekrarlama.
 - Bitiş ölçütü: canlı Compose yerelde ayağa kalkıyor, `/up` 200 dönüyor, kuyruk ve scheduler çalışıyor, test süiti yeşil.
+
+**Notlar (2026-11-16, tamamlandı):**
+- Karar: kod image'a gömülmez, sunucudaki checkout'tan **bind mount** edilir. "Asset'ler image içinde" maddesi bunun yerine şöyle uygulandı: `deploy.sh`, `public/build`'i node container'ında checkout içine derler. Image (`phpdocker/php-fpm/Dockerfile.prod` + `production/{php.ini,fpm-pool.conf}`) sadece çalışma ortamını içerir. `validate_timestamps=0` olduğu için deploy sonunda `php-fpm` yeniden başlatılır.
+- `docker-compose.prod.yml`: `name: restano` (volume'lar `restano_postgres-data`, yeni `restano_redis-data`). Kimlik bilgileri Laravel'in okuduğu `.env`'den gelir (`DB_*`, `REDIS_PASSWORD`, `CENTRAL_DOMAIN`, opsiyonel `HTTP_PORT`). Redis AOF açık, eviction yok. Log rotasyonu 10 MB × 5. `mailpit` yok.
+- nginx şablonu (`nginx.prod.conf.template`, resmi image'ın envsubst'ü ile): bilinmeyen host'lara 444, sadece `index.php` çalışır, `storage/` altında `.php` 404, dotfile 403, `client_max_body_size 8M` (PHP: 6M dosya / 8M post). **php-fpm, Docker DNS'i ile istek anında çözülür** (`resolver 127.0.0.11`). Aksi halde php-fpm yeniden başlayıp yeni IP alınca nginx 502 veriyordu.
+- `storage:link`, `www-data` olarak `public/`'e yazamadığı için root ile ve sadece symlink yoksa çalışır. Laravel 12'de `optimize` zaten `view:cache` içeriyor; ayrıca çağrılmadı.
+- Yerel doğrulama: ayrı bir klon + `COMPOSE_PROJECT_NAME=restano-prodtest` ile 3 deploy (ilk deploy, tekrar, bakım modu sırasında 503). Kontrol edilenler: `/up` 200, kuyruk işi (`ContactMessageMail`) işlendi, scheduler çalışıyor, Redis şifresiz bağlantıyı reddediyor, Postgres ve Redis portları dışarı açık değil, gzip ve immutable cache başlıkları var.
+- Proxy/HTTPS işi için: TLS olmadan `request()->getScheme()` http döndüğü için robots'taki `Sitemap:` satırı `http://` çıkıyor. `trustProxies` kurulunca düzelir.
+- Faz 4 için: `PlanSeeder` `updateOrCreate` kullanıyor; canlıda `db:seed` sadece ilk deploy'da çalıştırılmalı (README'de uyarı var). Uploadlar `storage/app/public` (checkout içinde), DB volume'u `restano_postgres-data`.
 
 ## Faz 3: E-posta (S)
 
