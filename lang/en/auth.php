@@ -71,4 +71,24 @@ return [
         'logout' => 'Log out',
     ],
 
+    'mail' => [
+        'greeting' => 'Hello :name,',
+        'fallback' => 'If the button does not work, paste this link into your browser:',
+        'signature' => 'The Restano team',
+        'verify' => [
+            'subject' => 'Verify your email address',
+            'intro' => 'Please verify your email address to activate your Restano account.',
+            'cta' => 'Verify my email address',
+            'expiry' => 'The link is valid for :count minutes.',
+            'outro' => 'If you did not create this account, you can ignore this email.',
+        ],
+        'reset' => [
+            'subject' => 'Your password reset link',
+            'intro' => 'We received a request to reset the password of your account.',
+            'cta' => 'Choose a new password',
+            'expiry' => 'The link is valid for :count minutes and can be used once.',
+            'outro' => 'If you did not request this, you can ignore this email; your password stays the same.',
+        ],
+    ],
+
 ];

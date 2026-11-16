@@ -18,10 +18,10 @@ use App\Models\SubscriptionEvent;
 use App\Models\Tenant;
 use App\Models\ThemeSetting;
 use App\Models\User;
+use App\Notifications\Auth\VerifyEmailNotification;
 use App\Services\Subscription\SubscriptionService;
 use App\Services\Tenancy\TenantRegistrationService;
 use App\Tenancy\TenantContext;
-use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -111,7 +111,7 @@ class RegistrationTest extends TestCase
         $this->assertSame(SubscriptionEventType::TrialStarted, $event->type);
         $this->assertSame(SubscriptionStatus::Trialing, $event->to_status);
 
-        Notification::assertSentTo($user, VerifyEmail::class);
+        Notification::assertSentTo($user, VerifyEmailNotification::class);
     }
 
     public function test_a_selected_active_public_plan_starts_the_trial_with_its_own_trial_days(): void

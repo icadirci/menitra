@@ -6,10 +6,10 @@ namespace Tests\Feature\Auth;
 
 use App\Models\TenantMembership;
 use App\Models\User;
+use App\Notifications\Auth\VerifyEmailNotification;
 use Filament\Auth\Pages\Login;
 use Filament\Facades\Filament;
 use Illuminate\Auth\Events\Verified;
-use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Notification;
@@ -155,6 +155,6 @@ class EmailVerificationTest extends TestCase
             ->assertRedirect('/email/verify')
             ->assertSessionHas('status', 'verification-link-sent');
 
-        Notification::assertSentTo($user, VerifyEmail::class);
+        Notification::assertSentTo($user, VerifyEmailNotification::class);
     }
 }

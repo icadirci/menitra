@@ -19,7 +19,7 @@ Oturum kuralları:
 | 0 | Kapsam ve doküman güncellemesi | S | ✅ 2026-11-16 |
 | 1 | Hızlı işler: hata sayfaları, log, env örneği, robots | S | ✅ 2026-11-16 |
 | 2 | Canlı ortam altyapısı (Compose, image, nginx, deploy) | M | ✅ 2026-11-16 |
-| 3 | E-posta | S | ⬜ |
+| 3 | E-posta | S | ✅ 2026-11-16 |
 | 4 | Yedekleme | M | ⬜ |
 | 5 | İzleme (Sentry, kontroller) | S | ⬜ |
 | 6 | Temalar vitrini için canlı seed | S | ⬜ |
@@ -110,6 +110,24 @@ Bulgular: geliştirme Compose'unda Postgres `37004` portundan dışarı açık; 
 - Doğrulama ve şifre sıfırlama maillerinin tr/en metinleri ve markası kontrol edilir.
 - **Kullanıcıya verilecek kontrol listesi:** sağlayıcı seçimi, SPF / DKIM / DMARC kayıtları, gönderen alan adının doğrulanması, test gönderimi (mail-tester).
 - Sağlayıcının KVKK tedarikçi listesine (Faz 10) eklenmesi için not düş.
+
+**Notlar (2026-11-16, tamamlandı):**
+- `WelcomeMail` ve `ContactMessageMail` zaten kuyruktaydı. Doğrulama ve şifre sıfırlama bildirimleri senkron gidiyordu; artık `App\Notifications\Auth\{VerifyEmailNotification,ResetPasswordNotification}` (`ShouldQueue`, `tries=3`) kullanılıyor, `User::sendEmailVerificationNotification()` / `sendPasswordResetNotification()` override'ları ile. Fortify ve route'lar değişmedi.
+- Dil: kuyruğa atılırken isteğin dili (`app()->getLocale()`) bildirime yazılır; worker'ın kendi istek dili yok. Auth sayfaları bugün sadece `tr` (`APP_LOCALE`), yani bu mailler pratikte Türkçe gidiyor; `en` render'ı test ediliyor.
+- Marka: Laravel'in varsayılan markdown şablonu yerine `WelcomeMail` ile aynı görünüm (`mail/auth-action` + `-text`), metinler `lang/{tr,en}/auth.php` → `mail`. Kullanıcı adı escape'li.
+- Linkler worker'da `APP_URL`'den üretilir: canlıda `APP_URL=https://restano.app` olmalı, yoksa imzalı doğrulama linki ve sıfırlama linki yanlış şema/host ile çıkar (proxy/HTTPS işiyle birlikte kontrol et).
+- `AccountMailTest`: `app/Mail` ve `app/Notifications` altındaki her sınıfın `ShouldQueue` olduğunu kontrol eder. Faz 7'deki davet maili de buna takılır.
+- `.env.production.example`: `MAIL_FROM_NAME="Restano"` (açık değer), `MAIL_SCHEME` açıklaması. Yerel `.env`'e dokunulmadı (gönderen hâlâ `Laravel <hello@example.com>`).
+- Yerel doğrulama: gerçek kuyruk → Mailpit, iki mail doğru dil ve konu ile ulaştı.
+- **Faz 10 için:** seçilen mail sağlayıcısı KVKK tedarikçi listesine (ve yurt dışındaysa yurt dışı aktarım bölümüne) eklenmeli.
+
+**Kullanıcı kontrol listesi (mail):**
+1. SMTP sağlayıcısı seç (ör. Amazon SES, Postmark, Brevo, Mailgun, Resend; AB/TR veri merkezi seçeneği KVKK açısından artı).
+2. Sağlayıcıda `restano.app` gönderen alan adını doğrula.
+3. DNS: **SPF** (`v=spf1 include:<sağlayıcı> -all`; tek SPF kaydı olmalı), **DKIM** (sağlayıcının verdiği CNAME/TXT), **DMARC** (`_dmarc.restano.app` → başta `v=DMARC1; p=none; rua=mailto:<adres>`, birkaç hafta sonra `quarantine`). Sağlayıcı istiyorsa özel Return-Path / MAIL FROM alt alan adı.
+4. Sunucudaki `.env`'e `MAIL_HOST`, `MAIL_PORT` (587 → `MAIL_SCHEME` boş; 465 → `smtps`), `MAIL_USERNAME`, `MAIL_PASSWORD` yaz; `php artisan config:cache` (deploy zaten yapar) ve `docker compose -f docker-compose.prod.yml restart queue`.
+5. Test: kayıt ol veya şifre sıfırla; mail-tester.com'a bir mail gönderip 9/10+ puan al; Gmail ve Outlook'ta spam'e düşmediğini ve linklerin `https://restano.app` ile başladığını kontrol et.
+6. `no-reply@` yerine yanıtların gideceği bir adres istenirse site ayarlarındaki platform e-postası kullanılabilir (şu an Reply-To yok).
 
 ## Faz 4: Yedekleme (M)
 

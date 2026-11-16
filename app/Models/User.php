@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Enums\PlatformRole;
+use App\Notifications\Auth\ResetPasswordNotification;
+use App\Notifications\Auth\VerifyEmailNotification;
 use Database\Factories\UserFactory;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Models\Contracts\HasTenants;
@@ -68,6 +70,23 @@ class User extends Authenticatable implements FilamentUser, HasTenants, MustVeri
     public function hasPlatformRole(): bool
     {
         return $this->platform_role !== null;
+    }
+
+    /**
+     * Account mails are queued; they keep the language of the request that
+     * triggered them (the worker has no request locale of its own).
+     */
+    public function sendEmailVerificationNotification(): void
+    {
+        $this->notify((new VerifyEmailNotification)->locale(app()->getLocale()));
+    }
+
+    /**
+     * @param  string  $token
+     */
+    public function sendPasswordResetNotification($token): void
+    {
+        $this->notify((new ResetPasswordNotification($token))->locale(app()->getLocale()));
     }
 
     public function isSuperAdmin(): bool

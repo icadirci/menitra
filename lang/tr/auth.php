@@ -74,4 +74,24 @@ return [
         'logout' => 'Çıkış yap',
     ],
 
+    'mail' => [
+        'greeting' => 'Merhaba :name,',
+        'fallback' => 'Düğme çalışmazsa bu bağlantıyı tarayıcınıza yapıştırın:',
+        'signature' => 'Restano ekibi',
+        'verify' => [
+            'subject' => 'E-posta adresinizi doğrulayın',
+            'intro' => 'Restano hesabınızı etkinleştirmek için e-posta adresinizi doğrulayın.',
+            'cta' => 'E-posta adresimi doğrula',
+            'expiry' => 'Bağlantı :count dakika geçerlidir.',
+            'outro' => 'Bu hesabı siz oluşturmadıysanız bu e-postayı yok sayabilirsiniz.',
+        ],
+        'reset' => [
+            'subject' => 'Şifre sıfırlama bağlantınız',
+            'intro' => 'Hesabınız için bir şifre sıfırlama talebi aldık.',
+            'cta' => 'Yeni şifre belirle',
+            'expiry' => 'Bağlantı :count dakika geçerlidir ve bir kez kullanılabilir.',
+            'outro' => 'Bu talebi siz yapmadıysanız bu e-postayı yok sayabilirsiniz; şifreniz değişmez.',
+        ],
+    ],
+
 ];
