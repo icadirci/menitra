@@ -171,6 +171,9 @@ final class MarketingContent
                 ->mapWithKeys(fn (PlanLimit $limit): array => [$limit->feature->value => $limit->limit_value])
                 ->all(),
             trialDays: $plan->trialDays(),
+            includedLocations: $plan->included_locations,
+            extraLocationMonthly: $monthly->extraLocationMoney(),
+            extraLocationYearly: $yearly?->extraLocationMoney(),
         );
     }
 

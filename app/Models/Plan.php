@@ -28,6 +28,7 @@ class Plan extends Model
         'is_public',
         'is_featured',
         'trial_days',
+        'included_locations',
         'sort_order',
     ];
 
@@ -38,6 +39,7 @@ class Plan extends Model
             'is_public' => 'boolean',
             'is_featured' => 'boolean',
             'trial_days' => 'integer',
+            'included_locations' => 'integer',
         ];
     }
 

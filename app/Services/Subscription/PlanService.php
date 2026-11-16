@@ -19,6 +19,8 @@ use Illuminate\Validation\ValidationException;
  * - Translations go through TranslationWriter::syncPlatform().
  * - Prices: one row per interval in the platform currency. Clearing a price
  *   deactivates its row (never deleted: subscriptions may reference it).
+ *   Optional per-branch pricing: included_locations on the plan and an
+ *   extra_location_amount per interval (price of each further branch).
  * - Limits: every PlanFeature gets a row. Count features: null = unlimited;
  *   boolean features: 1 = included, 0 = not included.
  * - At most one plan is featured ("most popular").
@@ -28,21 +30,29 @@ final class PlanService
     public function __construct(private readonly TranslationWriter $translations) {}
 
     /**
-     * @param  array{code?: string, is_active?: bool, is_public?: bool, is_featured?: bool, trial_days?: int|null, sort_order?: int|null}  $attributes
+     * @param  array{code?: string, is_active?: bool, is_public?: bool, is_featured?: bool, trial_days?: int|null, included_locations?: int|null, sort_order?: int|null}  $attributes
      * @param  array<string, mixed>  $translations  [locale => [name, description]]
      * @param  array<string, int|null>  $prices  BillingInterval value => amount in kuruş (null = no price)
      * @param  array<string, mixed>  $limits  PlanFeature value => limit
+     * @param  array<string, int|null>  $extraLocationPrices  BillingInterval value => kuruş per additional branch (null = none)
      *
      * @throws ValidationException
      */
-    public function save(Plan $plan, array $attributes, array $translations, array $prices, array $limits): Plan
+    public function save(Plan $plan, array $attributes, array $translations, array $prices, array $limits, array $extraLocationPrices = []): Plan
     {
-        return DB::transaction(function () use ($plan, $attributes, $translations, $prices, $limits): Plan {
+        return DB::transaction(function () use ($plan, $attributes, $translations, $prices, $limits, $extraLocationPrices): Plan {
+            $includedLocations = $attributes['included_locations'] ?? null;
+
+            if ($includedLocations !== null && $includedLocations !== '' && (! is_numeric($includedLocations) || (int) $includedLocations < 1)) {
+                throw ValidationException::withMessages(['included_locations' => __('validation.min.numeric', ['attribute' => __('panels.admin.plans.fields.included_locations'), 'min' => 1])]);
+            }
+
             $fill = [
                 'is_active' => (bool) ($attributes['is_active'] ?? true),
                 'is_public' => (bool) ($attributes['is_public'] ?? true),
                 'is_featured' => (bool) ($attributes['is_featured'] ?? false),
                 'trial_days' => isset($attributes['trial_days']) ? (int) $attributes['trial_days'] : null,
+                'included_locations' => $includedLocations === null || $includedLocations === '' ? null : (int) $includedLocations,
                 'sort_order' => (int) ($attributes['sort_order'] ?? 0),
             ];
 
@@ -57,7 +67,7 @@ final class PlanService
             }
 
             $this->translations->syncPlatform($plan, $translations, ['name']);
-            $this->syncPrices($plan, $prices);
+            $this->syncPrices($plan, $prices, $extraLocationPrices);
             $this->syncLimits($plan, $limits);
 
             return $plan->refresh();
@@ -66,13 +76,15 @@ final class PlanService
 
     /**
      * @param  array<string, int|null>  $prices
+     * @param  array<string, int|null>  $extraLocationPrices
      */
-    private function syncPrices(Plan $plan, array $prices): void
+    private function syncPrices(Plan $plan, array $prices, array $extraLocationPrices): void
     {
         $currency = config('subscriptions.currency');
 
         foreach (BillingInterval::cases() as $interval) {
             $amount = $prices[$interval->value] ?? null;
+            $extra = $extraLocationPrices[$interval->value] ?? null;
             $existing = $plan->prices()->where('interval', $interval)->where('currency', $currency)->first();
 
             if ($amount === null) {
@@ -85,9 +97,13 @@ final class PlanService
                 throw ValidationException::withMessages(["prices.{$interval->value}" => __('panels.app.money.negative')]);
             }
 
+            if ($extra !== null && $extra < 0) {
+                throw ValidationException::withMessages(["extra_location_prices.{$interval->value}" => __('panels.app.money.negative')]);
+            }
+
             $plan->prices()->updateOrCreate(
                 ['interval' => $interval, 'currency' => $currency],
-                ['amount' => $amount, 'is_active' => true],
+                ['amount' => $amount, 'extra_location_amount' => $extra, 'is_active' => true],
             );
         }
 

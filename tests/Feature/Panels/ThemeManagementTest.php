@@ -38,7 +38,8 @@ use Tests\TestCase;
 /**
  * B9 — Theme & appearance: page authorization, settings validation (incl.
  * contrast), per-theme persistence, premium_themes gating, the branch
- * override and cache invalidation. `minimal` is made "built" with test
+ * override and cache invalidation. `classic` and `minimal` are basic themes;
+ * premium flows use `cafe`. `minimal` can also be made "built" with test
  * fixture views (tests/Fixtures/views) to exercise premium flows.
  */
 class ThemeManagementTest extends TestCase
@@ -329,24 +330,37 @@ class ThemeManagementTest extends TestCase
         $this->assertSame('#123456', $this->storedSettings(MenuTheme::Minimal)['colors']['primary']);
     }
 
+    public function test_basic_themes_need_no_plan_feature(): void
+    {
+        $this->dropPremium();
+        $this->enter($this->member());
+
+        $this->assertNull(MenuTheme::Classic->requiredFeature());
+        $this->assertNull(MenuTheme::Minimal->requiredFeature());
+
+        app(ThemeService::class)->save($this->tenant, MenuTheme::Minimal, MenuTheme::Minimal->defaults());
+        $this->assertSame(MenuTheme::Minimal, $this->tenant->fresh()->theme);
+
+        $this->get(self::PATH.'/moda/menu')->assertOk()->assertSee('data-theme="minimal"', false);
+    }
+
     public function test_premium_themes_need_the_plan_feature(): void
     {
-        $this->buildMinimal();
         $this->dropPremium();
         $this->enter($this->member());
 
         try {
-            app(ThemeService::class)->save($this->tenant, MenuTheme::Minimal, MenuTheme::Minimal->defaults());
+            app(ThemeService::class)->save($this->tenant, MenuTheme::Cafe, MenuTheme::Cafe->defaults());
             $this->fail('Expected the plan to block a premium theme.');
         } catch (PlanLimitExceededException) {
         }
 
         $this->assertSame(MenuTheme::Classic, $this->tenant->fresh()->theme);
-        $this->assertNull($this->storedSettings(MenuTheme::Minimal));
+        $this->assertNull($this->storedSettings(MenuTheme::Cafe));
 
         // The page refuses it as well (the option is disabled).
         Livewire::test(ManageTheme::class)
-            ->set('data.theme', 'minimal')
+            ->set('data.theme', 'cafe')
             ->call('save')
             ->assertHasErrors(['data.theme']);
 
@@ -355,21 +369,20 @@ class ThemeManagementTest extends TestCase
 
     public function test_losing_premium_falls_back_to_classic_and_keeps_settings(): void
     {
-        $this->buildMinimal();
         $this->enter($this->member());
-        app(ThemeService::class)->save($this->tenant, MenuTheme::Minimal, $this->settings(MenuTheme::Minimal, ['primary' => '#123456']));
+        app(ThemeService::class)->save($this->tenant, MenuTheme::Cafe, $this->settings(MenuTheme::Cafe, ['primary' => '#123456']));
 
-        $this->get(self::PATH.'/moda/menu')->assertOk()->assertSee('data-theme="minimal"', false)->assertSee('--menu-primary:#123456', false);
+        $this->get(self::PATH.'/moda/menu')->assertOk()->assertSee('data-theme="cafe"', false)->assertSee('--menu-primary:#123456', false);
 
         $this->dropPremium();
 
         $this->get(self::PATH.'/moda/menu')->assertOk()->assertSee('data-theme="classic"', false);
-        $this->assertSame('#123456', $this->storedSettings(MenuTheme::Minimal)['colors']['primary']);
-        $this->assertSame(MenuTheme::Minimal, $this->tenant->fresh()->theme);
+        $this->assertSame('#123456', $this->storedSettings(MenuTheme::Cafe)['colors']['primary']);
+        $this->assertSame(MenuTheme::Cafe, $this->tenant->fresh()->theme);
 
         // Keeping (and editing) the theme already in use is not blocked by the plan.
-        app(ThemeService::class)->save($this->tenant, MenuTheme::Minimal, $this->settings(MenuTheme::Minimal, ['primary' => '#223344']));
-        $this->assertSame('#223344', $this->storedSettings(MenuTheme::Minimal)['colors']['primary']);
+        app(ThemeService::class)->save($this->tenant, MenuTheme::Cafe, $this->settings(MenuTheme::Cafe, ['primary' => '#223344']));
+        $this->assertSame('#223344', $this->storedSettings(MenuTheme::Cafe)['colors']['primary']);
 
         Livewire::test(ManageTheme::class)->assertSee(__('panels.app.theme.premium_lost.title'));
     }
@@ -424,11 +437,10 @@ class ThemeManagementTest extends TestCase
         } catch (ValidationException) {
         }
 
-        $this->buildMinimal();
         $this->dropPremium();
 
         $this->expectException(PlanLimitExceededException::class);
-        app(ThemeService::class)->setLocationTheme($this->cihangir, MenuTheme::Minimal);
+        app(ThemeService::class)->setLocationTheme($this->cihangir, MenuTheme::Cafe);
     }
 
     // Cache -------------------------------------------------------------------

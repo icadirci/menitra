@@ -29,6 +29,7 @@ class EditPlan extends EditRecord
 
         foreach (BillingInterval::cases() as $interval) {
             $data['prices'][$interval->value] = $plan->priceFor($interval)?->amount;
+            $data['extra_location_prices'][$interval->value] = $plan->priceFor($interval)?->extra_location_amount;
         }
 
         foreach (PlanFeature::cases() as $feature) {
@@ -45,10 +46,11 @@ class EditPlan extends EditRecord
     {
         return app(PlanService::class)->save(
             $record,
-            Arr::except($data, ['code', 'translations', 'prices', 'limits']),
+            Arr::except($data, ['code', 'translations', 'prices', 'limits', 'extra_location_prices']),
             $data['translations'] ?? [],
             $data['prices'] ?? [],
             $data['limits'] ?? [],
+            $data['extra_location_prices'] ?? [],
         );
     }
 }

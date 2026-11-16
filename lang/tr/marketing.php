@@ -228,6 +228,8 @@ return [
         'billed_monthly_or_yearly' => 'Aylık faturalandırılır · yıllık :price',
         'billed_yearly' => 'Yıllık faturalandırılır · aylık yaklaşık :price',
         'monthly_only' => 'Bu pakette yalnızca aylık ödeme var',
+        'included_locations' => ':count şube dahil',
+        'extra_location' => 'Her ek şube +:price',
         'recommended' => 'Önerilen',
         'start_trial' => ':days günlük ücretsiz denemeye başla',
         'includes' => 'Pakete dahil',

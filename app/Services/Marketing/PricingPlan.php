@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Marketing;
 
+use App\Enums\MenuTheme;
 use App\Enums\PlanFeature;
 use App\Support\Money;
 use Illuminate\Support\Number;
@@ -31,7 +32,18 @@ final readonly class PricingPlan
         public ?int $yearlySavingPercent,
         public array $limits = [],
         public ?int $trialDays = null,
+        public ?int $includedLocations = null,
+        public ?Money $extraLocationMonthly = null,
+        public ?Money $extraLocationYearly = null,
     ) {}
+
+    /**
+     * Whether the plan charges for branches beyond the included ones.
+     */
+    public function hasLocationPricing(): bool
+    {
+        return $this->extraLocationMonthly !== null || $this->extraLocationYearly !== null;
+    }
 
     /**
      * Included: the feature is built, and a limit row exists and is unlimited
@@ -72,7 +84,8 @@ final readonly class PricingPlan
 
     /**
      * Plan card bullet points, built only from included features
-     * (e.g. "3 menus", "Unlimited products", "Premium themes").
+     * (e.g. "3 menus", "Unlimited products") plus the number of menu themes
+     * the plan can use (basic themes always, the others with premium_themes).
      *
      * @return list<string>
      */
@@ -81,6 +94,12 @@ final readonly class PricingPlan
         $points = [];
 
         foreach (PlanFeature::cases() as $feature) {
+            if ($feature === PlanFeature::PremiumThemes) {
+                $points[] = $this->themesHighlight();
+
+                continue;
+            }
+
             if (! $this->includes($feature)) {
                 continue;
             }
@@ -95,5 +114,18 @@ final readonly class PricingPlan
         }
 
         return $points;
+    }
+
+    private function themesHighlight(): string
+    {
+        $themes = MenuTheme::cases();
+
+        if ($this->includes(PlanFeature::PremiumThemes)) {
+            return trans_choice('plans.themes_all', count($themes), ['count' => count($themes)]);
+        }
+
+        $basic = count(array_filter($themes, fn (MenuTheme $theme): bool => $theme->requiredFeature() === null));
+
+        return trans_choice('plans.themes_basic', $basic, ['count' => $basic]);
     }
 }

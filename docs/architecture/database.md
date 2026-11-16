@@ -137,9 +137,9 @@
 
 | Table | Columns | Constraints / indexes |
 |---|---|---|
-| `plans` | `code`, `is_active`, `is_public`, `is_featured` ("most popular", at most one — enforced by `PlanService`), `trial_days`, `sort_order` | unique `code` |
+| `plans` | `code`, `is_active`, `is_public`, `is_featured` ("most popular", at most one — enforced by `PlanService`), `trial_days`, `included_locations` smallint nullable (branches covered by the base price), `sort_order` | unique `code` |
 | `plan_translations` | `plan_id`, `locale`, `name`, `description` | unique (`plan_id`, `locale`) |
-| `plan_prices` | `plan_id` FK cascade, `interval` (`BillingInterval`: `monthly`, `yearly`), `amount` bigint (kuruş), `currency` char(3) default `TRY`, `is_active` | unique (`plan_id`, `interval`, `currency`); check `amount >= 0`. Rows are deactivated, never deleted, when a price is removed |
+| `plan_prices` | `plan_id` FK cascade, `interval` (`BillingInterval`: `monthly`, `yearly`), `amount` bigint (kuruş), `extra_location_amount` bigint nullable (kuruş per branch beyond `plans.included_locations`), `currency` char(3) default `TRY`, `is_active` | unique (`plan_id`, `interval`, `currency`); check `amount >= 0`, `extra_location_amount IS NULL OR >= 0`. Rows are deactivated, never deleted, when a price is removed |
 | `plan_limits` | `plan_id` FK cascade, `feature` (`PlanFeature`), `limit_value` int nullable (null = unlimited; 0/1 for boolean features) | unique (`plan_id`, `feature`); check `limit_value IS NULL OR limit_value >= 0`. A missing row means the feature isn't included |
 | `subscriptions` 🔒 | `plan_id`, `plan_price_id` nullable FK restrict (null during trials), `status` (`SubscriptionStatus`), `trial_ends_at`, `current_period_starts_at`, `current_period_ends_at`, `cancel_at_period_end`, `canceled_at`, `grace_ends_at`, `ended_at`, `provider` nullable, `provider_reference` nullable | partial unique (`tenant_id`) where `ended_at IS NULL`; index (`status`, `current_period_ends_at`) |
 | `subscription_events` 🔒 | `subscription_id`, `type` (`SubscriptionEventType`), `from_status`, `to_status`, `meta` jsonb, `occurred_at` | Append-only; index (`subscription_id`, `occurred_at`) |

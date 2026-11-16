@@ -19,10 +19,11 @@ class CreatePlan extends CreateRecord
     {
         return app(PlanService::class)->save(
             new Plan,
-            Arr::except($data, ['translations', 'prices', 'limits']),
+            Arr::except($data, ['translations', 'prices', 'limits', 'extra_location_prices']),
             $data['translations'] ?? [],
             $data['prices'] ?? [],
             $data['limits'] ?? [],
+            $data['extra_location_prices'] ?? [],
         );
     }
 }

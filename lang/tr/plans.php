@@ -35,6 +35,9 @@ return [
         'max_members' => 'Sınırsız ekip üyesi',
     ],
 
+    'themes_all' => 'Tüm menü temaları (:count)',
+    'themes_basic' => ':count temel menü teması',
+
     'errors' => [
         'invalid_transition' => 'Bu abonelik değişikliği mevcut durumda (:status) yapılamaz.',
         'live_subscription_exists' => 'Bu işletmenin zaten devam eden bir aboneliği var.',

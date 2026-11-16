@@ -30,6 +30,7 @@
 - Effective theme = `location.theme ?? tenant.theme`.
 - All menus at one location use the same theme, so breakfast and dinner never look different.
 - Per-theme customisation lives in `theme_settings` (unique per tenant and theme). Switching back to a theme restores the settings it had. A location override uses the tenant's settings of that theme; there are no per-location settings. A missing row means the theme's defaults; registration writes the `classic` row with defaults.
+- Basic themes: `classic` and `minimal` are included in every plan; `bistro`, `cafe` and `grid` need `premium_themes` (`MenuTheme::requiredFeature()`).
 - Plan gating: if the effective theme requires a feature the current plan lacks (`premium_themes`), `ThemeRenderer` falls back to `classic`. **Settings are not deleted.**
 
 ### Managing themes (business panel, B9)

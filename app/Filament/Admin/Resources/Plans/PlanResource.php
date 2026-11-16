@@ -110,6 +110,23 @@ class PlanResource extends Resource
                     fn (BillingInterval $interval): MoneyInput => MoneyInput::make($interval->value)->label($interval->label()),
                     BillingInterval::cases(),
                 )),
+            Section::make(__('panels.admin.plans.sections.location_pricing'))
+                ->description(__('panels.admin.plans.sections.location_pricing_help'))
+                ->columns(3)
+                ->columnSpanFull()
+                ->schema([
+                    TextInput::make('included_locations')
+                        ->label(__('panels.admin.plans.fields.included_locations'))
+                        ->helperText(__('panels.admin.plans.fields.included_locations_help'))
+                        ->integer()
+                        ->minValue(1)
+                        ->maxValue(1000),
+                    ...array_map(
+                        fn (BillingInterval $interval): MoneyInput => MoneyInput::make("extra_location_prices.{$interval->value}")
+                            ->label(__('panels.admin.plans.fields.extra_location_price', ['interval' => $interval->label()])),
+                        BillingInterval::cases(),
+                    ),
+                ]),
             Section::make(__('panels.admin.plans.sections.limits'))
                 ->description(__('panels.admin.plans.sections.limits_help'))
                 ->columns(3)

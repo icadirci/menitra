@@ -67,7 +67,7 @@
                     <x-ui.button :href="route('register')">{{ __('marketing.pricing_page.start_trial', ['days' => $trialDays]) }}</x-ui.button>
                 </div>
             @else
-                <div class="mx-auto grid max-w-[1200px] grid-cols-[repeat(auto-fit,minmax(min(320px,100%),1fr))] items-stretch gap-5">
+                <div class="mx-auto grid max-w-[1200px] grid-cols-1 items-stretch gap-6 pt-4 md:grid-cols-2 lg:grid-cols-[repeat(auto-fit,minmax(300px,1fr))] lg:gap-5">
                     @foreach ($plans as $plan)
                         @php
                             // Displayed price per billing period; a plan without a yearly price keeps its monthly price.
@@ -79,17 +79,23 @@
                                         ? __('marketing.pricing_page.billed_monthly_or_yearly', ['price' => $plan->yearly->format(omitZeroFraction: true)])
                                         : __('marketing.pricing_page.billed_monthly'),
                                     'saving' => null,
+                                    'extra' => $plan->extraLocationMonthly?->format(omitZeroFraction: true).' '.__('marketing.pricing_page.per_month'),
+                                    'hasExtra' => $plan->extraLocationMonthly !== null,
                                 ],
                                 'yearly' => $plan->yearly ? [
                                     'price' => $plan->yearly,
                                     'per' => __('marketing.pricing_page.per_year'),
                                     'note' => __('marketing.pricing_page.billed_yearly', ['price' => $plan->yearlyPerMonth->format(omitZeroFraction: true)]),
                                     'saving' => $plan->yearlySavingPercent,
+                                    'extra' => $plan->extraLocationYearly?->format(omitZeroFraction: true).' '.__('marketing.pricing_page.per_year'),
+                                    'hasExtra' => $plan->extraLocationYearly !== null,
                                 ] : [
                                     'price' => $plan->monthly,
                                     'per' => __('marketing.pricing_page.per_month'),
                                     'note' => __('marketing.pricing_page.monthly_only'),
                                     'saving' => null,
+                                    'extra' => $plan->extraLocationMonthly?->format(omitZeroFraction: true).' '.__('marketing.pricing_page.per_month'),
+                                    'hasExtra' => $plan->extraLocationMonthly !== null,
                                 ],
                             ];
                             if (! $hasYearly) {
@@ -97,63 +103,122 @@
                             }
                             $highlights = $plan->highlights();
                         @endphp
+                        {{-- The outer element carries the entrance animation (it keeps its final transform), the inner card the hover lift. --}}
                         <article style="animation-delay: {{ 240 + $loop->index * 100 }}ms" @class([
-                            'animated fadeInUp flex flex-col gap-5 rounded-[28px] px-8 py-9',
-                            'bg-ink text-paper shadow-[0_40px_70px_-36px_rgb(21_25_26/0.7)] outline-[3px] -outline-offset-[3px] outline-saffron-500' => $plan->featured,
-                            'border border-line bg-white text-ink' => ! $plan->featured,
+                            'animated fadeInUp flex',
+                            'relative z-10 lg:-my-3' => $plan->featured,
                         ])>
-                            <div class="flex items-center justify-between gap-3">
-                                <h2 class="font-display text-[26px] font-bold tracking-[-0.02em]">{{ $plan->name }}</h2>
+                            <div @class([
+                                'group relative flex w-full flex-col gap-6 overflow-hidden rounded-[28px] px-7 py-8 transition-[transform,box-shadow] duration-300 ease-out motion-safe:hover:-translate-y-1.5 sm:px-8 sm:py-9',
+                                'bg-ink text-paper shadow-[0_44px_80px_-36px_rgb(21_25_26/0.75)] ring-2 ring-saffron-500 lg:py-11' => $plan->featured,
+                                'border border-line bg-white text-ink shadow-card hover:border-forest-700/30 hover:shadow-[0_36px_70px_-40px_rgb(31_77_59/0.55)]' => ! $plan->featured,
+                            ])>
+                                {{-- Decoration: an accent strip on every card, a warm glow behind the recommended one. --}}
+                                <span aria-hidden="true" @class([
+                                    'pointer-events-none absolute inset-x-0 top-0 h-1.5',
+                                    'bg-linear-to-r from-saffron-500 via-[#F2C27A] to-saffron-500' => $plan->featured,
+                                    'bg-linear-to-r from-forest-700 to-forest-900 opacity-80' => ! $plan->featured,
+                                ])></span>
                                 @if ($plan->featured)
-                                    <span class="rounded-full bg-saffron-500 px-3 py-[5px] text-xs font-bold text-ink">{{ __('marketing.pricing_page.recommended') }}</span>
+                                    <span aria-hidden="true" class="pointer-events-none absolute -top-24 -right-20 size-64 rounded-full bg-saffron-500/25 blur-3xl"></span>
+                                    <span aria-hidden="true" class="pointer-events-none absolute -bottom-28 -left-24 size-64 rounded-full bg-forest-700/40 blur-3xl"></span>
                                 @endif
-                            </div>
-                            @if ($plan->description)
-                                <p class="text-[15px] opacity-80 sm:min-h-12">{{ $plan->description }}</p>
-                            @endif
 
-                            @foreach ($variants as $period => $variant)
-                                <div
-                                    class="flex flex-col gap-1"
-                                    @if ($hasYearly) x-show="{{ $period === 'yearly' ? 'yearly' : '! yearly' }}" @endif
-                                    @if ($period === 'yearly') x-cloak @endif
-                                >
-                                    <p class="flex flex-wrap items-baseline gap-x-1.5">
-                                        <span class="font-display text-[clamp(44px,5vw,60px)] leading-none font-bold tracking-[-0.045em]">{{ $variant['price']->format(omitZeroFraction: true) }}</span>
-                                        <span class="opacity-70">{{ $variant['per'] }}</span>
-                                    </p>
-                                    <p class="text-sm opacity-70">{{ $variant['note'] }}</p>
-                                    @if ($variant['saving'])
+                                <div class="relative flex items-start justify-between gap-3">
+                                    <div class="flex items-center gap-3">
                                         <span @class([
-                                            'mt-1 self-start rounded-full px-2.5 py-0.5 text-xs font-semibold',
-                                            'bg-white/10 text-saffron-500' => $plan->featured,
+                                            'inline-flex size-11 shrink-0 items-center justify-center rounded-2xl',
+                                            'bg-saffron-500 text-ink' => $plan->featured,
                                             'bg-forest-100 text-forest-700' => ! $plan->featured,
-                                        ])>{{ __('marketing.pricing.yearly_saving', ['percent' => $variant['saving']]) }}</span>
+                                        ]) aria-hidden="true">
+                                            <x-ui.icon :name="$plan->hasLocationPricing() ? 'pin' : ($plan->featured ? 'sparkle' : 'qr')" :size="22" :stroke="2" />
+                                        </span>
+                                        <h2 class="font-display text-[26px] font-bold tracking-[-0.02em]">{{ $plan->name }}</h2>
+                                    </div>
+                                    @if ($plan->featured)
+                                        <span class="inline-flex shrink-0 items-center gap-1 rounded-full bg-saffron-500 px-3 py-[5px] text-xs font-bold text-ink shadow-[0_8px_20px_-8px_rgb(231_163_62/0.9)]">
+                                            <x-ui.icon name="sparkle" :size="13" :stroke="2.4" />
+                                            {{ __('marketing.pricing_page.recommended') }}
+                                        </span>
                                     @endif
                                 </div>
-                            @endforeach
+                                @if ($plan->description)
+                                    <p class="relative -mt-2 text-[15px] opacity-80 sm:min-h-12">{{ $plan->description }}</p>
+                                @endif
 
-                            <a
-                                href="{{ route('register', ['plan' => $plan->code]) }}"
-                                @class([
-                                    'inline-flex min-h-[54px] items-center justify-center rounded-input px-4 text-center font-semibold no-underline transition-colors',
-                                    'bg-saffron-500 text-ink hover:bg-[#D9932C] hover:text-ink' => $plan->featured,
-                                    'bg-forest-700 text-white hover:bg-forest-900 hover:text-white' => ! $plan->featured,
-                                ])
-                            >{{ __('marketing.pricing_page.start_trial', ['days' => $plan->trialDays ?? $trialDays]) }}</a>
-
-                            @if ($highlights !== [])
-                                <div @class(['h-px', 'bg-paper/15' => $plan->featured, 'bg-line' => ! $plan->featured])></div>
-                                <h3 class="text-[13px] font-semibold tracking-[0.06em] uppercase opacity-70">{{ __('marketing.pricing_page.includes') }}</h3>
-                                <ul class="flex flex-col gap-3 text-[15px]">
-                                    @foreach ($highlights as $point)
-                                        <li class="flex items-start gap-2.5">
-                                            <x-ui.icon name="check" :stroke="2.2" @class(['mt-0.5', 'text-saffron-500' => $plan->featured, 'text-forest-700' => ! $plan->featured]) />
-                                            <span>{{ $point }}</span>
-                                        </li>
+                                <div @class([
+                                    'relative rounded-[20px] px-5 py-5',
+                                    'bg-white/[0.06] ring-1 ring-white/10' => $plan->featured,
+                                    'bg-paper ring-1 ring-line' => ! $plan->featured,
+                                ])>
+                                    @foreach ($variants as $period => $variant)
+                                        <div
+                                            class="flex flex-col gap-1"
+                                            @if ($hasYearly) x-show="{{ $period === 'yearly' ? 'yearly' : '! yearly' }}" @endif
+                                            @if ($period === 'yearly') x-cloak @endif
+                                        >
+                                            <p class="flex flex-wrap items-baseline gap-x-1.5">
+                                                <span class="font-display text-[clamp(44px,5vw,58px)] leading-none font-bold tracking-[-0.045em]">{{ $variant['price']->format(omitZeroFraction: true) }}</span>
+                                                <span class="opacity-70">{{ $variant['per'] }}</span>
+                                            </p>
+                                            <p class="text-sm opacity-70">{{ $variant['note'] }}</p>
+                                            @if ($variant['saving'])
+                                                <span @class([
+                                                    'mt-1 self-start rounded-full px-2.5 py-0.5 text-xs font-semibold',
+                                                    'bg-saffron-500/15 text-saffron-500' => $plan->featured,
+                                                    'bg-forest-100 text-forest-700' => ! $plan->featured,
+                                                ])>{{ __('marketing.pricing.yearly_saving', ['percent' => $variant['saving']]) }}</span>
+                                            @endif
+                                            @if ($variant['hasExtra'])
+                                                <p @class([
+                                                    'mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 border-t pt-3 text-sm font-semibold',
+                                                    'border-white/10' => $plan->featured,
+                                                    'border-line text-forest-700' => ! $plan->featured,
+                                                ])>
+                                                    <x-ui.icon name="pin" :size="16" :stroke="2" />
+                                                    @if ($plan->includedLocations)
+                                                        <span>{{ trans_choice('marketing.pricing_page.included_locations', $plan->includedLocations, ['count' => $plan->includedLocations]) }}</span>
+                                                        <span class="opacity-50" aria-hidden="true">·</span>
+                                                    @endif
+                                                    <span>{{ __('marketing.pricing_page.extra_location', ['price' => $variant['extra']]) }}</span>
+                                                </p>
+                                            @endif
+                                        </div>
                                     @endforeach
-                                </ul>
-                            @endif
+                                </div>
+
+                                <a
+                                    href="{{ route('register', ['plan' => $plan->code]) }}"
+                                    @class([
+                                        'relative inline-flex min-h-[54px] items-center justify-center gap-2 rounded-input px-4 text-center font-semibold no-underline transition-colors focus-visible:outline-none focus-visible:ring-4',
+                                        'bg-saffron-500 text-ink shadow-[0_14px_30px_-14px_rgb(231_163_62/0.9)] hover:bg-[#D9932C] hover:text-ink focus-visible:ring-saffron-500/40' => $plan->featured,
+                                        'bg-forest-700 text-white shadow-cta hover:bg-forest-900 hover:text-white focus-visible:ring-forest-700/25' => ! $plan->featured,
+                                    ])
+                                >
+                                    {{ __('marketing.pricing_page.start_trial', ['days' => $plan->trialDays ?? $trialDays]) }}
+                                    <x-ui.icon name="arrow-right" :size="18" :stroke="2.2" class="transition-transform group-hover:translate-x-0.5" />
+                                </a>
+
+                                @if ($highlights !== [])
+                                    <div class="relative flex flex-col gap-4">
+                                        <h3 class="text-[13px] font-semibold tracking-[0.06em] uppercase opacity-70">{{ __('marketing.pricing_page.includes') }}</h3>
+                                        <ul class="flex flex-col gap-3 text-[15px]">
+                                            @foreach ($highlights as $point)
+                                                <li class="flex items-start gap-3">
+                                                    <span @class([
+                                                        'mt-px inline-flex size-[22px] shrink-0 items-center justify-center rounded-full',
+                                                        'bg-saffron-500/15 text-saffron-500' => $plan->featured,
+                                                        'bg-forest-100 text-forest-700' => ! $plan->featured,
+                                                    ]) aria-hidden="true">
+                                                        <x-ui.icon name="check" :size="14" :stroke="2.6" />
+                                                    </span>
+                                                    <span>{{ $point }}</span>
+                                                </li>
+                                            @endforeach
+                                        </ul>
+                                    </div>
+                                @endif
+                            </div>
                         </article>
                     @endforeach
                 </div>

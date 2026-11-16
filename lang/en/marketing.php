@@ -228,6 +228,8 @@ return [
         'billed_monthly_or_yearly' => 'Billed monthly · or :price per year',
         'billed_yearly' => 'Billed yearly · about :price per month',
         'monthly_only' => 'This plan is billed monthly only',
+        'included_locations' => '{1} :count branch included|[2,*] :count branches included',
+        'extra_location' => 'Each additional branch +:price',
         'recommended' => 'Recommended',
         'start_trial' => 'Start :days-day free trial',
         'includes' => 'Includes',

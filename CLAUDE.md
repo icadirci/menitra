@@ -95,12 +95,11 @@ Work proceeds phase by phase with a review pause between phases (details in [ove
 
 ## 8. Open Decisions (working defaults until confirmed)
 
-- Plan names, prices and limits — placeholder seeds until defined. The `starter` limits in `PlanSeeder` are **development placeholders**, not a pricing decision.
 - Trial 14 days, grace 7 days.
 - Per-location price overrides — deferred.
 - S3-compatible media storage in production needs `league/flysystem-aws-s3-v3` (not installed; requires approval). The `media` disk config is ready for it.
 
-**Decided (2026-11-16):** prices are shown KDV-inclusive (display only). Unbuilt plan features (`custom_domain`, `qr_analytics`) can't be enabled or advertised (`PlanFeature::isAvailable()`).
+**Decided (2026-11-16):** prices are shown KDV-inclusive (display only). Three plans seeded by `PlanSeeder` (see [subscriptions.md § Data model](docs/architecture/subscriptions.md#data-model)): Başlangıç ₺300/month (basic themes `classic` + `minimal` only), Profesyonel ₺500/month (all themes, featured), Çoklu Şube ₺700/month (2 branches included, +₺200 per further branch via `plans.included_locations` / `plan_prices.extra_location_amount`); yearly = 8 × monthly. Unbuilt plan features (`custom_domain`, `qr_analytics`) can't be enabled or advertised (`PlanFeature::isAvailable()`).
 
 **Decided (2026-11-15):** QR images use the already-installed `chillerlan/php-qrcode` directly (SVG + PNG), no other QR package. QR images are rendered on demand (`QrCodeImage`) and not stored, since they encode only the stable `/q/{code}` URL; uploaded tenant images are stored on the `media` disk (see [tenancy.md § File storage](docs/architecture/tenancy.md#file-storage)).
 - Marketing site locales: `tr` at `/`, `en` at `/en`; page paths are localised (`/ozellikler` ↔ `/en/features`, `/fiyatlar` ↔ `/en/pricing`, see [overview.md § Public marketing website](docs/architecture/overview.md#public-marketing-website)).

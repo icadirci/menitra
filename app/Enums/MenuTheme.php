@@ -246,8 +246,15 @@ enum MenuTheme: string
         return __("panels.app.theme.themes.{$this->value}.name");
     }
 
+    /**
+     * Plan feature a theme needs. `classic` and `minimal` are the basic themes
+     * every plan includes; the others need `premium_themes`.
+     */
     public function requiredFeature(): ?PlanFeature
     {
-        return $this === self::Classic ? null : PlanFeature::PremiumThemes;
+        return match ($this) {
+            self::Classic, self::Minimal => null,
+            default => PlanFeature::PremiumThemes,
+        };
     }
 }

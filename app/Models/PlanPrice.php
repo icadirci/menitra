@@ -11,6 +11,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
  * Platform-level price of one plan for one billing interval (amount in kuruş).
+ * extra_location_amount: price per branch beyond plans.included_locations for
+ * the same interval (null = no per-branch pricing).
  */
 class PlanPrice extends Model
 {
@@ -18,6 +20,7 @@ class PlanPrice extends Model
     protected $fillable = [
         'interval',
         'amount',
+        'extra_location_amount',
         'currency',
         'is_active',
     ];
@@ -27,6 +30,7 @@ class PlanPrice extends Model
         return [
             'interval' => BillingInterval::class,
             'amount' => 'integer',
+            'extra_location_amount' => 'integer',
             'is_active' => 'boolean',
         ];
     }
@@ -39,5 +43,10 @@ class PlanPrice extends Model
     public function money(): Money
     {
         return Money::fromMinor($this->amount, $this->currency);
+    }
+
+    public function extraLocationMoney(): ?Money
+    {
+        return $this->extra_location_amount === null ? null : Money::fromMinor($this->extra_location_amount, $this->currency);
     }
 }

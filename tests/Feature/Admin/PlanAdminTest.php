@@ -107,7 +107,7 @@ class PlanAdminTest extends TestCase
 
         // Even if a value reaches the service, it stores 0.
         $plan = Plan::query()->where('code', 'pro')->sole();
-        app(PlanService::class)->save($plan, [], [], [], ['custom_domain' => true, 'qr_analytics' => 1, 'premium_themes' => true]);
+        app(PlanService::class)->save($plan, [], ['tr' => ['name' => 'Profesyonel']], [], ['custom_domain' => true, 'qr_analytics' => 1, 'premium_themes' => true]);
 
         $limits = $plan->limits()->get();
         $this->assertSame(0, $limits->firstWhere('feature', PlanFeature::CustomDomain)->limit_value);
@@ -152,6 +152,47 @@ class PlanAdminTest extends TestCase
         $this->assertSame(9900, $plan->priceFor(BillingInterval::Monthly)->amount);
         $this->assertNull($plan->priceFor(BillingInterval::Yearly), 'A cleared price is no longer offered.');
         $this->assertFalse($plan->prices->firstWhere('interval', BillingInterval::Yearly)->is_active, 'Cleared prices are deactivated, not deleted.');
+    }
+
+    public function test_per_branch_pricing_is_saved_and_filled(): void
+    {
+        $this->asSuperAdmin();
+
+        Livewire::test(CreatePlan::class)
+            ->fillForm($this->formData([
+                'code' => 'multi-branch',
+                'included_locations' => 2,
+                'extra_location_prices' => ['monthly' => '200', 'yearly' => '1600'],
+            ]))
+            ->call('create')
+            ->assertHasNoFormErrors();
+
+        $plan = Plan::query()->where('code', 'multi-branch')->with('prices')->sole();
+        $this->assertSame(2, $plan->included_locations);
+        $this->assertSame(20000, $plan->priceFor(BillingInterval::Monthly)->extra_location_amount);
+        $this->assertSame(160000, $plan->priceFor(BillingInterval::Yearly)->extra_location_amount);
+
+        Livewire::test(EditPlan::class, ['record' => $plan->getRouteKey()])
+            ->assertSchemaStateSet(['included_locations' => 2, 'extra_location_prices.monthly' => '200.00'])
+            ->fillForm(['included_locations' => null, 'extra_location_prices' => ['monthly' => '', 'yearly' => '']])
+            ->call('save')
+            ->assertHasNoFormErrors();
+
+        $plan->refresh()->load('prices');
+        $this->assertNull($plan->included_locations);
+        $this->assertNull($plan->priceFor(BillingInterval::Monthly)->extra_location_amount);
+    }
+
+    public function test_per_branch_pricing_rejects_invalid_values(): void
+    {
+        $this->asSuperAdmin();
+
+        Livewire::test(CreatePlan::class)
+            ->fillForm($this->formData(['included_locations' => 0, 'extra_location_prices' => ['monthly' => '-1']]))
+            ->call('create')
+            ->assertHasFormErrors(['included_locations', 'extra_location_prices.monthly']);
+
+        $this->assertDatabaseMissing('plans', ['code' => 'pro']);
     }
 
     public function test_edit_form_keeps_missing_limits_as_not_included(): void

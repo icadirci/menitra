@@ -35,6 +35,9 @@ return [
         'max_members' => 'Unlimited team members',
     ],
 
+    'themes_all' => 'All menu themes (:count)',
+    'themes_basic' => '{1} :count basic menu theme|[2,*] :count basic menu themes',
+
     'errors' => [
         'invalid_transition' => 'This subscription change is not possible in the current status (:status).',
         'live_subscription_exists' => 'This business already has a live subscription.',

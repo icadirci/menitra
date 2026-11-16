@@ -220,13 +220,45 @@ class PricingPageTest extends TestCase
             ->assertSee('1 şube')
             ->assertSee('3 menü')
             ->assertSee('Sınırsız ürün')
-            ->assertSee(__('plans.features.premium_themes', [], 'tr'))
+            ->assertSee('Tüm menü temaları (5)')
             ->assertDontSee(__('plans.features.remove_branding', [], 'tr'));
 
         $this->get('/en/pricing')
             ->assertSee('1 branch')
             ->assertSee('3 menus')
             ->assertSee('Unlimited products');
+    }
+
+    public function test_plans_without_premium_themes_advertise_the_basic_themes(): void
+    {
+        $this->plan('starter', 30000, limits: ['max_locations' => 1, 'premium_themes' => 0]);
+
+        $this->get('/fiyatlar')->assertSee('2 temel menü teması')->assertDontSee('Tüm menü temaları');
+        $this->get('/en/pricing')->assertSee('2 basic menu themes');
+    }
+
+    public function test_per_branch_pricing_is_shown_for_each_billing_period(): void
+    {
+        $plan = $this->plan('multi-branch', 70000, 560000, limits: ['max_locations' => null], attributes: ['included_locations' => 2]);
+        $plan->prices()->where('interval', BillingInterval::Monthly)->update(['extra_location_amount' => 20000]);
+        $plan->prices()->where('interval', BillingInterval::Yearly)->update(['extra_location_amount' => 160000]);
+        $this->plan('pro', 50000, 400000);
+
+        $text = $this->text('/fiyatlar');
+
+        $this->assertStringContainsString('2 şube dahil', $text);
+        $this->assertStringContainsString('Her ek şube +'.Money::fromMinor(20000)->format(omitZeroFraction: true).' / ay', $text);
+        $this->assertStringContainsString('Her ek şube +'.Money::fromMinor(160000)->format(omitZeroFraction: true).' / yıl', $text);
+        $this->assertStringContainsString('Sınırsız şube', $text);
+
+        $this->get('/en/pricing')->assertSee('2 branches included')->assertSee('Each additional branch');
+    }
+
+    public function test_plans_without_per_branch_pricing_show_no_branch_note(): void
+    {
+        $this->plan('pro', 50000, 400000);
+
+        $this->assertStringNotContainsString('Her ek şube', $this->text('/fiyatlar'));
     }
 
     public function test_unbuilt_features_are_never_advertised(): void
