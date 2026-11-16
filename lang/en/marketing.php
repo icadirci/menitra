@@ -168,6 +168,25 @@ return [
             'logo_body' => 'Shown at the top of every menu',
         ],
 
+        'team' => [
+            'badge' => 'Branches and team',
+            'title' => 'Each branch runs its own day. You see them all.',
+            'body' => 'Manage every branch from one panel. Invite your team by email; everyone sees only their own branch.',
+            'points' => [
+                'Opening hours, sold-out items and theme per branch',
+                'Owner, manager and branch staff roles',
+                'Secure sign-in with two-factor authentication',
+            ],
+            'card_label' => 'Sample team list',
+            'two_factor' => 'Two-factor authentication on',
+            // Illustration only (sample team).
+            'members' => [
+                ['initials' => 'AY', 'name' => 'Ayşe Y.', 'role' => 'Owner', 'branches' => 'All branches'],
+                ['initials' => 'MK', 'name' => 'Mert K.', 'role' => 'Manager', 'branches' => 'Kadıköy'],
+                ['initials' => 'ED', 'name' => 'Elif D.', 'role' => 'Branch staff', 'branches' => 'Moda'],
+            ],
+        ],
+
         'details' => [
             'title' => 'And the details that make service smoother.',
             'items' => [
@@ -234,6 +253,21 @@ return [
         'start_trial' => 'Start :days-day free trial',
         'includes' => 'Includes',
         'empty' => 'Our plans will be listed here soon. In the meantime you can start your free trial.',
+        'everywhere' => [
+            'title' => 'Included in every plan',
+            'lead' => 'Plans differ in capacity and theme choice. All of this comes with every plan.',
+            'link' => 'See all features',
+            'items' => [
+                ['icon' => 'qr', 'label' => 'Permanent QR codes'],
+                ['icon' => 'globe', 'label' => 'Turkish and English menus'],
+                ['icon' => 'image', 'label' => 'Item photos'],
+                ['icon' => 'tag', 'label' => 'Portions and extras'],
+                ['icon' => 'leaf', 'label' => 'Allergen and dietary labels'],
+                ['icon' => 'clock', 'label' => 'Sold-out and serving hours'],
+                ['icon' => 'user', 'label' => 'Team roles and invitations'],
+                ['icon' => 'lock', 'label' => 'Two-factor authentication'],
+            ],
+        ],
         'compare' => [
             'title' => 'Compare plans',
             'label' => 'Plan comparison',

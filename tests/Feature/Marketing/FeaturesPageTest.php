@@ -18,6 +18,7 @@ class FeaturesPageTest extends TestCase
             ->assertSee('<html lang="tr">', escape: false)
             ->assertSee(__('marketing.features_page.title', [], 'tr'))
             ->assertSee(__('marketing.features_page.details.items.0.title', [], 'tr'))
+            ->assertSee(__('marketing.features_page.team.title', [], 'tr'))
             ->assertSee('<title>'.e(__('marketing.meta.features_title', [], 'tr')), escape: false);
 
         $this->get('/en/features')

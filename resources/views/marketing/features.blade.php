@@ -146,6 +146,45 @@
         </div>
     </x-marketing.feature-row>
 
+    {{-- Branches and team --}}
+    <x-marketing.feature-row
+        :badge="__('marketing.features_page.team.badge')"
+        :title="__('marketing.features_page.team.title')"
+        :body="__('marketing.features_page.team.body')"
+        :points="__('marketing.features_page.team.points')"
+    >
+        <figure class="flex flex-col gap-3 rounded-[32px] bg-[#E4EEE8] p-[clamp(24px,4vw,44px)]">
+            <figcaption class="sr-only">{{ __('marketing.features_page.team.card_label') }}</figcaption>
+            <ul class="flex flex-col gap-2.5" aria-hidden="true">
+                @foreach (__('marketing.features_page.team.members') as $member)
+                    <li class="flex items-center gap-3.5 rounded-[18px] bg-white p-3.5 shadow-[0_18px_36px_-30px_rgb(21_25_26/0.5)]">
+                        <span @class([
+                            'inline-flex size-11 shrink-0 items-center justify-center rounded-full text-sm font-bold',
+                            'bg-forest-700 text-white' => $loop->first,
+                            'bg-[#F1EFE9] text-graphite' => ! $loop->first,
+                        ])>{{ $member['initials'] }}</span>
+                        <div class="min-w-0 flex-1">
+                            <p class="font-semibold">{{ $member['name'] }}</p>
+                            <p class="flex items-center gap-1 text-[13px] text-muted">
+                                <x-ui.icon name="pin" :size="14" :stroke="2" />
+                                {{ $member['branches'] }}
+                            </p>
+                        </div>
+                        <span @class([
+                            'shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold',
+                            'bg-forest-100 text-forest-700' => $loop->first,
+                            'border border-line text-graphite' => ! $loop->first,
+                        ])>{{ $member['role'] }}</span>
+                    </li>
+                @endforeach
+            </ul>
+            <p class="flex items-center gap-2 self-start rounded-full bg-forest-700 px-3.5 py-2 text-[13px] font-semibold text-white" aria-hidden="true">
+                <x-ui.icon name="lock" :size="15" :stroke="2" />
+                {{ __('marketing.features_page.team.two_factor') }}
+            </p>
+        </figure>
+    </x-marketing.feature-row>
+
     {{-- Details --}}
     <section class="border-y border-line bg-white px-5 py-[clamp(56px,7vw,96px)] sm:px-6">
         <div class="mx-auto flex max-w-[1200px] flex-col gap-10">

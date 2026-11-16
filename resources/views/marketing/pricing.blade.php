@@ -1,6 +1,8 @@
 @extends('layouts.marketing')
 
 @php
+    use App\Support\MarketingUrl;
+
     $trialDays = (int) config('subscriptions.trial_days');
     $hasYearly = $plans->contains(fn ($plan) => $plan->yearly !== null);
     $comparisonGroups = array_filter($comparison);
@@ -223,6 +225,28 @@
                     @endforeach
                 </div>
                 <p class="mx-auto mt-6 max-w-[1180px] text-center text-sm text-muted">{{ __('marketing.pricing.vat_note') }}</p>
+
+                {{-- Shared by every plan (product capabilities, not plan_limits): keeps the cards about capacity only. --}}
+                <div class="mx-auto mt-[clamp(40px,5vw,64px)] flex max-w-[1200px] flex-wrap items-start gap-x-12 gap-y-7 rounded-[28px] border border-line bg-white p-[clamp(24px,4vw,40px)]" data-animate="fadeInUp">
+                    <div class="flex min-w-0 flex-[1_1_260px] flex-col gap-2.5">
+                        <h2 class="font-display text-[26px] leading-tight font-bold tracking-[-0.02em]">{{ __('marketing.pricing_page.everywhere.title') }}</h2>
+                        <p class="text-[15px] text-pretty text-muted">{{ __('marketing.pricing_page.everywhere.lead') }}</p>
+                        <a href="{{ MarketingUrl::to('features') }}" class="group mt-1 inline-flex items-center gap-1.5 self-start font-semibold text-forest-700 no-underline hover:text-forest-900">
+                            {{ __('marketing.pricing_page.everywhere.link') }}
+                            <x-ui.icon name="arrow-right" :size="16" :stroke="2.2" class="transition-[translate] duration-300 ease-out group-hover:translate-x-0.5" />
+                        </a>
+                    </div>
+                    <ul class="grid min-w-0 flex-[2_1_520px] grid-cols-1 gap-x-6 gap-y-3.5 text-[15px] sm:grid-cols-2">
+                        @foreach (__('marketing.pricing_page.everywhere.items') as $item)
+                            <li class="flex items-center gap-3">
+                                <span class="inline-flex size-9 shrink-0 items-center justify-center rounded-xl bg-forest-100 text-forest-700" aria-hidden="true">
+                                    <x-ui.icon :name="$item['icon']" :size="18" :stroke="1.9" />
+                                </span>
+                                <span>{{ $item['label'] }}</span>
+                            </li>
+                        @endforeach
+                    </ul>
+                </div>
             @endif
         </section>
     </div>

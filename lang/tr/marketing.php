@@ -168,6 +168,25 @@ return [
             'logo_body' => 'Her menünün en üstünde',
         ],
 
+        'team' => [
+            'badge' => 'Şubeler ve ekip',
+            'title' => 'Her şube kendi işini görür, siz hepsini.',
+            'body' => 'Tüm şubelerinizi tek panelden yönetin. Ekibinizi e-postayla davet edin; herkes yalnızca kendi şubesini görür.',
+            'points' => [
+                'Şubeye özel çalışma saatleri, tükendi durumu ve tema',
+                'Sahip, yönetici ve şube personeli rolleri',
+                'İki adımlı doğrulama ile güvenli giriş',
+            ],
+            'card_label' => 'Örnek ekip listesi',
+            'two_factor' => 'İki adımlı doğrulama açık',
+            // Illustration only (sample team).
+            'members' => [
+                ['initials' => 'AY', 'name' => 'Ayşe Y.', 'role' => 'Sahip', 'branches' => 'Tüm şubeler'],
+                ['initials' => 'MK', 'name' => 'Mert K.', 'role' => 'Yönetici', 'branches' => 'Kadıköy'],
+                ['initials' => 'ED', 'name' => 'Elif D.', 'role' => 'Şube personeli', 'branches' => 'Moda'],
+            ],
+        ],
+
         'details' => [
             'title' => 'Servisi kolaylaştıran ayrıntılar da cabası.',
             'items' => [
@@ -234,6 +253,21 @@ return [
         'start_trial' => ':days günlük ücretsiz denemeye başla',
         'includes' => 'Pakete dahil',
         'empty' => 'Paketlerimiz çok yakında burada. Bu sırada ücretsiz denemenizi başlatabilirsiniz.',
+        'everywhere' => [
+            'title' => 'Her pakette dahil',
+            'lead' => 'Paketler kapasite ve tema seçeneğiyle ayrılır. Bunların hepsi her pakette var.',
+            'link' => 'Tüm özellikleri gör',
+            'items' => [
+                ['icon' => 'qr', 'label' => 'Kalıcı QR kodlar'],
+                ['icon' => 'globe', 'label' => 'Türkçe ve İngilizce menü'],
+                ['icon' => 'image', 'label' => 'Ürün fotoğrafları'],
+                ['icon' => 'tag', 'label' => 'Porsiyonlar ve ekstralar'],
+                ['icon' => 'leaf', 'label' => 'Alerjen ve diyet etiketleri'],
+                ['icon' => 'clock', 'label' => 'Tükendi ve servis saatleri'],
+                ['icon' => 'user', 'label' => 'Ekip rolleri ve davet'],
+                ['icon' => 'lock', 'label' => 'İki adımlı doğrulama'],
+            ],
+        ],
         'compare' => [
             'title' => 'Paketleri karşılaştırın',
             'label' => 'Paket karşılaştırması',

@@ -254,6 +254,24 @@ class PricingPageTest extends TestCase
         $this->get('/en/pricing')->assertSee('2 branches included')->assertSee('Each additional branch');
     }
 
+    public function test_capabilities_shared_by_every_plan_are_listed_once_with_a_link_to_features(): void
+    {
+        $this->plan('starter', 30000);
+
+        $this->get('/fiyatlar')
+            ->assertSee(__('marketing.pricing_page.everywhere.title', [], 'tr'))
+            ->assertSee(__('marketing.pricing_page.everywhere.items.6.label', [], 'tr'))
+            ->assertSee('href="'.url('/ozellikler').'"', escape: false);
+
+        $this->get('/en/pricing')
+            ->assertSee(__('marketing.pricing_page.everywhere.title', [], 'en'))
+            ->assertSee('href="'.url('/en/features').'"', escape: false);
+
+        // Without plans there is nothing to compare against: the block is not shown.
+        Plan::query()->delete();
+        $this->get('/fiyatlar')->assertDontSee(__('marketing.pricing_page.everywhere.title', [], 'tr'));
+    }
+
     public function test_plans_without_per_branch_pricing_show_no_branch_note(): void
     {
         $this->plan('pro', 50000, 400000);
