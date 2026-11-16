@@ -109,7 +109,7 @@
                             'relative z-10 lg:-my-3' => $plan->featured,
                         ])>
                             <div @class([
-                                'group relative flex w-full flex-col gap-6 overflow-hidden rounded-[28px] px-7 py-8 transition-[transform,box-shadow] duration-300 ease-out motion-safe:hover:-translate-y-1.5 sm:px-8 sm:py-9',
+                                'group relative flex w-full flex-col gap-6 overflow-hidden rounded-[28px] px-7 py-8 transition-[translate,box-shadow,border-color] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] motion-safe:hover:-translate-y-1.5 sm:px-8 sm:py-9',
                                 'bg-ink text-paper shadow-[0_44px_80px_-36px_rgb(21_25_26/0.75)] ring-2 ring-saffron-500 lg:py-11' => $plan->featured,
                                 'border border-line bg-white text-ink shadow-card hover:border-forest-700/30 hover:shadow-[0_36px_70px_-40px_rgb(31_77_59/0.55)]' => ! $plan->featured,
                             ])>
@@ -196,7 +196,7 @@
                                     ])
                                 >
                                     {{ __('marketing.pricing_page.start_trial', ['days' => $plan->trialDays ?? $trialDays]) }}
-                                    <x-ui.icon name="arrow-right" :size="18" :stroke="2.2" class="transition-transform group-hover:translate-x-0.5" />
+                                    <x-ui.icon name="arrow-right" :size="18" :stroke="2.2" class="transition-[translate] duration-300 ease-out group-hover:translate-x-0.5" />
                                 </a>
 
                                 @if ($highlights !== [])

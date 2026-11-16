@@ -31,8 +31,8 @@ class PlanSeeder extends Seeder
      */
     private const array BASE_LIMITS = [
         'max_locations' => 1,
-        'max_menus' => 3,
-        'max_items' => 100,
+        'max_menus' => 5,
+        'max_items' => 150,
         'max_languages' => 2,
         'max_qr_codes' => 5,
         'max_members' => 3,
