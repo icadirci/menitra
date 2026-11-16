@@ -157,6 +157,7 @@
                         </article>
                     @endforeach
                 </div>
+                <p class="mx-auto mt-6 max-w-[1180px] text-center text-sm text-muted">{{ __('marketing.pricing.vat_note') }}</p>
             @endif
         </section>
     </div>

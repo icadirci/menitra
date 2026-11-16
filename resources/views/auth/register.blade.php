@@ -52,6 +52,7 @@
                     />
                     <x-ui.field name="password" type="password" :label="__('auth.fields.password')" autocomplete="new-password" required />
                     <x-ui.field name="password_confirmation" type="password" :label="__('auth.fields.password_confirmation')" autocomplete="new-password" required />
+                    <x-ui.terms-consent />
 
                     <x-ui.button size="lg" class="mt-1 w-full">{{ __('auth.register.submit') }}</x-ui.button>
                     <p class="text-center text-[13px] text-muted">{{ __('auth.register.reassurance') }}</p>

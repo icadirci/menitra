@@ -225,6 +225,7 @@ class FeatureGateTest extends TestCase
             'password_confirmation' => 'a-Strong-passw0rd',
             'business_name' => 'Köşe Kafe',
             'slug' => 'kose-kafe',
+            'terms' => '1',
         ])->assertSessionHasNoErrors();
 
         $tenant = Tenant::query()->where('slug', 'kose-kafe')->firstOrFail();

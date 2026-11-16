@@ -26,8 +26,8 @@ Oturum kuralları:
 | 9 | İki adımlı doğrulama (MFA) | S | ✅ 2026-11-16 |
 | 7 | Ekip yönetimi `/app` | L | ✅ 2026-11-16 |
 | 8 | Kapsamlı admin + impersonation | L | ✅ 2026-11-16 |
-| 10 | Hukuk ve KVKK | S + kullanıcı | ⬜ |
-| 11 | Plan ve fiyatlar | kullanıcı | ⬜ |
+| 10 | Hukuk ve KVKK | S + kullanıcı | 🟡 kod 2026-11-16 (testler çalıştırılmadı), kullanıcı adımları açık |
+| 11 | Plan ve fiyatlar | kullanıcı | 🟡 kod 2026-11-16 (testler çalıştırılmadı), planlar/fiyatlar kullanıcıda |
 | 12 | Lansman sonrası iyileştirmeler | — | ⬜ |
 
 Önerilen sıra: 0 → 1 → 2 → 3 → 4 → 5 → 6 → 9 → 7 → 8. Faz 10 ve 11 paralel yürür. Lansman 7 ve 8'i beklemezse ikisi lansman sonrasına kayabilir.
@@ -270,11 +270,27 @@ Bulgular: `lang/tr/legal.php` (ve `en`) içinde `[şirket unvanı]`, `[adres]`, 
 - **Kullanıcının adımları:** şirket bilgileri; tedarikçi listesi (hosting, mail sağlayıcısı, Sentry, yurt dışı aktarım); avukat incelemesi; ardından `MARKETING_LEGAL_REVIEW_PENDING=false`.
 - **Runbook:** KVKK m.11 başvuru süreci (iletişim formu → kimlik doğrulama → süre: 30 gün); silme talebinde admin'den işletme soft-delete edilir, otomatik silme yok.
 
+**Notlar (2026-11-16, kod yazıldı; Docker WSL'den erişilemediği için migration ve testler çalıştırılmadı):**
+- **Karar (kullanıcı):** tek zorunlu kutu ("Kullanım koşullarını okudum ve kabul ediyorum") + altında aydınlatma metnine link veren bilgi notu. Aydınlatma bir onay kutusu değil (KVKK'da bilgilendirme, açık rıza ile karıştırılmamalı).
+- Ortak bileşen `<x-ui.terms-consent>` (kayıt + davet register modu); linkler `MarketingUrl::to()` ile o anki dilde, yeni sekmede. Doğrulama `terms => accepted` (`CreateNewUser`, `AcceptInvitationRequest` sadece register modunda).
+- Migration `2026_11_20_100000_add_terms_acceptance_to_users_table` (`terms_accepted_at`, `terms_version`, nullable). Sürüm `config('marketing.terms_version')` = `2026-11-15` (metnin tarihi). Yazan tek yer `User::recordTermsAcceptance()`; `TenantRegistrationService::register()` ve `TeamInvitationService::acceptAsNewUser()` çağırıyor (servisin tek çağıranı formu doğruluyor; e-posta doğrulama ile aynı desen).
+- Mevcut, seed ile ya da artisan ile oluşturulan hesaplarda kayıt yok. Sürüm değişince tekrar onay isteme akışı **yok** (gerekirse lansman sonrası).
+- Runbook README § "Legal and KVKK requests".
+- Testler: `RegistrationTest` (onay zorunlu, sürüm kaydı, mass-assignment), `TeamInvitationAcceptTest` (yeni hesapta onay zorunlu). Mevcut kayıt payload'larına `terms` eklendi (`WelcomeMailTest`, `FeatureGateTest`, `TenantAdminTest`).
+- **Kalan (kullanıcı):** şirket bilgileri, tedarikçi listesi (hosting, mail sağlayıcısı, Sentry; yurt dışı aktarım), saklama süreleri, sorumluluk/mahkeme, avukat incelemesi → `updated` tarihleri + `marketing.terms_version` güncellenir → `MARKETING_LEGAL_REVIEW_PENDING=false`.
+
 ## Faz 11: Plan ve fiyatlar (kullanıcı)
 
 - Gerçek plan isimleri, TRY fiyatları ve limitler (`max_members` dahil) `/admin` → Planlar'dan girilir. `PlanSeeder` sadece geliştirme yer tutucusudur.
 - KDV gösterimi ("dahil" mi "+KDV" mi) kararı verilince fiyat sayfası metni (`lang/*/marketing.php`) güncellenir.
 - `custom_domain` ve `qr_analytics` için kod yok: fiyat sayfasında ve plan açıklamalarında vaat edilmediğini kontrol et.
+
+**Notlar (2026-11-16, kod yazıldı; testler çalıştırılmadı):**
+- **Karar (kullanıcı):** fiyatlar **KDV dahil**. Fiyat sayfasında ve ana sayfadaki fiyat önizlemesinde kartların altında "Fiyatlara KDV dahildir." (`marketing.pricing.vat_note`); admin plan formundaki fiyat yardım metni buna göre.
+- `PlanFeature::isAvailable()`: `custom_domain`, `qr_analytics` false. Admin plan formunda toggle kapalı + açıklama, `PlanService` her durumda 0 yazar, `PricingPlan::includes()` false döner (DB'de 1 olsa bile kartta ve karşılaştırmada çıkmaz). Özellik yazılınca enum'da açılır.
+- Seed'lenen SSS'lerde ve pazarlama metinlerinde özel alan adı / analitik vaadi yok (`FeaturesPageTest` özellikler sayfasını zaten koruyor). Plan **açıklamaları** admin'den serbest metin: girerken bu iki özellik yazılmamalı.
+- Testler: `PricingPageTest` (vaat yok, KDV notu), `PlanAdminTest` (alan kapalı, servis 0 yazar).
+- **Kalan (kullanıcı):** `/admin` → Planlar'dan gerçek isimler, KDV dahil TRY fiyatlar, limitler (**`max_members` dahil**; satır yoksa davet gönderilemez).
 
 ## Faz 12: Lansman sonrası
 

@@ -210,6 +210,7 @@ return [
         'yearly_note' => 'Yıllık ödemede aylık :price',
         'yearly_saving' => '%:percent tasarruf',
         'compare_all' => 'Tüm paketleri karşılaştır',
+        'vat_note' => 'Fiyatlara KDV dahildir.',
     ],
 
     'pricing_page' => [

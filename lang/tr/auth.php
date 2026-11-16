@@ -22,6 +22,19 @@ return [
         'slug' => 'Menü adresi',
     ],
 
+    // Kullanım koşulları onayı (kayıt ve davet ile yeni hesap). Aydınlatma
+    // metni bir onay değil, bilgilendirmedir: sadece not olarak gösterilir.
+    'terms' => [
+        'accept_before' => '',
+        'accept_link' => 'Kullanım koşullarını',
+        'accept_after' => ' okudum ve kabul ediyorum.',
+        'privacy_before' => 'Kişisel verilerinizin nasıl işlendiği ',
+        'privacy_link' => 'Aydınlatma Metni',
+        'privacy_after' => '\'nde açıklanmıştır.',
+        'new_tab' => '(yeni sekmede açılır)',
+        'required' => 'Devam etmek için kullanım koşullarını kabul etmelisiniz.',
+    ],
+
     'register' => [
         'title' => 'İşletme hesabınızı oluşturun',
         'subtitle' => 'Ücretsiz denemenizi başlatın. Kredi kartı gerekmez.',

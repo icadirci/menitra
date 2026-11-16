@@ -15,7 +15,7 @@ use Laravel\Fortify\Contracts\CreatesNewUsers;
 /**
  * Validates public registration input and delegates to
  * TenantRegistrationService. Only the listed fields are read, so extra input
- * (e.g. platform_role, tenant_id) is ignored.
+ * (e.g. platform_role, tenant_id) is ignored. The terms checkbox is required.
  */
 class CreateNewUser implements CreatesNewUsers
 {
@@ -51,9 +51,12 @@ class CreateNewUser implements CreatesNewUsers
             ],
             // A hint only: TenantRegistrationService falls back to the default plan.
             'plan' => ['nullable', 'string', 'max:64'],
+            // Recorded by TenantRegistrationService (users.terms_accepted_at / terms_version).
+            'terms' => ['accepted'],
         ], [
             'slug.regex' => __('auth.register.slug_format'),
             'slug.not_in' => __('auth.register.slug_reserved'),
+            'terms.accepted' => __('auth.terms.required'),
         ], [
             'name' => __('auth.fields.name'),
             'email' => __('auth.fields.email'),

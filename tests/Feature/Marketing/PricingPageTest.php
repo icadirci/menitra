@@ -229,6 +229,30 @@ class PricingPageTest extends TestCase
             ->assertSee('Unlimited products');
     }
 
+    public function test_unbuilt_features_are_never_advertised(): void
+    {
+        // Rows written around PlanService (e.g. directly in the database).
+        $this->plan('pro', 49900, limits: ['max_menus' => 3, 'premium_themes' => 1, 'custom_domain' => 1, 'qr_analytics' => 1]);
+
+        foreach (['/fiyatlar' => 'tr', '/en/pricing' => 'en', '/' => 'tr'] as $path => $locale) {
+            $content = $this->get($path)->assertOk()->getContent();
+
+            $this->assertStringNotContainsString(__('plans.features.custom_domain', [], $locale), $content, $path);
+            $this->assertStringNotContainsString(__('plans.features.qr_analytics', [], $locale), $content, $path);
+        }
+
+        $this->get('/fiyatlar')->assertSee(__('plans.features.premium_themes', [], 'tr'));
+    }
+
+    public function test_prices_are_marked_vat_inclusive(): void
+    {
+        $this->plan('starter', 29900);
+
+        $this->get('/fiyatlar')->assertSee('Fiyatlara KDV dahildir.');
+        $this->get('/en/pricing')->assertSee('Prices include VAT.');
+        $this->get('/')->assertSee('Fiyatlara KDV dahildir.');
+    }
+
     public function test_comparison_is_hidden_without_plan_limits(): void
     {
         $this->plan('starter', 29900);

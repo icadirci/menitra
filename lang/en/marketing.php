@@ -210,6 +210,7 @@ return [
         'yearly_note' => ':price / month billed yearly',
         'yearly_saving' => 'Save :percent%',
         'compare_all' => 'Compare all plans',
+        'vat_note' => 'Prices include VAT.',
     ],
 
     'pricing_page' => [

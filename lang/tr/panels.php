@@ -23,13 +23,14 @@ return [
             'sections' => [
                 'general' => 'Genel',
                 'prices' => 'Fiyatlar',
-                'prices_help' => 'KDV dahil/hariç gösterimi henüz karara bağlanmadı. Boş bırakılan fiyat satılmaz ve fiyat sayfasında görünmez.',
+                'prices_help' => 'Fiyatları KDV dahil girin; fiyat sayfası "KDV dahil" olarak gösterir. Boş bırakılan fiyat satılmaz ve fiyat sayfasında görünmez.',
                 'limits' => 'Limitler',
                 'limits_help' => 'Sayı limitlerinde boş = sınırsız, 0 = dahil değil.',
             ],
             'fields' => [
                 'code' => 'Kod',
                 'code_help' => 'Kalıcı tanımlayıcı (ör. starter). Oluşturulduktan sonra değiştirilemez.',
+                'feature_unavailable' => 'Henüz geliştirilmedi; pakete eklenemez ve fiyat sayfasında gösterilmez.',
                 'name' => 'Paket adı',
                 'description' => 'Kısa açıklama',
                 'description_help' => 'Fiyat kartında adın altında gösterilir.',

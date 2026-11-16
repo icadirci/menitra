@@ -103,6 +103,7 @@ class TeamInvitationAcceptTest extends TestCase
             'name' => 'Selin Kaya',
             'password' => self::PASSWORD,
             'password_confirmation' => self::PASSWORD,
+            'terms' => '1',
             // Never read: everything comes from the stored invitation.
             'email' => 'attacker@example.com',
             'role' => 'owner',
@@ -127,6 +128,27 @@ class TeamInvitationAcceptTest extends TestCase
         // Single use.
         auth()->logout();
         $this->assertInvalidPage($token);
+    }
+
+    public function test_new_user_must_accept_the_terms_and_the_version_is_recorded(): void
+    {
+        $token = $this->invite();
+
+        $this->get("/invitations/{$token}")->assertOk()->assertSee('name="terms"', false);
+
+        $this->from("/invitations/{$token}")
+            ->post("/invitations/{$token}", ['name' => 'Selin', 'password' => self::PASSWORD, 'password_confirmation' => self::PASSWORD])
+            ->assertRedirect("/invitations/{$token}")
+            ->assertSessionHasErrors('terms');
+        $this->assertDatabaseMissing('users', ['email' => 'selin@example.com']);
+        $this->assertTrue($this->invitation()->isPending());
+
+        $this->post("/invitations/{$token}", ['name' => 'Selin', 'password' => self::PASSWORD, 'password_confirmation' => self::PASSWORD, 'terms' => '1'])
+            ->assertRedirect('/app/konak');
+
+        $user = User::query()->where('email', 'selin@example.com')->sole();
+        $this->assertNotNull($user->terms_accepted_at);
+        $this->assertSame(config('marketing.terms_version'), $user->terms_version);
     }
 
     public function test_new_user_password_follows_the_password_rules(): void

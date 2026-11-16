@@ -272,6 +272,7 @@
                         </div>
                     @endforeach
                 </div>
+                <p class="text-center text-sm text-muted">{{ __('marketing.pricing.vat_note') }}</p>
                 <x-ui.button :href="MarketingUrl::to('pricing')" variant="ghost" class="self-center">
                     {{ __('marketing.pricing.compare_all') }}
                     <x-ui.icon name="arrow-right" :size="18" :stroke="2" />

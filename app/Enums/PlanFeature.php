@@ -29,6 +29,20 @@ enum PlanFeature: string
         };
     }
 
+    /**
+     * Whether the feature is built. Unbuilt features (custom domains, QR scan
+     * analytics) can't be switched on in a plan (PlanService stores 0) and are
+     * never advertised on the pricing page, so nothing is sold that doesn't
+     * exist. Flip a case here when its implementation ships.
+     */
+    public function isAvailable(): bool
+    {
+        return match ($this) {
+            self::CustomDomain, self::QrAnalytics => false,
+            default => true,
+        };
+    }
+
     public function label(): string
     {
         return __("plans.features.{$this->value}");

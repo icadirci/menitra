@@ -102,7 +102,9 @@ final class PlanService
         foreach (PlanFeature::cases() as $feature) {
             $value = $limits[$feature->value] ?? null;
 
-            if ($feature->isBoolean()) {
+            if (! $feature->isAvailable()) {
+                $value = 0; // not built yet: never part of a plan (PlanFeature::isAvailable)
+            } elseif ($feature->isBoolean()) {
                 $value = (bool) $value ? 1 : 0;
             } elseif ($value === null || $value === '') {
                 $value = null;

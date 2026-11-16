@@ -117,7 +117,12 @@ class PlanResource extends Resource
                 ->statePath('limits')
                 ->schema(array_map(
                     fn (PlanFeature $feature): TextInput|Toggle => $feature->isBoolean()
-                        ? Toggle::make($feature->value)->label($feature->label())->inline(false)
+                        ? Toggle::make($feature->value)
+                            ->label($feature->label())
+                            ->inline(false)
+                            // Unbuilt features stay off; PlanService stores 0 regardless.
+                            ->disabled(! $feature->isAvailable())
+                            ->helperText($feature->isAvailable() ? null : __('panels.admin.plans.fields.feature_unavailable'))
                         : TextInput::make($feature->value)
                             ->label($feature->label())
                             ->integer()

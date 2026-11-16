@@ -23,13 +23,14 @@ return [
             'sections' => [
                 'general' => 'General',
                 'prices' => 'Prices',
-                'prices_help' => 'Whether prices are shown VAT-inclusive is not decided yet. A price left empty is not sold and is hidden on the pricing page.',
+                'prices_help' => 'Enter prices including VAT (KDV); the pricing page shows them as VAT-inclusive. A price left empty is not sold and is hidden on the pricing page.',
                 'limits' => 'Limits',
                 'limits_help' => 'Count limits: empty = unlimited, 0 = not included.',
             ],
             'fields' => [
                 'code' => 'Code',
                 'code_help' => 'Permanent identifier (e.g. starter). Cannot be changed after creation.',
+                'feature_unavailable' => 'Not built yet: it can\'t be part of a plan and isn\'t shown on the pricing page.',
                 'name' => 'Plan name',
                 'description' => 'Short description',
                 'description_help' => 'Shown under the name on the pricing card.',

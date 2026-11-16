@@ -56,6 +56,7 @@
                 <x-ui.field name="name" :label="__('auth.fields.name')" autocomplete="name" required autofocus />
                 <x-ui.field name="password" type="password" :label="__('auth.fields.password')" autocomplete="new-password" required />
                 <x-ui.field name="password_confirmation" type="password" :label="__('auth.fields.password_confirmation')" autocomplete="new-password" required />
+                <x-ui.terms-consent />
                 <x-ui.button size="lg" class="w-full shadow-none">{{ __('team.accept.submit_new') }}</x-ui.button>
             </form>
     @endswitch

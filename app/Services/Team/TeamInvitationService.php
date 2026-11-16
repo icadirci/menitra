@@ -213,6 +213,8 @@ final class TeamInvitationService
                 'password' => Hash::make($password),
             ]);
             $user->forceFill(['email_verified_at' => now()])->save();
+            // The caller validated the terms checkbox (AcceptInvitationRequest).
+            $user->recordTermsAcceptance();
 
             return $this->accept($invitation, $user);
         });

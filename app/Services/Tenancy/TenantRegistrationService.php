@@ -74,6 +74,9 @@ final class TenantRegistrationService
                 'email' => $email,
                 'password' => Hash::make($password),
             ]);
+            // Registration is only reachable through a form that requires the
+            // terms checkbox (CreateNewUser), so acceptance is recorded here.
+            $user->recordTermsAcceptance();
 
             $tenant = new Tenant([
                 'slug' => $slug,

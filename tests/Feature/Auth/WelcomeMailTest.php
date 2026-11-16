@@ -50,6 +50,7 @@ class WelcomeMailTest extends TestCase
             'password_confirmation' => 'a-Strong-passw0rd',
             'business_name' => 'Yaman Kahvesi',
             'slug' => 'yaman-kahvesi',
+            'terms' => '1',
         ])->assertRedirect('/app');
 
         Mail::assertQueued(WelcomeMail::class, function (WelcomeMail $mail): bool {

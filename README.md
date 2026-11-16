@@ -127,3 +127,17 @@ dc exec -u www-data -e HOME=/tmp php-fpm php artisan ops:health-check
 ```
 
 **Uptime (outside the server).** Point an external monitor (UptimeRobot, Better Stack, …) at `https://restano.app/up` every 1–5 minutes. It answers 200 when the app boots; if the whole server or Docker is down, nothing on the server can send an alert, so this is the only layer that catches it. Add a second check on a public menu URL to cover the database and Redis.
+
+### Legal and KVKK requests
+
+**Before launch.** The privacy notice and terms (`lang/{tr,en}/legal.php`) are drafts with bracketed placeholders. Fill in the company details and the provider list (hosting, mail provider, Sentry, and where data leaves Turkey the transfer section), have a lawyer review both texts, update their `updated` dates and `marketing.terms_version` in [config/marketing.php](config/marketing.php), then set `MARKETING_LEGAL_REVIEW_PENDING=false` and redeploy. Until then both pages show a "draft" notice.
+
+**Terms acceptance.** Registration and new accounts created from a team invitation require the terms checkbox; `users.terms_accepted_at` and `users.terms_version` record when and which version. The privacy notice is linked as information, not as consent. Accounts created by seeders or artisan, and accounts from before the checkbox existed, have no acceptance recorded. Changing `marketing.terms_version` doesn't ask existing users to accept again (no re-acceptance flow yet); announce material changes by e-mail as the terms say.
+
+**Data subject requests (KVKK m.11).**
+1. Requests arrive through the contact form or the application address named in the privacy notice. Log the date received: the legal deadline is **30 days**.
+2. Verify identity before acting: the request must come from the account's e-mail address, or the person proves it another way (e.g. a signed or KEP application). Never send data to an unverified address.
+3. Find the data in `/admin` (Users → the person and their memberships; Tenants → the business). Contact form messages aren't stored; check the mailbox they were delivered to.
+4. Answer in writing within 30 days: what is processed, why, who receives it (the provider list) and how long it is kept.
+5. **Deletion:** a business owner's request is handled by soft-deleting the tenant in `/admin` (super admin, audited). Nothing is purged automatically; data stays restorable until a manual, approved purge procedure exists. Deactivate the user account in `/admin` if they should no longer sign in. A member of someone else's business is removed by that business's owner (Team page) or, if they want their account gone, deactivated in `/admin`.
+6. Keep the request, the identity check and the answer for your records.

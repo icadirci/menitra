@@ -34,11 +34,12 @@ final readonly class PricingPlan
     ) {}
 
     /**
-     * Included: a limit row exists and is unlimited or at least 1.
+     * Included: the feature is built, and a limit row exists and is unlimited
+     * or at least 1. Unbuilt features are never advertised, whatever the row says.
      */
     public function includes(PlanFeature $feature): bool
     {
-        if (! array_key_exists($feature->value, $this->limits)) {
+        if (! $feature->isAvailable() || ! array_key_exists($feature->value, $this->limits)) {
             return false;
         }
 

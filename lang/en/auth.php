@@ -19,6 +19,19 @@ return [
         'slug' => 'Menu address',
     ],
 
+    // Terms of use acceptance (registration and new accounts from an
+    // invitation). The privacy notice is information, not consent: a note only.
+    'terms' => [
+        'accept_before' => 'I have read and accept the ',
+        'accept_link' => 'terms of use',
+        'accept_after' => '.',
+        'privacy_before' => 'How we process your personal data is explained in our ',
+        'privacy_link' => 'privacy notice',
+        'privacy_after' => '.',
+        'new_tab' => '(opens in a new tab)',
+        'required' => 'Please accept the terms of use to continue.',
+    ],
+
     'register' => [
         'title' => 'Create your business account',
         'subtitle' => 'Start your free trial. No credit card required.',

@@ -71,6 +71,7 @@ class User extends Authenticatable implements FilamentUser, HasAppAuthentication
             'password' => 'hashed',
             'platform_role' => PlatformRole::class,
             'deactivated_at' => 'datetime',
+            'terms_accepted_at' => 'datetime',
             // Two-factor (Filament app authentication): the TOTP secret and the
             // already-hashed recovery codes are stored encrypted.
             'app_authentication_secret' => 'encrypted',
@@ -134,6 +135,19 @@ class User extends Authenticatable implements FilamentUser, HasAppAuthentication
     public function isDeactivated(): bool
     {
         return $this->deactivated_at !== null;
+    }
+
+    /**
+     * Records acceptance of the current terms of use (launch plan Faz 10).
+     * Called only by the services behind forms that validated the terms
+     * checkbox; never mass-assigned.
+     */
+    public function recordTermsAcceptance(): void
+    {
+        $this->forceFill([
+            'terms_accepted_at' => now(),
+            'terms_version' => (string) config('marketing.terms_version'),
+        ])->save();
     }
 
     public function hasPlatformRole(): bool

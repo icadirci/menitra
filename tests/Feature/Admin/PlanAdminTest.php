@@ -10,6 +10,7 @@ use App\Filament\Admin\Resources\Plans\Pages\CreatePlan;
 use App\Filament\Admin\Resources\Plans\Pages\EditPlan;
 use App\Models\Plan;
 use App\Models\User;
+use App\Services\Subscription\PlanService;
 use Filament\Facades\Filament;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
@@ -87,6 +88,31 @@ class PlanAdminTest extends TestCase
         $this->assertSame(1, $plan->limits->firstWhere('feature', PlanFeature::PremiumThemes)->limit_value);
         $this->assertSame(0, $plan->limits->firstWhere('feature', PlanFeature::RemoveBranding)->limit_value);
         $this->assertCount(count(PlanFeature::cases()), $plan->limits);
+    }
+
+    public function test_unbuilt_features_can_never_be_switched_on(): void
+    {
+        $this->assertFalse(PlanFeature::CustomDomain->isAvailable());
+        $this->assertFalse(PlanFeature::QrAnalytics->isAvailable());
+
+        $this->asSuperAdmin();
+
+        Livewire::test(CreatePlan::class)
+            ->assertFormFieldIsDisabled('limits.custom_domain')
+            ->assertFormFieldIsDisabled('limits.qr_analytics')
+            ->assertFormFieldIsEnabled('limits.premium_themes')
+            ->fillForm($this->formData())
+            ->call('create')
+            ->assertHasNoFormErrors();
+
+        // Even if a value reaches the service, it stores 0.
+        $plan = Plan::query()->where('code', 'pro')->sole();
+        app(PlanService::class)->save($plan, [], [], [], ['custom_domain' => true, 'qr_analytics' => 1, 'premium_themes' => true]);
+
+        $limits = $plan->limits()->get();
+        $this->assertSame(0, $limits->firstWhere('feature', PlanFeature::CustomDomain)->limit_value);
+        $this->assertSame(0, $limits->firstWhere('feature', PlanFeature::QrAnalytics)->limit_value);
+        $this->assertSame(1, $limits->firstWhere('feature', PlanFeature::PremiumThemes)->limit_value);
     }
 
     public function test_invalid_input_is_rejected(): void

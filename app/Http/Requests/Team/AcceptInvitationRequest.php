@@ -52,9 +52,19 @@ class AcceptInvitationRequest extends FormRequest
             self::MODE_REGISTER => [
                 'name' => ['required', 'string', 'max:255'],
                 'password' => $this->passwordRules(),
+                // Recorded by TeamInvitationService::acceptAsNewUser().
+                'terms' => ['accepted'],
             ],
             default => [],
         };
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public function messages(): array
+    {
+        return ['terms.accepted' => __('auth.terms.required')];
     }
 
     /**

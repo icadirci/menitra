@@ -21,6 +21,7 @@ use App\Models\User;
 use App\Notifications\Auth\VerifyEmailNotification;
 use App\Services\Subscription\SubscriptionService;
 use App\Services\Tenancy\TenantRegistrationService;
+use App\Support\MarketingUrl;
 use App\Tenancy\TenantContext;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
@@ -53,6 +54,7 @@ class RegistrationTest extends TestCase
             'password_confirmation' => 'a-Strong-passw0rd',
             'business_name' => 'Yaman Kahvesi',
             'slug' => 'yaman-kahvesi',
+            'terms' => '1',
         ], $overrides);
     }
 
@@ -265,6 +267,41 @@ class RegistrationTest extends TestCase
         User::factory()->create(['email' => 'ayse@example.com']);
 
         $this->post('/register', $this->payload())->assertSessionHasErrors(['slug', 'email']);
+    }
+
+    public function test_registration_requires_accepting_the_terms_and_records_the_version(): void
+    {
+        $this->get('/register')
+            ->assertOk()
+            ->assertSee('name="terms"', false)
+            ->assertSee(MarketingUrl::to('terms', 'tr'), false)
+            ->assertSee(MarketingUrl::to('privacy', 'tr'), false);
+
+        foreach ([[], ['terms' => '0'], ['terms' => 'no']] as $override) {
+            $payload = $this->payload($override);
+            if ($override === []) {
+                unset($payload['terms']);
+            }
+
+            $this->post('/register', $payload)->assertSessionHasErrors(['terms' => __('auth.terms.required')]);
+        }
+        $this->assertDatabaseMissing('users', ['email' => 'ayse@example.com']);
+
+        Notification::fake();
+        $this->travelTo(now()->startOfSecond());
+        config(['marketing.terms_version' => '2027-01-01']);
+
+        $this->post('/register', $this->payload())->assertRedirect('/app');
+
+        $user = User::query()->where('email', 'ayse@example.com')->sole();
+        $this->assertTrue($user->terms_accepted_at->equalTo(now()));
+        $this->assertSame('2027-01-01', $user->terms_version);
+    }
+
+    public function test_terms_fields_are_not_mass_assignable(): void
+    {
+        $this->assertNotContains('terms_accepted_at', (new User)->getFillable());
+        $this->assertNotContains('terms_version', (new User)->getFillable());
     }
 
     public function test_password_must_be_confirmed(): void

@@ -223,7 +223,7 @@ class TenantAdminTest extends TestCase
         // Public registration can't take it either.
         $this->post('/register', [
             'name' => 'Ayşe', 'email' => 'ayse@example.com', 'password' => 'Str0ng!Passw0rd#', 'password_confirmation' => 'Str0ng!Passw0rd#',
-            'business_name' => 'Konak', 'slug' => 'konak',
+            'business_name' => 'Konak', 'slug' => 'konak', 'terms' => '1',
         ])->assertSessionHasErrors('slug');
 
         // Its own tenant can go back: the redirect row is removed, a new one kept.
