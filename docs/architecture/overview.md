@@ -26,10 +26,11 @@ A multi-tenant SaaS platform for cafes, restaurants, bakeries and other hospital
 
 | In scope (current) | Out of scope (later, architecture must allow it) |
 |---|---|
-| Public marketing website, pricing page, contact page; `/admin` resources for its content: plans and prices, FAQ, testimonials, site settings (contact details) | Other CRUD modules in `/admin` (tenants, users, subscriptions) |
-| Registration, forgot password, email verification, minimal `/account` page | Payment gateway integration (iyzico / PayTR) |
-| Filament panel infrastructure: `/admin`, `/app/{tenant-slug}`, login, initial dashboards, roles | Team management in `/app` (invitations, staff CRUD, branch-assignment screens) |
-| Business management modules in `/app` ([Phase B](#business-panel-phase-b)) | |
+| Public marketing website, pricing page, contact page; `/admin` resources for its content: plans and prices, FAQ, testimonials, site settings (contact details) | Subscription management in `/admin` (manual activation, renewal) — part of the payment work |
+| Registration, forgot password, email verification, minimal `/account` page | Payment gateway integration (iyzico, last step) |
+| Filament panel infrastructure: `/admin`, `/app/{tenant-slug}`, login, initial dashboards, roles | Owner transfer, manager-initiated invitations |
+| Business management modules in `/app` ([Phase B](#business-panel-phase-b)) | Proxy / HTTPS termination (`trustProxies`, SSL, HSTS) — separate infrastructure work |
+| **Launch (2026-11-16, [launch plan](../launch-plan.md)):** team management in `/app` (invitations, roles, branch assignment, `max_members`); platform management in `/admin` (tenants, users, audit log, limited impersonation); MFA (mandatory in `/admin`); production infrastructure, mail, backups, monitoring | |
 | Public QR menu pages, stable QR redirects | Online ordering, payment from the menu, waiter calling, reservations |
 | Five menu themes | Custom domains, QR scan analytics |
 
@@ -155,7 +156,8 @@ Two independent Filament 5 panels, registered only on the central domain (`confi
 | Who | Users with `platform_role` (`super_admin`, `platform_staff`) | Users with an active membership in an active tenant (`owner`, `manager`, `branch_staff`) |
 | Code | `app/Filament/Admin/{Pages,Resources,Widgets}` | `app/Filament/App/{Pages,Resources,Widgets}` |
 | Look | Filament defaults; Restano logo, Forest primary, Stone gray | Filament defaults; Restano logo, Forest primary, Stone gray |
-| Resources | Plans (`PlanPolicy`: super admins only; saved by `PlanService`; never deleted), FAQ and testimonials (`FaqPolicy`, `TestimonialPolicy`: any platform role); page **Site settings** (`/admin/site-settings`, `ManageSiteSettings`, `SiteSettingPolicy`: super admins only) | Phase B modules |
+| Resources | Plans (`PlanPolicy`: super admins only; saved by `PlanService`; never deleted), FAQ and testimonials (`FaqPolicy`, `TestimonialPolicy`: any platform role); page **Site settings** (`/admin/site-settings`, `ManageSiteSettings`, `SiteSettingPolicy`: super admins only). Planned for launch: tenants, users, audit log, impersonation ([Platform management](#platform-management-launch)) | Phase B modules; team management ([Team management](#team-management-launch)) |
+| Two-factor | Mandatory (Filament MFA: TOTP + recovery codes; launch plan Faz 9) | Optional |
 
 Authorization layers:
 
@@ -182,14 +184,33 @@ Business action matrix (each row is implemented with its module in Phase B):
 | QR codes: create, edit (label, target menu, branch), activate / deactivate | yes | assigned locations (old and new branch) | — |
 | QR codes: delete (breaks printed codes; deactivation is the reversible alternative) | yes | — | — |
 | Tenant settings: profile, languages, theme, subscription | yes | — | — |
-| Team: invitations, staff, branch assignment | later phase | — | — |
+| Team: invitations, roles, branch assignment, deactivate / remove members (launch, [Team management](#team-management-launch)) | yes | — | — |
 | Permanent deletion | — | — | — |
 
 The manager content rule exists because menus are shared: editing a menu also changes it at every location it is attached to, so a manager may only edit menus that are fully inside their branches. Because only owners can attach menus to locations, a manager can't widen that scope.
 
 Livewire's update, upload and preview endpoints are restricted to the central domain and to panel users; see [tenancy.md](tenancy.md#livewire-endpoints). Members of a suspended business get an explicit 403 in `/app` and keep their data.
 
-Platform roles: `super_admin` holds every platform permission; `platform_staff` gets limited platform permissions defined per future resource. Platform roles grant nothing in `/app`; there is no global `Gate::before`. Platform roles are assigned with `php artisan platform:assign-role {email} {role}` until a management UI exists.
+Platform roles: `super_admin` holds every platform permission; `platform_staff` gets limited platform permissions defined per resource. Platform roles grant nothing in `/app`; there is no global `Gate::before`. Platform roles are assigned with `php artisan platform:assign-role {email} {role}`; once the user management resource exists, super admins can also assign them there.
+
+### Team management (launch)
+
+Launch plan Faz 7 ([docs/launch-plan.md](../launch-plan.md)). Owner-only, enforced by policy in `canAccess()` and every action.
+
+- **Tables:** `tenant_invitations` (`tenant_id`, `email`, `role`, `token_hash` — the raw token is never stored —, `invited_by_membership_id` composite FK, `expires_at`, `accepted_at`, `revoked_at`, `UNIQUE (tenant_id, id)`, one open invitation per tenant and email) and `tenant_invitation_location` (composite FKs to the invitation and the location).
+- **Services:** `TeamInvitationService` (invite, resend, revoke, accept; `FeatureGate::ensureCanCreate()` for `max_members` when inviting) and `TeamService` (change role, assign branches, deactivate, remove). Transactions; `role` and membership state are never mass-assignable.
+- **Acceptance:** `GET/POST /invitations/{token}` on the central domain (Blade, tr/en, throttled). An existing user signs in and the membership is created only if their email matches the invitation; a new user sets a name and password (Fortify rules) and their email counts as verified. Public registration (`TenantRegistrationService`) is unchanged.
+- **Rules:** exactly one owner; the owner can't remove or demote themselves; `manager` / `branch_staff` need ≥ 1 branch; deactivation cuts access immediately; usage = active memberships + open invitations. Not in the first version: owner transfer, managers inviting staff.
+
+### Platform management (launch)
+
+Launch plan Faz 8. Every resource has a policy; `super_admin` may do everything, `platform_staff` reads and performs a limited set of actions (the exact list is fixed in the policies and documented here when built).
+
+- **`admin_audit_events`:** `actor_user_id`, `action`, `subject_type/id`, nullable `tenant_id`, `meta` (jsonb), `ip`, `created_at`. Append-only; read-only list in `/admin`.
+- **Tenants:** list (name, slug, status, plan, subscription status, created), detail (members, locations, subscription and `subscription_events`, read-only), suspend / unsuspend (`TenantStatus`, resolution cache cleared), slug change (`TenantSlugService`: format, reserved slugs, uniqueness, cache). No hard delete; soft delete by super admins only, with confirmation.
+- **Users:** list and detail (memberships), resend verification email, create platform users; only super admins assign `platform_role`. No deletion (deactivation if needed).
+- **Impersonation:** see CLAUDE.md §3.15 — super admin only, into non-platform users, 60 minutes, band in `/app`, sensitive actions and `/admin` blocked, audited, session regenerated on exit.
+- Cross-tenant reads in these resources use the admin scope bypass area ([tenancy.md § Allowed scope bypasses](tenancy.md#allowed-scope-bypasses)).
 
 ### Business panel (Phase B)
 
@@ -222,7 +243,7 @@ Business          Business profile · Languages · Theme & appearance · Subscri
 | B8 | QR codes (`chillerlan/php-qrcode`, SVG + PNG). **Done 2026-11-15:** `QrCodeResource` (list/create/edit; query limited to codes of `accessibleLocations()`, so another branch's code is a 404). Target branch from `accessibleLocations()`, optional deep-linked menu only among menus attached to that branch; the submitted branch is re-checked (`QrCodePolicy::manageAt`, also when a code is moved) and `QrCodeService` enforces `max_qr_codes` on create, the branch (current tenant, not deleted) and the menu attachment. The `code` never changes. `QrCodeImage` renders SVG and PNG on demand from the stable `/q/{code}` URL (nothing is stored); download actions for every role on its branches, SVG preview on the edit page. Deactivation takes effect at once (the `qrmenu:qr:{code}` entry is forgotten by `MenuCacheObserver`); delete is owner-only |
 | B9 | Theme & appearance (`theme_settings`). **Done 2026-11-15:** `theme_settings` (one jsonb row per tenant and theme: colours, `MenuFontPair`, layout options) and `ManageTheme` (owner-only): theme choice plus the selected theme's settings, validated on the server by `MenuTheme::validator()` incl. WCAG AA contrast (`ColorContrast`); switching back restores a theme's settings. `ThemeService` allows only built themes (all five since Phase 7; an unbuilt theme is shown as "coming soon") and gates newly choosing a premium theme with `FeatureGate` (`premium_themes`); keeping the current theme is never blocked and settings are never deleted. Branch override on the location form, owner-only (`LocationPolicy::setTheme`). Settings travel in `ResolvedTenant` (warm requests stay query-free); writes bump the tenant version and clear resolution entries. Registration writes the default `classic` row |
 | B10 | Dashboard widgets and onboarding checklist. **Done 2026-11-15:** widgets in `app/Filament/App/Widgets/` (Filament components only; the existing `Dashboard` page and `AccountWidget` are unchanged). Owner-only (`TenantPolicy::manageSettings`): `OnboardingChecklistWidget` (profile + logo, at least one item, a published menu actively attached to an active branch, opening hours of the default branch, theme chosen — a non-`classic` theme or a `theme_settings` row saved after registration —, a QR code scanned at least once), `SubscriptionStatusWidget` (plan, status, trial / grace / period end, `accessUntil()`, menu online or not — the same rule as the public menu) and `PlanUsageWidget` (`FeatureGate` usage / limit). Owner and manager: `MenuStatusWidget` (published / draft, active branches, item count; managers see menus attached to their branches, the edit link only where the manager content rule allows it). Every role: `BranchOverviewWidget` (rows from `accessibleLocations()`: public link from `MenuUrlGenerator`, items sold out right now with a link to the stock page filtered to that branch, the default QR code — `Location::defaultQrCode()`, the oldest active code — with SVG/PNG downloads). Checklist and online state come from `BusinessDashboard` (scoped, one query for all checklist steps); nothing about the checklist is stored and the widget disappears once every step is done. Nothing is cached: queries are constant per widget (tested against the number of branches and menus), the data is time-dependent and member-specific. `RecordQrCodeScan` (listener of `QrCodeScanned`) keeps `qr_codes.last_scanned_at`, written at most once an hour per code. Suspended tenants keep the explicit 403; without a live subscription the widgets say so (no subscription, menu offline, nothing new can be created) |
-| later | Team management / invitations, menu duplication, bulk price updates |
+| later | Menu duplication, bulk price updates (team management moved to the [launch plan](../launch-plan.md), Faz 7) |
 
 ## Public marketing website
 
@@ -349,7 +370,7 @@ tests/
 
 ## Implementation roadmap
 
-Each phase ends with tests run, a summary of changed files, and a review pause.
+Each phase ends with tests run, a summary of changed files, and a review pause. The phases below are complete; the road to production (infrastructure, mail, backups, monitoring, MFA, team management, platform management, legal) is tracked in [docs/launch-plan.md](../launch-plan.md).
 
 | Phase | Scope | Exit criteria |
 |---|---|---|

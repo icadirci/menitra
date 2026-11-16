@@ -141,6 +141,15 @@ Livewire is used only by the panels, so its endpoints follow the panels:
 | `ResolveTenantFromMembership` / membership lookups | The tenant is derived from the user's verified membership |
 | Commands and jobs implementing `TenantAgnostic` | Cross-tenant maintenance, e.g. subscription lifecycle |
 | `TenantRegistrationService` | Creates the tenant, then sets the context for the remaining inserts and restores the previous context afterwards |
+| **Admin area** (planned, launch plan Faz 8): `app/Filament/Admin/Resources/Tenants/**` and `app/Services/Admin/**` | Platform management must list and inspect every tenant. Rules below |
+
+**Admin bypass rules** (decided 2026-11-16). The admin area is the only place where a platform user reads tenant-owned rows without a `TenantContext`:
+
+- Reached only through the `admin` panel (`platform_role`) and a resource policy; never from `/app`, public routes, jobs or commands.
+- **Read-only.** A bypassed query never writes. Admin actions change only non-scoped models (`Tenant`, `User`, `TenantMembership`, `admin_audit_events`) through services (`TenantSlugService`, `TenantStatus` changes, …); state changes of subscriptions still go only through `SubscriptionService`.
+- **Allow-listed models:** `Location`, `Subscription`, `SubscriptionEvent` (members are `TenantMembership`, which isn't scoped). Menu content, QR codes, theme settings and media are not read across tenants in `/admin`.
+- Every query on one tenant constrains `where('tenant_id', $tenant->id)` explicitly; cross-tenant lists (e.g. subscription status per tenant in the tenant table) are eager-loaded for the listed tenants only.
+- `TenantScopeBypassTest` allows these two path prefixes; any bypass elsewhere still fails. Impersonation doesn't need a bypass: the impersonated user goes through the normal `/app` membership resolution.
 
 ## Queue processing
 

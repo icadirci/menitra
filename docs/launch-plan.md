@@ -1,0 +1,191 @@
+# Canlıya çıkış planı
+
+Hazırlanma: 2026-11-16. Her faz **ayrı bir sohbette** uygulanır. Yeni oturuma şöyle başla:
+
+> `docs/launch-plan.md` dosyasındaki **Faz N**'yi uygula.
+
+Oturum kuralları:
+- Sadece o fazın bölümünü ve fazda adı geçen dosyaları oku; tüm projeyi yeniden keşfetme.
+- CLAUDE.md'deki iş akışı geçerli: testleri çalıştır, değişen dosyaları özetle, commit atma.
+- Faz bitince aşağıdaki durum tablosunu güncelle ve bulduğun yeni bilgileri ilgili faz bölümüne kısa not olarak ekle.
+- "Sorulacak" diye işaretli konularda kod yazmadan önce kullanıcıya sor.
+
+**Kapsam dışı (ayrı iş):** ödeme / iyzico ve ücretli aboneliğin elle aktivasyonu (`SubscriptionService::activate()`, `renew()`, `resubscribe()` hiçbir yerden çağrılmıyor), proxy / HTTPS (`trustProxies`, SSL sonlandırma, HSTS).
+
+## Durum
+
+| Faz | Konu | Boyut | Durum |
+|---|---|---|---|
+| 0 | Kapsam ve doküman güncellemesi | S | ✅ 2026-11-16 |
+| 1 | Hızlı işler: hata sayfaları, log, env örneği, robots | S | ⬜ |
+| 2 | Canlı ortam altyapısı (Compose, image, nginx, deploy) | M | ⬜ |
+| 3 | E-posta | S | ⬜ |
+| 4 | Yedekleme | M | ⬜ |
+| 5 | İzleme (Sentry, kontroller) | S | ⬜ |
+| 6 | Temalar vitrini için canlı seed | S | ⬜ |
+| 9 | İki adımlı doğrulama (MFA) | S | ⬜ |
+| 7 | Ekip yönetimi `/app` | L | ⬜ |
+| 8 | Kapsamlı admin + impersonation | L | ⬜ |
+| 10 | Hukuk ve KVKK | S + kullanıcı | ⬜ |
+| 11 | Plan ve fiyatlar | kullanıcı | ⬜ |
+| 12 | Lansman sonrası iyileştirmeler | — | ⬜ |
+
+Önerilen sıra: 0 → 1 → 2 → 3 → 4 → 5 → 6 → 9 → 7 → 8. Faz 10 ve 11 paralel yürür. Lansman 7 ve 8'i beklemezse ikisi lansman sonrasına kayabilir.
+
+## Kullanıcının verdiği kararlar (2026-11-16)
+
+- Sunucu: **tek VPS + Docker Compose**.
+- Görseller: başlangıçta **VPS diski** (`MEDIA_DRIVER=local`). S3 paketi kurulmaz.
+- Ekip yönetimi: **`/app` içinde davetli sistem**; üye sayısı **`max_members`** plan limitine bağlı.
+- Admin: **kapsamlı** işletme ve kullanıcı yönetimi, **sınırlı impersonation** dahil.
+- Mail: **SMTP üzerinden, sağlayıcıdan bağımsız**. Sağlayıcıyı kullanıcı seçecek; yeni paket yok.
+- Hata takibi: **Sentry**. `sentry/sentry-laravel` paketini kurmadan önce son bir onay istenir.
+
+---
+
+## Faz 0: Kapsam ve dokümanlar (S)
+
+Ekip yönetimi ve admin'de işletme/kullanıcı yönetimi şu an kapsam dışı yazıyor. Kodlamadan önce dokümanlar güncellenmeli.
+
+- `CLAUDE.md` §1 ("Out of scope" listesi): ekip yönetimini ve admin'de işletme/kullanıcı yönetimini kapsama al. §3.15–16'ya davet akışını ve impersonation'ı ekle.
+- `docs/architecture/overview.md`: kapsam tablosu ve yol haritası. Bu plana link ver.
+- `.claude/rules/security.md`: davet token kuralları, impersonation sınırları, admin MFA zorunluluğu.
+- `docs/architecture/tenancy.md` § Allowed scope bypasses: admin kaynakları tüm işletmeleri listelemek için tenant scope'unu atlamak zorunda. `TenantScopeBypassTest` bugün izinli yerler dışındaki her `withoutTenantScope()` çağrısında düşüyor. Admin için dar bir izinli alan tanımla (ör. `app/Filament/Admin/Resources/Tenants/**` ve ilgili servis), gerekirse testi buna göre güncelle.
+- Kod yok. Bitiş ölçütü: dokümanlar tutarlı ve plandaki kararları yansıtıyor.
+
+**Notlar (2026-11-16, tamamlandı):**
+- `Tenant`, `User`, `TenantMembership` tenant-scoped değil; admin'in bypass'a ihtiyacı yalnızca `Location`, `Subscription`, `SubscriptionEvent` için. tenancy.md'de bu üç model izin listesine alındı; menü içeriği, QR, tema ayarları ve medya admin'de tenant'lar arası okunmaz.
+- İzinli alan: `app/Filament/Admin/Resources/Tenants/**` ve `app/Services/Admin/**`. Kurallar: sadece okuma, açık `where('tenant_id', …)`, sadece admin paneli + policy. `TenantScopeBypassTest`'e `ALLOWED_PREFIXES` eklendi (dizinler henüz yok). `UserResource` bypass gerektirmiyor; gerekirse Faz 8'de alan genişletilip doküman güncellenir.
+- Impersonation bypass gerektirmez (normal `/app` üyelik çözümlemesinden geçer).
+- security.md'ye yeni bölümler: admin MFA, admin platform yönetimi + audit, impersonation, ekip davetleri (token ≥ 32 byte, hash'li, tek kullanımlık, 7 gün).
+- `php artisan test --parallel` çalışmıyor (paratest kurulu değil); süit sıralı ~2,5 dk.
+
+## Faz 1: Hızlı işler (S)
+
+Bulgular: `resources/views/errors/` yok; `LOG_STACK=single`; `.env.example` içinde `APP_NAME=Laravel`; `public/robots.txt` her ortamda her şeye izin veriyor.
+
+- **Hata sayfaları:** `resources/views/errors/{403,404,419,429,500,503}.blade.php`, tr/en (`lang/*/errors.php`).
+  - Merkezi domain'de marketing tasarımı (`components/ui`, `app.css`).
+  - Menü host'larında (`{slug}.restano.app`, `/m/*`) işletme bilgisi göstermeyen sade platform sayfası; Livewire, app.js veya oturum yok.
+  - `menu.unavailable` (503, `bootstrap/app.php`) mevcut haliyle kalır, bozulmadığını test et.
+- **Log:** `.env.example` → `LOG_STACK=daily`; `config/logging.php` daily kanalı `days=14`.
+- **`.env.production.example`:** `APP_NAME=Restano`, `APP_ENV=production`, `APP_DEBUG=false`, `CENTRAL_DOMAIN=restano.app`, `SESSION_SECURE_COOKIE=true`, `REDIS_PASSWORD`, `LOG_LEVEL=warning`, `MARKETING_LEGAL_REVIEW_PENDING=true`, `MAIL_*` yer tutucuları. Gerçek sır yazma.
+- **robots:** canlı dışındaki ortamlarda `Disallow: /`. Statik dosya yerine bir route ile çözülebilir; `sitemap.xml` satırı canlıda kalsın.
+- Testler: her hata kodu iki host tipinde render oluyor; menü host'unda oturum çerezi set edilmiyor.
+
+## Faz 2: Canlı ortam altyapısı (M)
+
+*`docker-compose*.yml` ve `phpdocker/*` değişiklikleri onay gerektirir (CLAUDE.md §9). Plan onaylandı; yine de değişiklikleri özetleyip başlamadan önce teyit al.*
+
+Bulgular: geliştirme Compose'unda Postgres `37004` portundan dışarı açık; `phpdocker/nginx/nginx.conf` içinde `server_name` yok ve `client_max_body_size 108M`.
+
+- **`docker-compose.prod.yml`:** Postgres ve Redis portları dışarı açılmaz; Redis `requirepass` ile; `restart: unless-stopped`; healthcheck'ler; `queue` ve `scheduler` servisleri `www-data` ile (gelişmedekiyle aynı mantık); volume adları korunur. `down -v` asla kullanılmaz.
+- **Canlı PHP image'ı** (ayrı bir Dockerfile veya multi-stage): opcache açık (`validate_timestamps=0`), `composer install --no-dev --optimize-autoloader`, derlenmiş asset'ler (`public/build`) image'ın içinde, canlı `php-ini` (`display_errors=Off`, `expose_php=Off`, yükleme limitleri).
+- **nginx (canlı):** `server_name restano.app *.restano.app`; `client_max_body_size` en büyük `MediaType::maxKilobytes()` değerine göre küçük bir pay bırakılarak; gzip; `build/` ve `fonts/` için `Cache-Control: public, max-age=31536000, immutable`; `storage/` altında PHP çalıştırma yasak; `server_tokens off`. SSL ve proxy başlıkları **kapsam dışı** (proxy/HTTPS işi), sadece yerini yorumla belirt.
+- **`scripts/deploy.sh`:** `php artisan down` → `git pull` → `composer install --no-dev` → node container'ında `npm ci && npm run build` → `migrate --force` → `optimize` + `filament:optimize` + `view:cache` → `queue:restart` (ve queue container'ını yeniden başlat) → `up`. Hata olursa durur (`set -euo pipefail`).
+- **`README.md`:** Laravel'in varsayılan metnini, projenin kurulum (geliştirme) ve deploy (canlı) runbook'u ile değiştir. CLAUDE.md §9'daki komutlara referans ver, tekrarlama.
+- Bitiş ölçütü: canlı Compose yerelde ayağa kalkıyor, `/up` 200 dönüyor, kuyruk ve scheduler çalışıyor, test süiti yeşil.
+
+## Faz 3: E-posta (S)
+
+- `.env.production.example`: SMTP (`MAIL_MAILER=smtp`, host/port/kullanıcı/şifre yer tutucu, `MAIL_SCHEME=tls`), `MAIL_FROM_ADDRESS=no-reply@restano.app`, `MAIL_FROM_NAME=Restano`.
+- Tüm maillerin (doğrulama, şifre sıfırlama, `WelcomeMail`, `ContactMessageMail`, ileride davet maili) kuyruktan gittiğini doğrula. Fortify bildirimleri kuyrukta değilse `ShouldQueue` ekle.
+- Doğrulama ve şifre sıfırlama maillerinin tr/en metinleri ve markası kontrol edilir.
+- **Kullanıcıya verilecek kontrol listesi:** sağlayıcı seçimi, SPF / DKIM / DMARC kayıtları, gönderen alan adının doğrulanması, test gönderimi (mail-tester).
+- Sağlayıcının KVKK tedarikçi listesine (Faz 10) eklenmesi için not düş.
+
+## Faz 4: Yedekleme (M)
+
+- `docker-compose.prod.yml` içinde ayrı bir **`backup`** servisi (`postgres:15-alpine` + crond). PHP image'ına `postgresql-client` eklenmez.
+- Günlük `pg_dump -Fc` ve `storage/app/public/tenants` (media diski) tar arşivi.
+- Saklama: 7 günlük, 4 haftalık, 3 aylık. Yerel hedef `storage/app/private/backups/` (git-ignored).
+- **Sorulacak:** dış hedef (Hetzner Storage Box / S3 benzeri bucket / başka bir sunucu) ve gerekirse araç (`rclone` gibi).
+- README'ye **geri yükleme prosedürü**: `pg_restore` ile ayrı bir veritabanına geri yükleme denenmeli ve sonucu yazılmalı.
+- Yedek başarısız olursa bildirim (Faz 5'teki kanal).
+
+## Faz 5: İzleme (S)
+
+- **Sentry:** `sentry/sentry-laravel` paketini kurmadan önce onay al (CLAUDE.md §2). `send_default_pii=false`; istek gövdesi, form verisi ve kullanıcı e-postası gönderilmez; `SENTRY_LARAVEL_DSN` sadece env'de; `traces_sample_rate` düşük veya 0.
+- **Kontrol komutu** (ör. `ops:health-check`, scheduler'da 15 dakikada bir): başarısız kuyruk işi sayısı, disk doluluğu (%85+), son yedeğin yaşı. Eşik aşılırsa platform e-postasına (site settings) mail; aynı uyarıyı saatte bir defadan sık gönderme.
+- **Kullanıcının adımı:** `/up` için dışarıdan uptime izleyicisi (UptimeRobot / Better Stack).
+- Testler: komutun eşikleri ve bildirim tekrar kısıtı.
+
+## Faz 6: Temalar vitrini için canlı seed (S)
+
+Bulgular: `/temalar` (`ThemeShowcaseController`, `config/marketing.php` → `showcase`) `kahve-konagi`, `noon`, `maison-ardoise`, `kiln-coffee`, `petal-bakehouse` işletmelerine bağlı. Bunları sadece `DemoSeeder` oluşturuyor; o da local'de çalışıyor (`DatabaseSeeder`) ve şifresi `password` olan kullanıcılar açıyor. Vitrin işletmeleri `demo` planında **365 günlük trial** ile başlıyor (`DemoSeeder` satır ~79 ve ~257), yani canlıda bir yıl sonra kapanırlar.
+
+- `DemoSeeder`'daki vitrin bölümünü **`ShowcaseSeeder`**'a taşı: giriş yapan kullanıcısı (üyeliği) olmayan 5 işletme, idempotent, canlıda çalıştırılabilir. `DemoSeeder` local demo hesaplarını oluşturmaya devam eder ve vitrin için `ShowcaseSeeder`'ı çağırır.
+- Vitrin işletmeleri için süresiz bir abonelik: `SubscriptionService` üzerinden ve `subscription_events` kaydıyla (ör. `active`, `current_period_ends_at` çok ileri veya null; lifecycle komutunun bunu süresi dolmuş saymadığını test et). Bu ödeme akışı değildir.
+- Üyesi olmayan işletmenin hiçbir yerde hata vermediğini doğrula (admin listeleri, lifecycle job'ı, dashboard sorguları).
+- README'ye canlıda `php artisan db:seed --class=ShowcaseSeeder --force` adımını ekle.
+
+## Faz 9: İki adımlı doğrulama (S)
+
+- Filament'in yerleşik MFA'sı: TOTP (`pragmarx/google2fa` Filament bağımlılığı olarak zaten kurulu, yeni paket yok) ve kurtarma kodları.
+- `AdminPanelProvider`: MFA **zorunlu** (platform rolü olan herkes ilk girişte kurmak zorunda). `AppPanelProvider`: isteğe bağlı.
+- Gerekli kolonlar için migration (Filament'in beklediği alanlar, şifreli cast'ler).
+- Testler: MFA kurmamış platform kullanıcısı admin'e giremez / kuruluma yönlenir; `/app` MFA'sız çalışır.
+
+## Faz 7: Ekip yönetimi `/app` (L)
+
+Bağlam: üyelikler `tenant_user` tablosunda (`role`, `is_active`, `UNIQUE (tenant_id, id)`); şube erişimi `location_user` üzerinden (composite FK). `TenantRole`: `owner`, `manager`, `branch_staff`. Yetki kuralları için CLAUDE.md §3.16 ve `TenantMembership::canAccessLocation()`.
+
+- **Veritabanı:**
+  - `tenant_invitations`: `tenant_id`, `email`, `role`, `token_hash` (ham token saklanmaz), `invited_by_membership_id` (composite FK), `expires_at`, `accepted_at`, `revoked_at`, `UNIQUE (tenant_id, id)`. Aynı işletmede aynı e-postaya tek açık davet.
+  - `tenant_invitation_location`: `(tenant_id, tenant_invitation_id)` ve `(tenant_id, location_id)` composite FK'leri.
+  - `PlanFeature::MaxMembers` (`max_members`): admin plan formuna ve `PlanSeeder`'a eklenir. Kullanım = aktif üyelikler + açık davetler.
+- **Servisler:** `TeamInvitationService` (davet, tekrar gönderme, iptal, kabul; `FeatureGate::ensureCanCreate()` davet anında) ve `TeamService` (rol değiştirme, şube atama, pasifleştirme, çıkarma). Transaction ile. `role` ve membership durumu asla mass-assignable değil.
+- **Panel (sadece owner, policy ile):** "Ekip" sayfası/resource'u, üye listesi, rol ve şube düzenleme, davet listesi. Navigation gizlemek yetki değildir; `canAccess()` ve her action'da yeniden kontrol.
+- **Daveti kabul etme** (merkezi domain, Blade, tr/en, `throttle`):
+  - `GET/POST /invitations/{token}`.
+  - Hesabı olan kişi giriş yapar; e-postası davetle eşleşirse üyelik oluşur. Eşleşmiyorsa açık bir hata, üyelik yok.
+  - Hesabı olmayan kişi ad ve şifre belirler (Fortify şifre kuralları). E-postası doğrulanmış sayılır.
+  - Token tek kullanımlık, süreli (ör. 7 gün), sabit zamanlı karşılaştırma. Geçersiz token işletmeyi ifşa etmez.
+  - Public kayıt ile karışmaz: `TenantRegistrationService` değişmez.
+- **Davet maili:** kuyrukta, tr/en, işletme adı escape'li.
+- **Kurallar:** tek owner; owner kendini çıkaramaz veya rolünü düşüremez; `manager` ve `branch_staff` için en az bir şube zorunlu; pasifleştirilen üyenin erişimi anında kesilir. Owner devri ve müdürün personel davet etmesi **ilk sürümde yok**.
+- **Testler:** yetki matrisi (owner / manager / branch_staff), başka işletmenin şubesine atama (DB reddeder), token güvenliği (süresi geçmiş, iptal edilmiş, tekrar kullanılmış, yanlış e-posta), `max_members` limiti, rate limit, askıdaki işletme.
+
+## Faz 8: Kapsamlı admin + impersonation (L)
+
+Önkoşul: Faz 0'da tenancy.md'deki izinli scope bypass alanı tanımlanmış olmalı.
+
+- **`admin_audit_events`:** `actor_user_id`, `action`, `subject_type/id`, `tenant_id` (nullable), `meta` (jsonb), `ip`, `created_at`. Sadece ekleme, düzenleme yok. Admin'de salt okunur liste.
+- **`TenantResource`:**
+  - Liste: ad, slug, durum, plan, abonelik durumu, oluşturulma tarihi; filtreler.
+  - Detay: üyeler, şubeler, abonelik ve `subscription_events`. Abonelik **salt okunur** (elle aktivasyon ödeme işinin parçası).
+  - İşlemler: askıya alma / geri açma (`TenantStatus`, resolution cache temizliği), slug değiştirme (`TenantSlugService`: format, `tenancy.reserved_slugs`, benzersizlik, cache temizliği). Kalıcı silme yok; soft delete sadece super_admin ve onaylı.
+  - **Sorulacak:** slug değişince eski subdomain/path yeni adrese 301 ile yönlensin mi? (QR kodlar `/q/{code}` sayesinde etkilenmez.)
+- **`UserResource`:** liste ve detay (üyelikler), doğrulama mailini tekrar gönderme, platform kullanıcısı oluşturma. `platform_role` sadece super_admin atar. Kullanıcı silme yok; gerekirse pasifleştirme.
+- **Yetki:** her resource için policy. `super_admin` her şey; `platform_staff` okuma ve sınırlı işlem (hangi işlemler: policy'de netleştir, dokümana yaz). İş yetkileri için global `Gate::before` yok.
+- **Impersonation (sınırlı):**
+  - Sadece super_admin, sadece platform rolü olmayan işletme kullanıcılarına.
+  - Oturumda impersonator kimliği saklanır; 60 dakika sonra otomatik biter.
+  - `/app` panelinde "X adına görüntülüyorsun / Çık" bandı (render hook).
+  - Bu oturum sırasında şifre/e-posta/MFA değiştirme, `/admin`'e geçme ve iç içe impersonation engellenir.
+  - Başlangıç ve bitiş `admin_audit_events`'e yazılır. Çıkışta admin oturumuna güvenli dönüş (session regenerate).
+- **Testler:** policy matrisi, platform_staff ile super_admin farkları, impersonation sınırları ve süresi, audit kayıtları, slug değişikliği sonrası cache ve menü URL'leri.
+
+## Faz 10: Hukuk ve KVKK (S kod + kullanıcı)
+
+Bulgular: `lang/tr/legal.php` (ve `en`) içinde `[şirket unvanı]`, `[adres]`, `[başvuru adresi]`, tedarikçi listesi yer tutucuları var; `MARKETING_LEGAL_REVIEW_PENDING` varsayılanı `true`.
+
+- **Kod:**
+  - Kayıt formunda kullanım koşulları onayı ve aydınlatma metnini okudum kutusu (zorunlu, Form Request ile).
+  - `users.terms_accepted_at` ve `users.terms_version` (migration); sürüm config'de.
+  - Davet kabul ekranında (Faz 7) aynı onay.
+- **Kullanıcının adımları:** şirket bilgileri; tedarikçi listesi (hosting, mail sağlayıcısı, Sentry, yurt dışı aktarım); avukat incelemesi; ardından `MARKETING_LEGAL_REVIEW_PENDING=false`.
+- **Runbook:** KVKK m.11 başvuru süreci (iletişim formu → kimlik doğrulama → süre: 30 gün); silme talebinde admin'den işletme soft-delete edilir, otomatik silme yok.
+
+## Faz 11: Plan ve fiyatlar (kullanıcı)
+
+- Gerçek plan isimleri, TRY fiyatları ve limitler (`max_members` dahil) `/admin` → Planlar'dan girilir. `PlanSeeder` sadece geliştirme yer tutucusudur.
+- KDV gösterimi ("dahil" mi "+KDV" mi) kararı verilince fiyat sayfası metni (`lang/*/marketing.php`) güncellenir.
+- `custom_domain` ve `qr_analytics` için kod yok: fiyat sayfasında ve plan açıklamalarında vaat edilmediğini kontrol et.
+
+## Faz 12: Lansman sonrası
+
+- CI: GitHub Actions (Postgres + Redis servisleri, `pint --test`, PHPUnit, `npm run build`).
+- WebP dönüşümü ve küçük görseller (thumbnail) (`ImageNormalizer`).
+- Panel CSP nonce'ları (`SecurityHeaders`).
+- OG görselleri, Search Console kaydı.

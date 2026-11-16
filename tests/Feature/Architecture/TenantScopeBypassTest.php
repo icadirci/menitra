@@ -27,6 +27,16 @@ class TenantScopeBypassTest extends TestCase
         'app/Console/Commands/ProcessSubscriptionLifecycle.php' => 'TenantAgnostic command',
     ];
 
+    /**
+     * Directories allowed to call withoutTenantScope(): the admin area
+     * (platform management, read-only cross-tenant queries; see the admin
+     * bypass rules in tenancy.md).
+     */
+    private const array ALLOWED_PREFIXES = [
+        'app/Filament/Admin/Resources/Tenants/' => 'admin: tenant management',
+        'app/Services/Admin/' => 'admin: platform management services',
+    ];
+
     public function test_without_tenant_scope_is_used_only_in_documented_places(): void
     {
         $offenders = [];
@@ -34,7 +44,7 @@ class TenantScopeBypassTest extends TestCase
         foreach (File::allFiles(app_path()) as $file) {
             $relative = 'app/'.str_replace('\\', '/', $file->getRelativePathname());
 
-            if (str_contains($this->code($file->getContents()), 'withoutTenantScope(') && ! array_key_exists($relative, self::ALLOWED)) {
+            if (str_contains($this->code($file->getContents()), 'withoutTenantScope(') && ! $this->isAllowed($relative)) {
                 $offenders[] = $relative;
             }
         }
@@ -75,6 +85,12 @@ class TenantScopeBypassTest extends TestCase
         }
 
         $this->assertSame([], $offenders, 'Tenant scope removed in: '.implode(', ', $offenders));
+    }
+
+    private function isAllowed(string $relative): bool
+    {
+        return array_key_exists($relative, self::ALLOWED)
+            || Str::startsWith($relative, array_keys(self::ALLOWED_PREFIXES));
     }
 
     /**
