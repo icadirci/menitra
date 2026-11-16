@@ -6,6 +6,7 @@ namespace App\Providers;
 
 use App\Http\Middleware\RestrictLivewireFileEndpoints;
 use App\Services\Marketing\MarketingContent;
+use App\Support\ErrorPage;
 use App\Support\MarketingUrl;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
@@ -28,6 +29,20 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->restrictLivewireToTheCentralDomain();
         $this->configureMarketing();
+        $this->configureErrorPages();
+    }
+
+    /**
+     * HTTP error views (errors::403 … errors::503): marketing design on the
+     * central domain, plain platform page on menu hosts (App\Support\ErrorPage).
+     */
+    private function configureErrorPages(): void
+    {
+        View::composer('errors::*', function ($view): void {
+            $request = request();
+            ErrorPage::applyLocale($request);
+            $view->with('menuHost', ErrorPage::isMenuHost($request));
+        });
     }
 
     /**

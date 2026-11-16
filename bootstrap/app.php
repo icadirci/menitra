@@ -1,6 +1,7 @@
 <?php
 
 use App\Exceptions\MenuUnavailableException;
+use App\Http\Controllers\RobotsController;
 use App\Http\Middleware\SecurityHeaders;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -17,6 +18,8 @@ return Application::configure(basePath: dirname(__DIR__))
         // Public QR menus: no `web` middleware group (no session or cookies).
         then: function (): void {
             Route::middleware([])->group(base_path('routes/menu.php'));
+            // Every host, no session; environment-aware (replaces public/robots.txt).
+            Route::get('robots.txt', RobotsController::class)->name('robots');
         },
     )
     ->withMiddleware(function (Middleware $middleware): void {

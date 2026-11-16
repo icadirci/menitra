@@ -17,7 +17,7 @@ Oturum kuralları:
 | Faz | Konu | Boyut | Durum |
 |---|---|---|---|
 | 0 | Kapsam ve doküman güncellemesi | S | ✅ 2026-11-16 |
-| 1 | Hızlı işler: hata sayfaları, log, env örneği, robots | S | ⬜ |
+| 1 | Hızlı işler: hata sayfaları, log, env örneği, robots | S | ✅ 2026-11-16 |
 | 2 | Canlı ortam altyapısı (Compose, image, nginx, deploy) | M | ⬜ |
 | 3 | E-posta | S | ⬜ |
 | 4 | Yedekleme | M | ⬜ |
@@ -73,6 +73,14 @@ Bulgular: `resources/views/errors/` yok; `LOG_STACK=single`; `.env.example` içi
 - **robots:** canlı dışındaki ortamlarda `Disallow: /`. Statik dosya yerine bir route ile çözülebilir; `sitemap.xml` satırı canlıda kalsın.
 - Testler: her hata kodu iki host tipinde render oluyor; menü host'unda oturum çerezi set edilmiyor.
 
+**Notlar (2026-11-16, tamamlandı):**
+- Bağlam `App\Support\ErrorPage` + `errors::*` view composer'ı (`AppServiceProvider`). Menü host'u = merkezi olmayan host **veya** `/m/*`, **`/q/*`** (QR yönlendirmesi de oturumsuz olduğu için eklendi). Hata sayfaları DB'ye dokunmaz.
+- Kod görünümleri tek `errors/page.blade.php`'ye bağlanır; varyantlar `errors/partials/{central,menu}`. Menü varyantı `menu-base.css` + mevcut `.menu-unavailable` stillerini kullanır. Ek olarak `4xx`/`5xx` genel yedek sayfaları var.
+- Eşleşmeyen URL'lerde dil, `/en/...` önekinden alınır. Merkezi domain'de açık bir 403 nedeni (`abort(403, __('tenancy.suspended'))`) gösterilir; Laravel'in çevrilmemiş "This action is unauthorized." metni gösterilmez (askıdaki işletme testleri buna dayanıyor).
+- `config/logging.php` zaten `LOG_DAILY_DAYS` (varsayılan 14) okuyordu, değişmedi. Yerel `.env`'e dokunulmadı (hâlâ `LOG_STACK=single`).
+- robots: `public/robots.txt` silindi; `RobotsController` `bootstrap/app.php` içinde host'tan bağımsız ve `web` grubu olmadan kayıtlı (oturum yok). Canlıda `Disallow:` + `Sitemap:`, diğer ortamlarda `Disallow: /`. Faz 2 nginx'i statik `robots.txt` aramamalı (dosya yok, `try_files` PHP'ye düşer).
+- Faz 3 için: Laravel 12'de `MAIL_SCHEME` Symfony DSN şemasıdır (`smtp` / `smtps`); `tls` geçerli değil. 587 + STARTTLS için boş bırakılır (`.env.production.example` böyle).
+
 ## Faz 2: Canlı ortam altyapısı (M)
 
 *`docker-compose*.yml` ve `phpdocker/*` değişiklikleri onay gerektirir (CLAUDE.md §9). Plan onaylandı; yine de değişiklikleri özetleyip başlamadan önce teyit al.*
@@ -88,7 +96,7 @@ Bulgular: geliştirme Compose'unda Postgres `37004` portundan dışarı açık; 
 
 ## Faz 3: E-posta (S)
 
-- `.env.production.example`: SMTP (`MAIL_MAILER=smtp`, host/port/kullanıcı/şifre yer tutucu, `MAIL_SCHEME=tls`), `MAIL_FROM_ADDRESS=no-reply@restano.app`, `MAIL_FROM_NAME=Restano`.
+- `.env.production.example`: SMTP (`MAIL_MAILER=smtp`, host/port/kullanıcı/şifre yer tutucu, `MAIL_SCHEME` boş veya `smtps`; bkz. Faz 1 notu), `MAIL_FROM_ADDRESS=no-reply@restano.app`, `MAIL_FROM_NAME=Restano`.
 - Tüm maillerin (doğrulama, şifre sıfırlama, `WelcomeMail`, `ContactMessageMail`, ileride davet maili) kuyruktan gittiğini doğrula. Fortify bildirimleri kuyrukta değilse `ShouldQueue` ekle.
 - Doğrulama ve şifre sıfırlama maillerinin tr/en metinleri ve markası kontrol edilir.
 - **Kullanıcıya verilecek kontrol listesi:** sağlayıcı seçimi, SPF / DKIM / DMARC kayıtları, gönderen alan adının doğrulanması, test gönderimi (mail-tester).
