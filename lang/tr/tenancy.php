@@ -6,6 +6,11 @@ return [
 
     'suspended' => 'Bu işletme hesabı askıya alındı. Verileriniz korunuyor; yeniden etkinleştirmek için lütfen destek ekibiyle iletişime geçin.',
 
+    'statuses' => [
+        'active' => 'Aktif',
+        'suspended' => 'Askıda',
+    ],
+
     'locales' => [
         'errors' => [
             'unsupported' => '":locale" platformda desteklenen bir dil değil.',

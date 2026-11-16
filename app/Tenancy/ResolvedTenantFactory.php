@@ -31,6 +31,26 @@ final class ResolvedTenantFactory
         });
     }
 
+    /**
+     * The current slug of the (non-deleted) tenant that used to have this slug
+     * (tenant_slug_redirects). Asked only after resolution failed, so not
+     * cached; public menu routes are throttled.
+     */
+    public function currentSlugFor(string $formerSlug): ?string
+    {
+        if (preg_match('/^[a-z0-9](-?[a-z0-9])*$/', $formerSlug) !== 1 || strlen($formerSlug) > 40) {
+            return null;
+        }
+
+        $slug = DB::table('tenant_slug_redirects')
+            ->join('tenants', 'tenants.id', '=', 'tenant_slug_redirects.tenant_id')
+            ->where('tenant_slug_redirects.slug', $formerSlug)
+            ->whereNull('tenants.deleted_at')
+            ->value('tenants.slug');
+
+        return $slug === null ? null : (string) $slug;
+    }
+
     public function byId(int $id): ?ResolvedTenant
     {
         $slug = Tenant::query()->whereKey($id)->value('slug');

@@ -10,6 +10,7 @@ return [
             'title' => 'Platform dashboard',
         ],
         'navigation' => [
+            'platform' => 'Platform management',
             'subscriptions' => 'Subscriptions',
             'website' => 'Website',
         ],

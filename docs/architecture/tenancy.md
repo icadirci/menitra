@@ -142,7 +142,7 @@ Livewire is used only by the panels, so its endpoints follow the panels:
 | `ResolveTenantFromMembership` / membership lookups | The tenant is derived from the user's verified membership |
 | Commands and jobs implementing `TenantAgnostic` | Cross-tenant maintenance, e.g. subscription lifecycle |
 | `TenantRegistrationService` | Creates the tenant, then sets the context for the remaining inserts and restores the previous context afterwards |
-| **Admin area** (planned, launch plan Faz 8): `app/Filament/Admin/Resources/Tenants/**` and `app/Services/Admin/**` | Platform management must list and inspect every tenant. Rules below |
+| **Admin area** (launch plan Faz 8): `app/Filament/Admin/Resources/Tenants/**` and `app/Services/Admin/**` (`TenantInspector`) | Platform management must list and inspect every tenant. Rules below |
 
 **Admin bypass rules** (decided 2026-11-16). The admin area is the only place where a platform user reads tenant-owned rows without a `TenantContext`:
 
@@ -151,6 +151,8 @@ Livewire is used only by the panels, so its endpoints follow the panels:
 - **Allow-listed models:** `Location`, `Subscription`, `SubscriptionEvent` (members are `TenantMembership`, which isn't scoped). Menu content, QR codes, theme settings and media are not read across tenants in `/admin`.
 - Every query on one tenant constrains `where('tenant_id', $tenant->id)` explicitly; cross-tenant lists (e.g. subscription status per tenant in the tenant table) are eager-loaded for the listed tenants only.
 - `TenantScopeBypassTest` allows these two path prefixes; any bypass elsewhere still fails. Impersonation doesn't need a bypass: the impersonated user goes through the normal `/app` membership resolution.
+- As built: `TenantInspector` (live subscription; `HasMany` relations over `Location` / `SubscriptionEvent` without the scope, constrained to one tenant, for read-only relation managers) and the tenant list's plain subqueries (live subscription status/plan, owner email). Relation counts over scoped models (`withCount('locations')`) would trip the fail-closed scope; count the pivot instead. `UserResource` needs no bypass (users, memberships and tenants aren't scoped).
+- **Former slugs:** `ResolvedTenantFactory::currentSlugFor()` reads `tenant_slug_redirects` (platform data, not tenant-scoped) only after resolution failed; `ResolveTenantFromRequest` answers 301 to the current slug. Not cached.
 
 ## Queue processing
 

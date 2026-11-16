@@ -7,6 +7,7 @@ namespace App\Models;
 use App\Enums\PlatformRole;
 use App\Notifications\Auth\ResetPasswordNotification;
 use App\Notifications\Auth\VerifyEmailNotification;
+use App\Services\Admin\Impersonation;
 use Database\Factories\UserFactory;
 use Filament\Auth\MultiFactor\App\Contracts\HasAppAuthentication;
 use Filament\Auth\MultiFactor\App\Contracts\HasAppAuthenticationRecovery;
@@ -69,6 +70,7 @@ class User extends Authenticatable implements FilamentUser, HasAppAuthentication
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'platform_role' => PlatformRole::class,
+            'deactivated_at' => 'datetime',
             // Two-factor (Filament app authentication): the TOTP secret and the
             // already-hashed recovery codes are stored encrypted.
             'app_authentication_secret' => 'encrypted',
@@ -83,6 +85,8 @@ class User extends Authenticatable implements FilamentUser, HasAppAuthentication
 
     public function saveAppAuthenticationSecret(#[SensitiveParameter] ?string $secret): void
     {
+        $this->refuseDuringImpersonation();
+
         $this->forceFill(['app_authentication_secret' => $secret])->save();
     }
 
@@ -104,12 +108,32 @@ class User extends Authenticatable implements FilamentUser, HasAppAuthentication
      */
     public function saveAppAuthenticationRecoveryCodes(#[SensitiveParameter] ?array $codes): void
     {
+        $this->refuseDuringImpersonation();
+
         $this->forceFill(['app_authentication_recovery_codes' => $codes])->save();
     }
 
     public function hasTwoFactorEnabled(): bool
     {
         return filled($this->app_authentication_secret);
+    }
+
+    /**
+     * Two-factor settings are never changed while a super admin impersonates
+     * this session (security.md § Impersonation), whichever code path tries.
+     */
+    private function refuseDuringImpersonation(): void
+    {
+        abort_if(app(Impersonation::class)->isActive(), 403);
+    }
+
+    /**
+     * Deactivated by a super admin (launch plan Faz 8): no panel access, signed
+     * out on the next request (LogoutDeactivatedUsers). Memberships are kept.
+     */
+    public function isDeactivated(): bool
+    {
+        return $this->deactivated_at !== null;
     }
 
     public function hasPlatformRole(): bool
@@ -140,11 +164,15 @@ class User extends Authenticatable implements FilamentUser, HasAppAuthentication
     }
 
     /**
-     * Panel access is fail-closed: unknown panels and users without an
-     * explicit grant are denied. Hiding navigation is never authorization.
+     * Panel access is fail-closed: deactivated users, unknown panels and users
+     * without an explicit grant are denied. Hiding navigation is never authorization.
      */
     public function canAccessPanel(Panel $panel): bool
     {
+        if ($this->isDeactivated()) {
+            return false;
+        }
+
         return match ($panel->getId()) {
             'admin' => $this->hasPlatformRole(),
             'app' => $this->memberships()->active()->exists(),

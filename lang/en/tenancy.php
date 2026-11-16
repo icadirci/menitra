@@ -6,6 +6,11 @@ return [
 
     'suspended' => 'This business account is suspended. Its data is kept safe; please contact support to reactivate it.',
 
+    'statuses' => [
+        'active' => 'Active',
+        'suspended' => 'Suspended',
+    ],
+
     'locales' => [
         'errors' => [
             'unsupported' => '":locale" is not a language supported by the platform.',

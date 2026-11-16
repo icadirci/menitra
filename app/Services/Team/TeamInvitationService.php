@@ -186,7 +186,8 @@ final class TeamInvitationService
     {
         $user = $this->userWithEmail($invitation->email);
 
-        if ($user === null || ! Hash::check($password, $user->password)) {
+        // A deactivated account gets the same answer as a wrong password.
+        if ($user === null || ! Hash::check($password, $user->password) || $user->isDeactivated()) {
             throw ValidationException::withMessages(['password' => __('team.accept.errors.password')]);
         }
 

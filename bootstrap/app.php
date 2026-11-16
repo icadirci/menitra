@@ -2,7 +2,10 @@
 
 use App\Exceptions\MenuUnavailableException;
 use App\Http\Controllers\RobotsController;
+use App\Http\Middleware\EnforceImpersonation;
+use App\Http\Middleware\LogoutDeactivatedUsers;
 use App\Http\Middleware\SecurityHeaders;
+use Illuminate\Contracts\Auth\Middleware\AuthenticatesRequests;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -28,6 +31,14 @@ return Application::configure(basePath: dirname(__DIR__))
         // signed-in users hitting `guest` routes (register, password reset) go to /app.
         $middleware->redirectGuestsTo(fn () => route('login'));
         $middleware->redirectUsersTo('/app');
+
+        // Impersonation limits and deactivated accounts (launch plan Faz 8). The
+        // panels list their own middleware and add both there too.
+        $middleware->web(append: [EnforceImpersonation::class, LogoutDeactivatedUsers::class]);
+        // Before authentication (after the session is started), so a deactivated
+        // user is signed out instead of only refused by the panel's Authenticate.
+        $middleware->prependToPriorityList(AuthenticatesRequests::class, EnforceImpersonation::class);
+        $middleware->prependToPriorityList(AuthenticatesRequests::class, LogoutDeactivatedUsers::class);
 
         // CSP and other security headers on every response, menus included.
         $middleware->append(SecurityHeaders::class);

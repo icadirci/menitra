@@ -10,6 +10,7 @@ return [
             'title' => 'Platform paneli',
         ],
         'navigation' => [
+            'platform' => 'Platform yönetimi',
             'subscriptions' => 'Abonelik',
             'website' => 'Web sitesi',
         ],

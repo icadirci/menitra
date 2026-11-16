@@ -43,16 +43,17 @@
 - `/admin` requires two-factor authentication (Filament MFA, TOTP + recovery codes): a platform user without MFA is sent to set it up and reaches nothing else. MFA secrets and recovery codes are stored with encrypted casts (recovery codes hashed first) and hidden from serialization; they are never mass-assignable. In `/app` MFA is optional. Both panels must use the same providers (`App\Filament\Shared\Auth\MultiFactor`), otherwise the weaker login opens the other panel through the shared session. The panel profile page manages MFA only (`EditProfile`: empty form, `save()` refused). The only out-of-band reset is `php artisan platform:reset-two-factor {email}`.
 
 ## Admin platform management (launch plan Faz 8)
-- Every admin resource and action is authorized by its policy (`super_admin` everything; `platform_staff` only what its policy lists). Only super admins assign `platform_role`, soft-delete tenants or impersonate. No hard deletes of tenants or users.
+- Every admin resource and action is authorized by its policy (`TenantPolicy` admin abilities, `UserPolicy`, `AdminAuditEventPolicy`) and again in the service (`TenantAdminService`, `UserAdminService`, `Impersonation`). `super_admin` everything; `platform_staff` only lists/views tenants, users and the audit log and resends verification mails. Only super admins suspend, change slugs, soft-delete/restore tenants, create platform users, assign `platform_role`, deactivate users or impersonate. Nobody changes their own role, deactivates or impersonates themselves. No hard deletes of tenants or users.
 - Cross-tenant reads only in the admin bypass area and under its rules (tenancy.md § Allowed scope bypasses): read-only, allow-listed models, explicit `tenant_id` constraint.
 - Subscriptions are read-only in `/admin`; state changes go only through `SubscriptionService`.
 - Admin actions that change state (suspend/unsuspend, slug change, soft delete, platform user creation, role assignment, resend verification, impersonation start/end) are written to the append-only `admin_audit_events` (actor, action, subject, tenant, meta, IP). Audit rows are never updated or deleted from the application.
-- A slug change goes through `TenantSlugService` (format, reserved list, uniqueness) and clears the resolution cache.
+- A slug change goes through `TenantSlugService` (format, reserved list, uniqueness among tenants and other tenants' former slugs) and clears the resolution cache. The old slug is kept in `tenant_slug_redirects`: it 301-redirects to the current slug and can't be taken by anyone else (registration checks it too), so an old printed link can't be captured.
+- Deactivated users (`users.deactivated_at`) reach no panel, are signed out on their next request (`LogoutDeactivatedUsers`, prioritised before authentication) and can't accept invitations.
 
 ## Impersonation
 - Only a `super_admin`, only into a user **without** a platform role; never nested.
-- The impersonator's id is stored in the server-side session, never in a client-controlled value; the impersonation ends automatically after 60 minutes.
-- While impersonating: `/admin` is refused, and password, email and MFA changes are blocked (on the server, not just hidden).
+- The impersonator's id is stored in the server-side session, never in a client-controlled value; the impersonation ends automatically after 60 minutes (`EnforceImpersonation`, web group and both panels).
+- While impersonating: `/admin` and invitation acceptance are refused, password reset routes stay guest-only, and MFA writes are refused by `EditProfile` and by `User::saveAppAuthentication*()` (on the server, not just hidden). There is no email change anywhere. A logout ends and audits the impersonation.
 - `/app` shows a persistent "viewing as X / leave" band. Leaving regenerates the session and restores the admin user; start and end are audited.
 - The impersonated user is resolved through the normal `/app` membership checks; impersonation grants no extra permission inside the tenant.
 

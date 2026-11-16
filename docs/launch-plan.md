@@ -25,7 +25,7 @@ Oturum kuralları:
 | 6 | Temalar vitrini için canlı seed | S | ✅ 2026-11-16 |
 | 9 | İki adımlı doğrulama (MFA) | S | ✅ 2026-11-16 |
 | 7 | Ekip yönetimi `/app` | L | ✅ 2026-11-16 |
-| 8 | Kapsamlı admin + impersonation | L | ⬜ |
+| 8 | Kapsamlı admin + impersonation | L | ✅ 2026-11-16 |
 | 10 | Hukuk ve KVKK | S + kullanıcı | ⬜ |
 | 11 | Plan ve fiyatlar | kullanıcı | ⬜ |
 | 12 | Lansman sonrası iyileştirmeler | — | ⬜ |
@@ -247,6 +247,17 @@ Bağlam: üyelikler `tenant_user` tablosunda (`role`, `is_active`, `UNIQUE (tena
   - Bu oturum sırasında şifre/e-posta/MFA değiştirme, `/admin`'e geçme ve iç içe impersonation engellenir.
   - Başlangıç ve bitiş `admin_audit_events`'e yazılır. Çıkışta admin oturumuna güvenli dönüş (session regenerate).
 - **Testler:** policy matrisi, platform_staff ile super_admin farkları, impersonation sınırları ve süresi, audit kayıtları, slug değişikliği sonrası cache ve menü URL'leri.
+
+**Notlar (2026-11-16, tamamlandı):**
+- **Kararlar (kullanıcı):** (1) Slug değişince eski slug `tenant_slug_redirects`'e yazılır, eski menü URL'leri (path ve subdomain, aynı sayfa + query string) **301** ile yeni slug'a gider ve eski slug başka işletmeye verilmez (kayıt formu da kontrol ediyor). (2) `platform_staff` sadece okur ve doğrulama mailini tekrar gönderir; diğer her işlem super_admin. (3) Ek olarak: silinen işletmeyi **geri alma** ve **kullanıcı pasifleştirme** (`users.deactivated_at`). MFA sıfırlama admin'e eklenmedi (artisan komutu yeterli).
+- Yetki tablosu overview.md § Platform management'ta. `TenantPolicy`'ye admin yetenekleri eklendi (`manageSettings` ayrı kaldı), yeni `UserPolicy`, `AdminAuditEventPolicy`. Servisler `app/Services/Admin/` (`TenantAdminService`, `UserAdminService`, `Impersonation`, `AdminAudit`, `TenantInspector`) ve `app/Services/Tenancy/TenantSlugService`; hepsi yetkiyi tekrar kontrol eder ve audit'e yazar.
+- `admin_audit_events`: model güncelleme/silmeyi reddeder, ayrıca DB trigger'ı `UPDATE`/`DELETE`'i reddeder. Trigger fonksiyonu `CREATE OR REPLACE` ile oluşturuluyor, çünkü `migrate:fresh` tabloları siler ama PG fonksiyonlarını silmez. `meta` jsonb olduğu için anahtar sırası korunmaz (testlerde `assertEquals`).
+- Tenant listesi abonelik/sahip bilgisini düz alt sorgularla alıyor; detay sayfasındaki şube ve abonelik geçmişi relation manager'ları `TenantInspector`'daki scope'suz `HasMany` ile. **Tuzak:** scope'lu modele `withCount` (ör. `locations`) fail-closed scope'a takılıp patlıyor; pivot sayılmalı.
+- Impersonation state'i sadece sunucu oturumunda; `Auth::login()` şifre hash'ini de güncellediği için `AuthenticateSession` sorun çıkarmıyor. `EnforceImpersonation` ve `LogoutDeactivatedUsers` hem `web` grubunda hem iki panelin middleware listesinde (paneller `web` grubunu kullanmıyor) ve **priority listesinde `AuthenticatesRequests`'ten önce**; aksi halde Laravel önceliklendirmesi Filament'in `Authenticate`'ini önce çalıştırıp pasif kullanıcıya sadece 403 veriyordu. Oturum durumu `session()->driver()->isStarted()` ile okunuyor (menü route'ları, komutlar, job'lar → state yok).
+- Impersonation sırasında engellenenler: `/admin`, davet kabulü (POST), profil sayfası, model seviyesinde MFA yazımı; şifre sıfırlama zaten `guest`. Logout da bitiş olarak audit'e yazılır. 60 dk sonra ilk istekte admin geri yüklenir. Band sadece `/app`'te; `/account` sayfasında yok.
+- Livewire testlerinde dikkat: aynı testte önce tenant subdomain'ine HTTP isteği atılırsa sonraki Livewire çağrıları o host'u kullanıyor ve merkezi domain'e bağlı update route'u bulunamıyor.
+- Slug değişikliğinde `/app/{slug}` yönlendirilmez; vitrin işletmelerinin slug'ı değişirse `config/marketing.php` → `showcase` elle güncellenmeli.
+- Testler: `tests/Feature/Admin/{TenantAdminTest (12), UserAdminTest (8), ImpersonationTest (8)}`. Süit: 726 test yeşil.
 
 ## Faz 10: Hukuk ve KVKK (S kod + kullanıcı)
 

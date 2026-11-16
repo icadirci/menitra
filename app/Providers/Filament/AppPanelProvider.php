@@ -8,6 +8,8 @@ use App\Filament\App\Navigation\AppNavigationGroup;
 use App\Filament\App\Pages\Dashboard;
 use App\Filament\Shared\Auth\EditProfile;
 use App\Filament\Shared\Auth\MultiFactor;
+use App\Http\Middleware\EnforceImpersonation;
+use App\Http\Middleware\LogoutDeactivatedUsers;
 use App\Http\Middleware\ResolveTenantFromMembership;
 use App\Models\Tenant;
 use Filament\Http\Middleware\Authenticate;
@@ -17,6 +19,7 @@ use Filament\Http\Middleware\DispatchServingFilamentEvent;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
+use Filament\View\PanelsRenderHook;
 use Filament\Widgets\AccountWidget;
 use Illuminate\Auth\Middleware\EnsureEmailIsVerified;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
@@ -70,6 +73,8 @@ class AppPanelProvider extends PanelProvider
                 'gray' => Color::Stone,
             ])
             ->navigationGroups(AppNavigationGroup::class)
+            // "Viewing as X / leave" band while a super admin impersonates.
+            ->renderHook(PanelsRenderHook::BODY_START, fn (): string => view('filament.app.impersonation-banner')->render())
             ->discoverResources(in: app_path('Filament/App/Resources'), for: 'App\Filament\App\Resources')
             ->discoverPages(in: app_path('Filament/App/Pages'), for: 'App\Filament\App\Pages')
             ->pages([
@@ -84,6 +89,8 @@ class AppPanelProvider extends PanelProvider
                 AddQueuedCookiesToResponse::class,
                 StartSession::class,
                 AuthenticateSession::class,
+                EnforceImpersonation::class,
+                LogoutDeactivatedUsers::class,
                 ShareErrorsFromSession::class,
                 VerifyCsrfToken::class,
                 SubstituteBindings::class,

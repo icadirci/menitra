@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Http\Controllers\Account\AccountController;
 use App\Http\Controllers\Account\AccountQrCodeController;
+use App\Http\Controllers\Admin\LeaveImpersonationController;
 use App\Http\Controllers\Team\InvitationController;
 use App\Http\Middleware\ResolveAccountTenant;
 use Illuminate\Routing\RedirectController;
@@ -65,6 +66,9 @@ Route::domain(config('tenancy.central_domain'))->group(function (): void {
             ->name('verification.send');
 
         Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
+
+        // Ends a super admin's impersonation (launch plan Faz 8; 404 otherwise).
+        Route::post('/impersonation/leave', LeaveImpersonationController::class)->name('impersonation.leave');
     });
 
     // Team invitations (launch plan Faz 7): reachable signed in or out. The

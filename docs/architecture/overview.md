@@ -157,7 +157,7 @@ Two independent Filament 5 panels, registered only on the central domain (`confi
 | Who | Users with `platform_role` (`super_admin`, `platform_staff`) | Users with an active membership in an active tenant (`owner`, `manager`, `branch_staff`) |
 | Code | `app/Filament/Admin/{Pages,Resources,Widgets}` | `app/Filament/App/{Pages,Resources,Widgets}` |
 | Look | Filament defaults; Restano logo, Forest primary, Stone gray | Filament defaults; Restano logo, Forest primary, Stone gray |
-| Resources | Plans (`PlanPolicy`: super admins only; saved by `PlanService`; never deleted), FAQ and testimonials (`FaqPolicy`, `TestimonialPolicy`: any platform role); page **Site settings** (`/admin/site-settings`, `ManageSiteSettings`, `SiteSettingPolicy`: super admins only). Planned for launch: tenants, users, audit log, impersonation ([Platform management](#platform-management-launch)) | Phase B modules; team management ([Team management](#team-management-launch)) |
+| Resources | Plans (`PlanPolicy`: super admins only; saved by `PlanService`; never deleted), FAQ and testimonials (`FaqPolicy`, `TestimonialPolicy`: any platform role); page **Site settings** (`/admin/site-settings`, `ManageSiteSettings`, `SiteSettingPolicy`: super admins only). Tenants, users, audit log and impersonation ([Platform management](#platform-management-launch)) | Phase B modules; team management ([Team management](#team-management-launch)) |
 | Two-factor | Mandatory (Filament MFA: TOTP + recovery codes): without it a platform user only reaches `/admin/multi-factor-authentication/set-up` | Optional |
 | Profile | `/admin/profile` and `/app/profile` (`App\Filament\Shared\Auth\EditProfile`): two-factor management only (set up, new recovery codes, disable); name, email and password are not editable there | |
 
@@ -210,12 +210,22 @@ Launch plan Faz 7 ([docs/launch-plan.md](../launch-plan.md)). Owner-only, enforc
 
 ### Platform management (launch)
 
-Launch plan Faz 8. Every resource has a policy; `super_admin` may do everything, `platform_staff` reads and performs a limited set of actions (the exact list is fixed in the policies and documented here when built).
+Launch plan Faz 8 (built 2026-11-16), navigation group "Platform management". Every resource has a policy; no global `Gate::before`.
 
-- **`admin_audit_events`:** `actor_user_id`, `action`, `subject_type/id`, nullable `tenant_id`, `meta` (jsonb), `ip`, `created_at`. Append-only; read-only list in `/admin`.
-- **Tenants:** list (name, slug, status, plan, subscription status, created), detail (members, locations, subscription and `subscription_events`, read-only), suspend / unsuspend (`TenantStatus`, resolution cache cleared), slug change (`TenantSlugService`: format, reserved slugs, uniqueness, cache). No hard delete; soft delete by super admins only, with confirmation.
-- **Users:** list and detail (memberships), resend verification email, create platform users; only super admins assign `platform_role`. No deletion (deactivation if needed).
-- **Impersonation:** see CLAUDE.md §3.15 — super admin only, into non-platform users, 60 minutes, band in `/app`, sensitive actions and `/admin` blocked, audited, session regenerated on exit.
+| Ability | `super_admin` | `platform_staff` |
+|---|---|---|
+| List / view tenants, users, audit log | ✓ | ✓ |
+| Resend verification email (unverified, active users) | ✓ | ✓ |
+| Suspend / unsuspend, change slug, soft delete, restore tenants | ✓ | — |
+| Create platform users, change `platform_role` (not own), deactivate / reactivate users (not self) | ✓ | — |
+| Impersonate (users without a platform role, active, not self) | ✓ | — |
+| Hard delete tenants or users, edit subscriptions, edit audit rows | — | — |
+
+- **`admin_audit_events`** (`AdminAuditEvent`, written only by `AdminAudit`): `actor_user_id`, `action` (`AdminAuditAction`), `subject_type` (`tenant` / `user`) + `subject_id`, nullable `tenant_id`, `meta` (jsonb: slugs, roles, reasons; never secrets), `ip`, `created_at`. Append-only (model refuses update/delete, a DB trigger refuses `UPDATE`/`DELETE`); read-only list at `/admin/audit-log`.
+- **Tenants** (`TenantResource`, `/admin/tenants`): list (name/slug, owner email, status incl. deleted, plan, live subscription status, created; filters status, subscription status, trashed; plain read-only subqueries), detail (general, live subscription, read-only relation managers for members, branches and `subscription_events` through `TenantInspector`). Actions in `TenantAdminService` (authorize + transaction + audit): suspend (optional reason in the audit only) / unsuspend, slug change (`TenantSlugService`), soft delete / restore. Memberless (showcase) tenants are listed without an owner.
+- **Slug change** (decided 2026-11-16): the old slug goes into `tenant_slug_redirects`; public menu URLs with it (path and subdomain forms, same page and query string) answer **301** to the current slug (`Cache-Control: public, max-age=3600`, because a slug can be given back) and no other tenant can take it (registration and `TenantSlugService` check the table). A chain A→B→C redirects A straight to C; changing back to an own former slug removes that row. `/app/{slug}` changes without redirect; QR codes are unaffected. Showcase slugs in `config/marketing.php` must be updated by hand.
+- **Users** (`UserResource`, `/admin/users`): list (role, active memberships, verified, MFA, active/deactivated), detail with memberships (deleted tenants included). Actions in `UserAdminService`: create platform user (random password + queued password reset link; MFA at first `/admin` sign-in), change platform role, resend verification (1/min/user), deactivate / reactivate. **Deactivation** (`users.deactivated_at`): `canAccessPanel()` is false, `LogoutDeactivatedUsers` signs an open session out on the next request (or ends an impersonation of that user), and accepting an invitation with the password is refused. Memberships are kept; users are never deleted.
+- **Impersonation** (`App\Services\Admin\Impersonation`): started from the user page; state `{impersonator_id, user_id, started_at}` in the server-side session only; `Auth::login()` + session regenerate on start and on leave. `EnforceImpersonation` (web group and both panels, before authentication) drops stale state, restores the admin after 60 minutes, refuses `/admin` and invitation acceptance. Password reset routes are guest-only; MFA is blocked by `EditProfile` (`canAccess()` + `mount()`) and in `User::saveAppAuthentication*()`. `/app` shows a band (render hook `BODY_START`) with `POST /impersonation/leave`, which restores the admin (or signs out if the impersonator is no longer an active super admin). A logout during impersonation is audited as an end (`EndImpersonationOnLogout`). The impersonated user goes through the normal membership checks.
 - Cross-tenant reads in these resources use the admin scope bypass area ([tenancy.md § Allowed scope bypasses](tenancy.md#allowed-scope-bypasses)).
 
 ### Business panel (Phase B)

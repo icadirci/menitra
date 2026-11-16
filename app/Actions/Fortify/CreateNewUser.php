@@ -46,6 +46,8 @@ class CreateNewUser implements CreatesNewUsers
                 'regex:/^[a-z0-9](-?[a-z0-9])*$/',
                 Rule::notIn(config('tenancy.reserved_slugs')),
                 Rule::unique('tenants', 'slug'),
+                // Former slugs stay reserved for their tenant (TenantSlugService).
+                Rule::unique('tenant_slug_redirects', 'slug'),
             ],
             // A hint only: TenantRegistrationService falls back to the default plan.
             'plan' => ['nullable', 'string', 'max:64'],

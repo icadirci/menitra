@@ -72,7 +72,7 @@ Version bumps come from one model observer, `App\Observers\MenuCacheObserver` (r
 | Location details, location translations, location theme | `tenant:{t}:version` | Location names/addresses also appear in the tenant location index |
 | Location created, deleted or (de)activated | `tenant:{t}:version` | Tenant location index |
 | Tenant brand, translations, theme, theme settings, locales | `tenant:{t}:version` + `host:*`/`slug:*` entries for the tenant | Theme settings are carried in `ResolvedTenant`, so `ThemeSetting` writes clear the resolution entries too (`MenuCacheObserver`) |
-| Tenant slug change | old and new `slug:` / `host:` entries + `tenant:{t}:version` | |
+| Tenant slug change | old and new `slug:` / `host:` entries + `tenant:{t}:version` | Only through `TenantSlugService` (admin). Old-slug requests miss the resolution cache and hit `tenant_slug_redirects` (uncached, throttled) → 301 |
 | Tenant status or subscription change | `host:` / `slug:` entries (they hold `access_until`) | Every `SubscriptionService` transition saves the `Subscription` model, so `MenuCacheObserver` clears them after commit |
 | QR code change | `qr:{code}` | |
 | Plan, price or limit change | `plans:*` | |

@@ -7,6 +7,8 @@ namespace App\Providers\Filament;
 use App\Filament\Admin\Pages\Dashboard;
 use App\Filament\Shared\Auth\EditProfile;
 use App\Filament\Shared\Auth\MultiFactor;
+use App\Http\Middleware\EnforceImpersonation;
+use App\Http\Middleware\LogoutDeactivatedUsers;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -64,6 +66,8 @@ class AdminPanelProvider extends PanelProvider
                 AddQueuedCookiesToResponse::class,
                 StartSession::class,
                 AuthenticateSession::class,
+                EnforceImpersonation::class,
+                LogoutDeactivatedUsers::class,
                 ShareErrorsFromSession::class,
                 VerifyCsrfToken::class,
                 SubstituteBindings::class,
