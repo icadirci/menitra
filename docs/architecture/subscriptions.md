@@ -87,6 +87,7 @@ Each method runs in a transaction on the subscription row re-read `FOR UPDATE` t
 | `renew()` | `active` / `past_due` / `grace` (after a paid period) → `active` | new period end later than the current one; otherwise no-op | `renewed` |
 | `markPastDue()` | `active` → `past_due` | renewal failed | `payment_failed` |
 | `resubscribe()` | no live subscription → **new row** `active` | the same call again returns the existing row; any other live subscription is refused (and the partial unique index backs it up) | `reactivated` (`previous_subscription_id`) |
+| `startComplimentary()` | no live subscription → **new row** `active` | free, platform-granted period (no price, no provider) ending at the given date; same call again returns the existing row, any other live subscription is refused. Used only by `ShowcaseSeeder` (period until 2099-12-31), not a payment flow | `complimentary_started` (`plan`, `reason`, `period_ends_at`) |
 
 `processDue()` applies transitions in a loop, so a subscription that missed several (e.g. trial and grace both over) gets `grace_started` and `expired` in one run. `activate`, `renew`, `markPastDue` and `resubscribe` are the entry points for the future gateway adapter; nothing calls them yet.
 

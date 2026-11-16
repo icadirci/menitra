@@ -67,6 +67,57 @@ class SubscriptionService
     }
 
     /**
+     * A free subscription granted by the platform (e.g. the theme showcase
+     * businesses, ShowcaseSeeder): a new active row with a fixed period end,
+     * no price and no provider. Not a payment flow. Repeating the same call
+     * returns the existing row; any other live subscription is refused.
+     */
+    public function startComplimentary(Tenant $tenant, Plan $plan, CarbonImmutable $periodEndsAt, string $reason): Subscription
+    {
+        $this->ensureCurrentTenant($tenant);
+        $now = CarbonImmutable::now();
+        $this->ensurePeriod($now, $periodEndsAt);
+
+        return DB::transaction(function () use ($tenant, $plan, $periodEndsAt, $reason, $now): Subscription {
+            // Serialises concurrent calls for this tenant (the tenant equals the context, checked above).
+            Tenant::query()->whereKey($tenant->getKey())->lockForUpdate()->first();
+
+            $live = Subscription::query()->whereNull('ended_at')->first();
+
+            if ($live !== null) {
+                if ($live->status === SubscriptionStatus::Active
+                    && (int) $live->plan_id === (int) $plan->getKey()
+                    && $live->plan_price_id === null
+                    && $live->provider === null
+                    && $live->current_period_ends_at?->equalTo($periodEndsAt)) {
+                    return $live;
+                }
+
+                throw InvalidSubscriptionTransitionException::liveSubscriptionExists();
+            }
+
+            $subscription = new Subscription;
+            $subscription->forceFill([
+                'tenant_id' => $tenant->getKey(),
+                'plan_id' => $plan->getKey(),
+                'status' => SubscriptionStatus::Active,
+                'current_period_starts_at' => $now,
+                'current_period_ends_at' => $periodEndsAt,
+            ])->save();
+
+            $this->record($subscription, SubscriptionEventType::ComplimentaryStarted, null, SubscriptionStatus::Active, $now, [
+                'plan' => $plan->code,
+                'reason' => $reason,
+                'period_ends_at' => $periodEndsAt->toIso8601String(),
+            ]);
+
+            DB::afterCommit(fn () => app(FeatureGate::class)->flush());
+
+            return $subscription;
+        });
+    }
+
+    /**
      * Applies every transition that is due by now: trial or period end →
      * grace, grace end → expired. Several in one call when runs were missed.
      * Returns the number of transitions applied (0 = nothing due).

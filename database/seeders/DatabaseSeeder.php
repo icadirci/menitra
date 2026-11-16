@@ -6,7 +6,7 @@ use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
 {
-    // No WithoutModelEvents: DemoSeeder relies on model events (ULIDs, tenant_id, QR codes).
+    // No WithoutModelEvents: DemoSeeder / ShowcaseSeeder rely on model events (ULIDs, tenant_id, QR codes).
     /**
      * Seed the application's database.
      */
@@ -14,7 +14,8 @@ class DatabaseSeeder extends Seeder
     {
         $this->call([PlanSeeder::class, MarketingFaqSeeder::class]);
 
-        // Showcase data for local development only (see DemoSeeder).
+        // Demo users and teams for local development only (see DemoSeeder; it
+        // also runs ShowcaseSeeder). In production ShowcaseSeeder runs on its own.
         if (! app()->isProduction()) {
             $this->call(DemoSeeder::class);
         }

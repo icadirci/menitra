@@ -16,4 +16,5 @@ enum SubscriptionEventType: string
     case Expired = 'expired';
     case PlanChanged = 'plan_changed';
     case Reactivated = 'reactivated';
+    case ComplimentaryStarted = 'complimentary_started';
 }

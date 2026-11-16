@@ -9,13 +9,13 @@ use App\Enums\TenantStatus;
 use App\Models\Tenant;
 use App\Services\Menu\MenuCacheKeys;
 use App\Services\Menu\MenuUrlGenerator;
-use Database\Seeders\DemoSeeder;
+use Database\Seeders\ShowcaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use Tests\TestCase;
 
 /**
- * Theme showcase (/temalar · /en/themes): live demo menus from DemoSeeder,
+ * Theme showcase (/temalar · /en/themes): live demo menus from ShowcaseSeeder,
  * resolved through the public resolver; no hard-coded menu data.
  */
 class ThemeShowcaseTest extends TestCase
@@ -24,7 +24,7 @@ class ThemeShowcaseTest extends TestCase
 
     public function test_every_theme_links_to_its_live_demo_menu(): void
     {
-        $this->seed(DemoSeeder::class);
+        $this->seed(ShowcaseSeeder::class);
         $urls = app(MenuUrlGenerator::class);
 
         $tr = $this->get('/temalar')->assertOk()->assertSee('<html lang="tr">', escape: false);
@@ -43,7 +43,7 @@ class ThemeShowcaseTest extends TestCase
 
     public function test_each_demo_business_renders_its_theme(): void
     {
-        $this->seed(DemoSeeder::class);
+        $this->seed(ShowcaseSeeder::class);
 
         foreach (config('marketing.showcase') as $theme => $slug) {
             if ($slug === 'kahve-konagi') {
@@ -60,7 +60,7 @@ class ThemeShowcaseTest extends TestCase
 
     public function test_venue_names_come_from_the_database(): void
     {
-        $this->seed(DemoSeeder::class);
+        $this->seed(ShowcaseSeeder::class);
         $tenant = Tenant::query()->where('slug', 'noon')->sole();
         $tenant->translations()->where('locale', 'tr')->update(['name' => 'Öğle Kahvesi']);
         Cache::forget(MenuCacheKeys::slug('noon'));
@@ -70,7 +70,7 @@ class ThemeShowcaseTest extends TestCase
 
     public function test_missing_or_offline_demos_get_no_link(): void
     {
-        $this->seed(DemoSeeder::class);
+        $this->seed(ShowcaseSeeder::class);
         Tenant::query()->where('slug', 'petal-bakehouse')->sole()->forceFill(['status' => TenantStatus::Suspended])->save();
         Cache::forget(MenuCacheKeys::slug('petal-bakehouse'));
         config(['marketing.showcase.bistro' => 'does-not-exist']);

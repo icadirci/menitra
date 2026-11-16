@@ -22,7 +22,7 @@ Oturum kuralları:
 | 3 | E-posta | S | ✅ 2026-11-16 |
 | 4 | Yedekleme | M | ⬜ |
 | 5 | İzleme (Sentry, kontroller) | S | ✅ 2026-11-16 |
-| 6 | Temalar vitrini için canlı seed | S | ⬜ |
+| 6 | Temalar vitrini için canlı seed | S | ✅ 2026-11-16 |
 | 9 | İki adımlı doğrulama (MFA) | S | ⬜ |
 | 7 | Ekip yönetimi `/app` | L | ⬜ |
 | 8 | Kapsamlı admin + impersonation | L | ⬜ |
@@ -168,6 +168,14 @@ Bulgular: `/temalar` (`ThemeShowcaseController`, `config/marketing.php` → `sho
 - Vitrin işletmeleri için süresiz bir abonelik: `SubscriptionService` üzerinden ve `subscription_events` kaydıyla (ör. `active`, `current_period_ends_at` çok ileri veya null; lifecycle komutunun bunu süresi dolmuş saymadığını test et). Bu ödeme akışı değildir.
 - Üyesi olmayan işletmenin hiçbir yerde hata vermediğini doğrula (admin listeleri, lifecycle job'ı, dashboard sorguları).
 - README'ye canlıda `php artisan db:seed --class=ShowcaseSeeder --force` adımını ekle.
+
+**Notlar (2026-11-16, tamamlandı):**
+- `ShowcaseSeeder` 5 vitrin işletmesinin tamamını (Kahve Konağı dahil, iki şube + kahvaltı menüsüyle) ve `demo` planını oluşturur; kullanıcı ve üyelik yok. Ortak builder'lar `database/seeders/Concerns/SeedsMenuContent` trait'inde. `DemoSeeder` local'de platform kullanıcılarını, `ShowcaseSeeder`'ı, Kahve Konağı ekibini (sahip/müdür/personel, şifre `password`) ve askıdaki `eski-firin`'i oluşturur.
+- Abonelik: yeni `SubscriptionService::startComplimentary()` (yeni satır `active`, fiyat ve sağlayıcı yok, `current_period_ends_at = 2099-12-31 23:59:59 UTC`, event `complimentary_started`, `reason: showcase`). `null` bitiş tarihi kullanılmadı, çünkü `accessUntil()` null dönünce menü kapanıyor. Lifecycle bitiş tarihi gelmediği için dokunmuyor (2090'a zaman atlatılarak test edildi). subscriptions.md tablosuna eklendi.
+- İdempotent: var olan işletme (silinmiş dahil) atlanır; var olan `demo` planı **ezilmez** (admin'den düzenlenen limitler korunur; `premium_themes` kapatılırsa vitrin temaları kaydedilemez ve seed düşer).
+- Kahve Konağı'nın sabit QR kodları (`KNKM0DA001` vb.) kaldırıldı; artık rastgele üretiliyor (hiçbir test bunlara bağlı değildi). Mevcut yerel veritabanındaki işletmeler değişmedi (hâlâ 365 günlük trial); temiz bir `migrate:fresh --seed` ile complimentary aboneliğe geçerler.
+- Üyesiz işletme kontrolü: `/admin`, `/admin/plans`, `ops:health-check`, lifecycle komutu ve job'ı hatasız. `/app` dashboard'u üyelik gerektirdiği için bu işletmelere zaten erişilemez. **Faz 8:** `TenantResource` listesi ve detayında üyesi olmayan (vitrin) işletmeler görünecek; sahip sütunu boş olabilir. Askıya alma/slug değiştirme vitrin işletmelerini de etkiler (`config/marketing.php` → `showcase` slug'larına bağlı).
+- Testler: `tests/Feature/Marketing/ShowcaseSeederTest.php`; `ThemeShowcaseTest` artık `ShowcaseSeeder` ile seed ediyor.
 
 ## Faz 9: İki adımlı doğrulama (S)
 

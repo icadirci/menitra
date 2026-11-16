@@ -21,7 +21,7 @@ docker compose run --rm node npm run build
 ```
 
 - Site: http://localhost:37000. Mail catcher: http://localhost:8025.
-- Local seeding also creates demo tenants and users (`DemoSeeder`, password `password`).
+- Local seeding also creates demo tenants and users (`DemoSeeder`, password `password`); the theme showcase businesses come from `ShowcaseSeeder`, which `DemoSeeder` calls.
 - Grant yourself `/admin` access: `php artisan platform:assign-role you@example.com super_admin` (in the php-fpm container, as `www-data`).
 - Tests: `php artisan test` (sequential, about 2.5 minutes).
 
@@ -69,6 +69,11 @@ alias dc='docker compose -f docker-compose.prod.yml'
 # Only on the first deploy: PlanSeeder uses updateOrCreate and would overwrite
 # plans edited in /admin. Production seeding creates plans and FAQ, no demo data.
 dc exec -u www-data -e HOME=/tmp php-fpm php artisan db:seed --force
+
+# Theme showcase businesses for /temalar (no users, complimentary subscription
+# until 2099 on the non-public "demo" plan). Idempotent: existing businesses
+# and an existing "demo" plan are left untouched, so it is safe to run again.
+dc exec -u www-data -e HOME=/tmp php-fpm php artisan db:seed --class=ShowcaseSeeder --force
 ```
 
 The super admin needs an account first: register through the public site, then grant the role with `platform:assign-role` as above (`dc exec -u www-data -e HOME=/tmp php-fpm php artisan platform:assign-role ...`).
