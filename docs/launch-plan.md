@@ -21,7 +21,7 @@ Oturum kuralları:
 | 2 | Canlı ortam altyapısı (Compose, image, nginx, deploy) | M | ✅ 2026-11-16 |
 | 3 | E-posta | S | ✅ 2026-11-16 |
 | 4 | Yedekleme | M | ⬜ |
-| 5 | İzleme (Sentry, kontroller) | S | ⬜ |
+| 5 | İzleme (Sentry, kontroller) | S | ✅ 2026-11-16 |
 | 6 | Temalar vitrini için canlı seed | S | ⬜ |
 | 9 | İki adımlı doğrulama (MFA) | S | ⬜ |
 | 7 | Ekip yönetimi `/app` | L | ⬜ |
@@ -144,6 +144,21 @@ Bulgular: geliştirme Compose'unda Postgres `37004` portundan dışarı açık; 
 - **Kontrol komutu** (ör. `ops:health-check`, scheduler'da 15 dakikada bir): başarısız kuyruk işi sayısı, disk doluluğu (%85+), son yedeğin yaşı. Eşik aşılırsa platform e-postasına (site settings) mail; aynı uyarıyı saatte bir defadan sık gönderme.
 - **Kullanıcının adımı:** `/up` için dışarıdan uptime izleyicisi (UptimeRobot / Better Stack).
 - Testler: komutun eşikleri ve bildirim tekrar kısıtı.
+
+**Notlar (2026-11-16, tamamlandı):**
+- `sentry/sentry-laravel` **^4.30** kuruldu (kullanıcı onayıyla). `config/sentry.php` açık bir `data_collection` kullanıyor; bu seçenek verildiğinde SDK'nın kendi varsayılanları (kullanıcı bilgisi, istek gövdeleri, stack frame değişkenleri) gevşek, o yüzden her alan elle kapatıldı. Kullanıcı/IP, çerez, gövde, query string, SQL binding ve job payload gitmiyor; header'lar allow-list'te. Tracing, profiling, logs ve metrics kapalı. `send_default_pii` env ile açılamıyor.
+- `SentryEventScrubber` (`before_send`): `/reset-password/…`, `/email/verify/…`, `/invitations/…` yollarındaki token'ları `[redacted]` yapıyor ve event'e `tenant_id` tag'i ekliyor. **Faz 7:** davet route'u `/invitations/{token}` dışında bir yol kullanırsa scrubber'a ve `SentryPrivacyTest`'e eklenmeli.
+- `bootstrap/app.php`: `Sentry::handles($exceptions)` + `dontReport(MenuUnavailableException)`. Bu exception her offline menü açılışında loga düşüyordu (yerel logda 252 kayıt) ve Sentry'yi dolduracaktı; render davranışı değişmedi.
+- `ops:health-check` (`config/ops.php`, 15 dakikada bir, `withoutOverlapping` + `onOneServer`): başarısız işler (son uyarıdan bu yana `id` ile; her hata bir kez bildirilir, son görülen id Redis'te), `storage/` diskinin doluluğu, en yeni yedek dosyasının yaşı. Uyarılar senkron (`sendNow`) gidiyor, çünkü kontrol edilen şeylerden biri kuyruğun kendisi. `OpsAlertMail` mimari test gereği yine `ShouldQueue`. Her kontrol için `Cache::add` ile cooldown var; mail gönderilemezse cooldown geri alınıyor ve bir sonraki çalışmada tekrar deneniyor. Alıcı `OPS_ALERT_EMAIL`, boşsa site ayarlarındaki `contact_email`.
+- **Faz 4 için:** yedek kontrolü yazıldı ama kapalı (`OPS_BACKUP_CHECK=false`). Varsayılan yol `storage/app/private/backups` (alt klasörler dahil en yeni dosyaya bakar), eşik 26 saat. Yedekler çalışmaya başlayınca `.env`'de `OPS_BACKUP_CHECK=true` yapılmalı; yol farklıysa `OPS_BACKUP_PATH`. Yedek servisi hata verirse ayrı bir bildirim şart değil: yedek eskiyince bu kontrol yakalar.
+- **Faz 10 için:** Sentry tedarikçi listesine (ve yurt dışı aktarım bölümüne; Sentry'de AB veri bölgesi seçilebilir) eklenmeli.
+- `phpunit.xml`: `SENTRY_LARAVEL_DSN`, `OPS_ALERT_EMAIL` boş ve `OPS_BACKUP_CHECK=false`, böylece yerel `.env` testleri etkilemiyor. README'ye "Monitoring" bölümü, `.claude/rules/security.md`'ye "Monitoring" kuralları, overview teknoloji tablosuna ve CLAUDE.md §2'ye Sentry eklendi.
+- Yerel doğrulama: `config:cache` ile çalışıyor; disk eşiği 0 yapılınca gerçek uyarı Mailpit'e ulaştı, ikinci çalışmada cooldown devreye girdi.
+
+**Kullanıcının adımları:**
+1. Sentry hesabı ve Laravel projesi (mümkünse AB veri bölgesi); DSN'i sunucudaki `.env`'e `SENTRY_LARAVEL_DSN` olarak yaz, `scripts/deploy.sh` çalıştır. Sentry'de yeni issue için e-posta alarm kuralı kur.
+2. `.env`'e `OPS_ALERT_EMAIL` (yoksa site ayarlarındaki platform e-postası kullanılır).
+3. Dışarıdan uptime izleyicisi: `https://restano.app/up` (1–5 dk) ve bir public menü URL'si.
 
 ## Faz 6: Temalar vitrini için canlı seed (S)
 

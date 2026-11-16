@@ -7,6 +7,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Support\Facades\Route;
+use Sentry\Laravel\Integration as Sentry;
 use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
@@ -32,6 +33,13 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->append(SecurityHeaders::class);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
+        // Reported exceptions also go to Sentry (no-op without a DSN; see config/sentry.php).
+        Sentry::handles($exceptions);
+
+        // Expected state, not an error: every scan of an offline menu threw
+        // into the log. It is still rendered below.
+        $exceptions->dontReport(MenuUnavailableException::class);
+
         // Tenant hosts serve only GET menu routes: any other method is a 404
         // there (not 405), so central-only endpoints stay invisible.
         $exceptions->map(MethodNotAllowedHttpException::class, fn (MethodNotAllowedHttpException $exception) => strtolower(request()->getHost()) === strtolower((string) config('tenancy.central_domain'))

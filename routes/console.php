@@ -10,3 +10,6 @@ Artisan::command('inspire', function () {
 
 // Subscription lifecycle: trial/period end → grace → expired (docs/architecture/subscriptions.md).
 Schedule::command('subscriptions:process-lifecycle')->hourly()->withoutOverlapping()->onOneServer();
+
+// Failed jobs, disk usage, backup age → mail to the platform team (config/ops.php).
+Schedule::command('ops:health-check')->everyFifteenMinutes()->withoutOverlapping()->onOneServer();

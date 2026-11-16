@@ -33,7 +33,7 @@ Area-specific rules live in [.claude/rules/](.claude/rules/) (backend, frontend,
 
 ## 2. Technology Stack
 
-- **Backend:** PHP 8.4+, Laravel 12, PostgreSQL, Redis (cache, queue, session on separate DBs), Eloquent, Form Requests, Policies/Gates, Queues, **Laravel Fortify** (headless auth with our own Blade views for public registration, password reset and email verification), **Filament 5** (the `/admin` and `/app` panels only).
+- **Backend:** PHP 8.4+, Laravel 12, PostgreSQL, Redis (cache, queue, session on separate DBs), Eloquent, Form Requests, Policies/Gates, Queues, **Laravel Fortify** (headless auth with our own Blade views for public registration, password reset and email verification), **Filament 5** (the `/admin` and `/app` panels only), **Sentry** (`sentry/sentry-laravel`, error tracking without personal data).
 - **Frontend:** Blade (SSR), Tailwind CSS 4, Alpine.js (npm `alpinejs`, public site and QR menus only), Vite, vanilla JS when appropriate. Bundles: `app.css` + `app.js` (public site, auth); `menu-base.css` + one `themes/{key}.css` + `menu.js` (QR menus). Filament panels load none of them.
 - **Testing:** PHPUnit against a PostgreSQL test database.
 - **Livewire exception:** Livewire is installed **only as a Filament dependency** and is used only inside the `/admin` and `/app` panels. Never build Livewire components, or load Livewire assets, in the marketing site, auth pages or public QR menus. Those stay Blade + Tailwind + Alpine.

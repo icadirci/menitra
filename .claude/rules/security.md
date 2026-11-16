@@ -77,3 +77,9 @@
 ## Queues and cache
 - Jobs run with the tenant context restored from the payload and cleared afterwards.
 - Never cache user-specific or authorization-sensitive data in shared keys.
+
+## Monitoring
+- Sentry receives errors only and never personal data: `config/sentry.php` sets `data_collection` explicitly (no user info or IP, no cookies, no request/response bodies, no query strings, allow-listed request headers, no SQL bindings, no stack frame variables, no job payloads); tracing, profiling, logs and metrics stay off. Don't loosen these or enable `send_default_pii`.
+- URL paths that carry secrets (`/reset-password/{token}`, `/email/verify/{id}/{hash}`, `/invitations/{token}`) are redacted by `SentryEventScrubber`; a new route with a secret in its path is added there (and to `SentryPrivacyTest`).
+- Never attach user, tenant content or request data to Sentry manually (`setUser`, `setContext`, `setExtra`); the internal `tenant_id` tag is the only tenant reference.
+- Ops alert mails (`ops:health-check`) contain system state only, never tenant or user data.

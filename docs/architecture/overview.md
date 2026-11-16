@@ -45,6 +45,7 @@ A multi-tenant SaaS platform for cafes, restaurants, bakeries and other hospital
 | Admin / business UI | Filament 5 panels (`admin`, `app`) using Filament's native design system |
 | Frontend | Blade (SSR), Tailwind CSS 4, Alpine.js, Vite |
 | Tests | PHPUnit on a PostgreSQL test database |
+| Monitoring | Sentry (`sentry/sentry-laravel`, approved 2026-11-16): errors only, no personal data (`config/sentry.php`); `ops:health-check` every 15 minutes (failed jobs, disk, backups) mails the platform team; external uptime check on `/up` (README § Monitoring) |
 | Local environment | Docker Compose (`php-fpm` PHP 8.5, nginx, PostgreSQL 15, Redis) — see CLAUDE.md §9 |
 
 Not used: React, Vue, Next, Nuxt, Inertia, Bootstrap, jQuery, Laravel starter kits, tenancy packages, translation packages, roles/permissions packages, Filament plugins. **Livewire** is present only as a Filament dependency and is used only inside the panels; the marketing site, auth pages and QR menus never use it. Any new dependency requires approval.
