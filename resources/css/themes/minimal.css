@@ -673,3 +673,8 @@
         padding-top: 14px;
     }
 }
+
+/* Category cards (shared markup in menu-base.css) take the theme's corner style. */
+[data-theme='minimal'] {
+    --menu-tile-radius: 4px;
+}

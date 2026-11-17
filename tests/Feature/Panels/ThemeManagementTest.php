@@ -197,6 +197,7 @@ class ThemeManagementTest extends TestCase
             ->set('data.settings.font_pair', MenuFontPair::BricolageInter->value)
             ->set('data.settings.layout.show_images', false)
             ->set('data.settings.layout.image_shape', 'rounded')
+            ->set('data.settings.layout.category_layout', 'tiles')
             ->call('save')
             ->assertHasNoErrors()
             ->assertNotified(__('panels.app.theme.saved'));
@@ -204,7 +205,7 @@ class ThemeManagementTest extends TestCase
         $stored = $this->storedSettings(MenuTheme::Classic);
         $this->assertSame('#1A3A30', $stored['colors']['primary']);
         $this->assertSame('bricolage_inter', $stored['font_pair']);
-        $this->assertEquals(['show_images' => false, 'show_featured' => true, 'image_shape' => 'rounded'], $stored['layout']);
+        $this->assertEquals(['show_images' => false, 'show_featured' => true, 'image_shape' => 'rounded', 'category_layout' => 'tiles'], $stored['layout']);
     }
 
     public function test_invalid_values_and_low_contrast_are_rejected_on_the_server(): void
@@ -218,6 +219,7 @@ class ThemeManagementTest extends TestCase
             'settings.colors.text' => $this->settings(MenuTheme::Classic, ['text' => '#DDDDDD']),
             'settings.font_pair' => $this->settings(MenuTheme::Classic, extra: ['font_pair' => 'comic_sans']),
             'settings.layout.image_shape' => $this->settings(MenuTheme::Classic, extra: ['layout' => ['image_shape' => 'circle']]),
+            'settings.layout.category_layout' => $this->settings(MenuTheme::Classic, extra: ['layout' => ['category_layout' => 'carousel']]),
         ];
 
         foreach ($cases as $key => $settings) {
@@ -265,13 +267,14 @@ class ThemeManagementTest extends TestCase
         $settings = ThemeSettings::fromStored(MenuTheme::Classic, [
             'colors' => ['primary' => 'not-a-colour'],
             'font_pair' => MenuFontPair::System->value,
-            'layout' => ['show_images' => false, 'image_shape' => 'hexagon'],
+            'layout' => ['show_images' => false, 'image_shape' => 'hexagon', 'category_layout' => 'carousel'],
         ]);
 
         $this->assertSame(MenuTheme::Classic->defaults()['colors'], $settings->colors);
         $this->assertSame(MenuFontPair::System, $settings->fontPair);
         $this->assertFalse($settings->option('show_images'));
         $this->assertSame('arch', $settings->option('image_shape'));
+        $this->assertFalse($settings->categoryTiles());
         $this->assertStringContainsString('--menu-font-body:'.MenuFontPair::System->body().';', $settings->cssVariables());
     }
 

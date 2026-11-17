@@ -781,3 +781,8 @@
         font-size: 12.5px;
     }
 }
+
+/* Category cards (shared markup in menu-base.css) take the theme's corner style. */
+[data-theme='grid'] {
+    --menu-tile-radius: 22px;
+}

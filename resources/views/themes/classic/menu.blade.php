@@ -1,7 +1,7 @@
 {{--
     Classic theme — menu page. Design reference: docs/design/source/MenuKonak + DetailKonak.
     Inputs: $menu (MenuSnapshot), $live (LiveMenuState), $theme (ThemeSettings). No other data source.
-    Layout options ($theme->option()): show_images, show_featured, image_shape (arch | rounded).
+    Layout options ($theme->option()): category_layout (list | tiles, via $theme->categoryTiles()), show_images, show_featured, image_shape (arch | rounded).
 --}}
 @extends('layouts.menu')
 
@@ -9,7 +9,7 @@
 @section('description', \Illuminate\Support\Str::limit((string) $menu->brand->description, 160))
 
 @section('content')
-    <div class="k-page k-page--{{ $theme->option('image_shape') === 'rounded' ? 'rounded' : 'arch' }}" x-data="menuPage" data-search="{{ collect($menu->menu->categories)->flatMap(fn ($c) => $c->items)->map(fn ($i) => mb_strtolower($i->name.' '.$i->description))->implode('|') }}">
+    <div class="k-page k-page--{{ $theme->option('image_shape') === 'rounded' ? 'rounded' : 'arch' }}" x-data="menuPage({{ $theme->categoryTiles() ? 'true' : 'false' }})" data-search="{{ collect($menu->menu->categories)->flatMap(fn ($c) => $c->items)->map(fn ($i) => mb_strtolower($i->name.' '.$i->description))->implode('|') }}">
         @include('themes.classic.partials.header')
         @include('themes.classic.partials.info')
 
@@ -32,7 +32,7 @@
                 <span class="sr-only">{{ __('menu.search') }}</span>
                 <input type="search" x-model.debounce.150ms="query" placeholder="{{ __('menu.search_placeholder') }}" autocomplete="off" enterkeyhint="search">
             </label>
-            @if (count($menu->menu->categories) > 1)
+            @if (count($menu->menu->categories) > 1 && ! $theme->categoryTiles())
                 <nav class="k-cats" aria-label="{{ __('menu.categories') }}" x-show="query === ''">
                     @foreach ($menu->menu->categories as $category)
                         <a href="#{{ $category->anchor }}">{{ $category->name }}</a>
@@ -41,8 +41,12 @@
             @endif
         </div>
 
+        @if ($theme->categoryTiles())
+            <x-menu.category-tiles :categories="$menu->menu->categories" />
+        @endif
+
         @if ($menu->menu->featured !== [] && $theme->option('show_featured') !== false)
-            <section class="k-featured" x-show="query === ''" aria-labelledby="k-featured-title">
+            <section class="k-featured" x-show="query === '' && cat === null" aria-labelledby="k-featured-title">
                 <div class="k-heading"><h2 id="k-featured-title">{{ __('menu.featured') }}</h2><span aria-hidden="true"></span></div>
                 <ul class="k-featured__list">
                     @foreach ($menu->menu->featured as $item)
@@ -64,7 +68,7 @@
         @endif
 
         @forelse ($menu->menu->categories as $category)
-            <section id="{{ $category->anchor }}" class="k-section" x-show="matches($el.dataset.search)"
+            <section id="{{ $category->anchor }}" class="k-section" x-show="visible($el)" @if ($theme->categoryTiles()) x-cloak @endif
                      data-search="{{ collect($category->items)->map(fn ($i) => mb_strtolower($i->name.' '.$i->description))->implode('|') }}">
                 <div class="k-section__head">
                     @include('themes.classic.partials.star')

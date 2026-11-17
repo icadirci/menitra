@@ -756,3 +756,8 @@
         justify-content: center;
     }
 }
+
+/* Category cards (shared markup in menu-base.css) take the theme's corner style. */
+[data-theme='bistro'] {
+    --menu-tile-radius: 2px;
+}

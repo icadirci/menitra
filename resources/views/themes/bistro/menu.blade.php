@@ -1,7 +1,7 @@
 {{--
     Bistro theme — menu page. Design reference: docs/design/source/MenuArdoise + DetailArdoise.
     Inputs: $menu (MenuSnapshot), $live (LiveMenuState), $theme (ThemeSettings). No other data source.
-    Layout options ($theme->option()): show_images, show_featured.
+    Layout options ($theme->option()): category_layout (list | tiles, via $theme->categoryTiles()), show_images, show_featured.
 --}}
 @extends('layouts.menu')
 
@@ -9,7 +9,7 @@
 @section('description', \Illuminate\Support\Str::limit((string) $menu->brand->description, 160))
 
 @section('content')
-    <div class="b-page" x-data="menuPage" data-search="{{ collect($menu->menu->categories)->flatMap(fn ($c) => $c->items)->map(fn ($i) => mb_strtolower($i->name.' '.$i->description))->implode('|') }}">
+    <div class="b-page" x-data="menuPage({{ $theme->categoryTiles() ? 'true' : 'false' }})" data-search="{{ collect($menu->menu->categories)->flatMap(fn ($c) => $c->items)->map(fn ($i) => mb_strtolower($i->name.' '.$i->description))->implode('|') }}">
         @include('themes.bistro.partials.header')
 
         @if (count($menu->menus) > 1)
@@ -31,7 +31,7 @@
                 <span class="menu-sr">{{ __('menu.search') }}</span>
                 <input type="search" x-model.debounce.150ms="query" placeholder="{{ __('menu.search_placeholder') }}" autocomplete="off" enterkeyhint="search">
             </label>
-            @if (count($menu->menu->categories) > 1)
+            @if (count($menu->menu->categories) > 1 && ! $theme->categoryTiles())
                 <nav class="b-cats" aria-label="{{ __('menu.categories') }}" x-show="query === ''">
                     @foreach ($menu->menu->categories as $category)
                         <a href="#{{ $category->anchor }}">{{ $category->name }}</a>
@@ -40,8 +40,12 @@
             @endif
         </div>
 
+        @if ($theme->categoryTiles())
+            <x-menu.category-tiles :categories="$menu->menu->categories" />
+        @endif
+
         @if ($menu->menu->featured !== [] && $theme->option('show_featured') !== false)
-            <section class="b-featured" x-show="query === ''" aria-labelledby="b-featured-title">
+            <section class="b-featured" x-show="query === '' && cat === null" aria-labelledby="b-featured-title">
                 <h2 id="b-featured-title" class="menu-sr">{{ __('menu.featured') }}</h2>
                 @foreach ($menu->menu->featured as $item)
                     <button type="button" class="b-signature" @click="show('{{ $item->publicId }}')" aria-haspopup="dialog">
@@ -66,7 +70,7 @@
         @endif
 
         @forelse ($menu->menu->categories as $category)
-            <section id="{{ $category->anchor }}" class="b-section" x-show="matches($el.dataset.search)"
+            <section id="{{ $category->anchor }}" class="b-section" x-show="visible($el)" @if ($theme->categoryTiles()) x-cloak @endif
                      data-search="{{ collect($category->items)->map(fn ($i) => mb_strtolower($i->name.' '.$i->description))->implode('|') }}">
                 <div class="b-rule"><span aria-hidden="true"></span><h2>{{ $category->name }}</h2><span aria-hidden="true"></span></div>
                 @if ($category->description)

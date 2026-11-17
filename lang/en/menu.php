@@ -52,6 +52,7 @@ return [
     'search_placeholder' => 'Search the menu…',
     'no_results' => 'No items match your search.',
     'categories' => 'Categories',
+    'all_categories' => 'All categories',
     'featured' => 'Featured',
     'popular' => 'Popular',
     'from_price' => 'from :price',

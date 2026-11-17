@@ -52,6 +52,7 @@ return [
     'search_placeholder' => 'ابحث في القائمة…',
     'no_results' => 'لا توجد أصناف تطابق بحثك.',
     'categories' => 'الأقسام',
+    'all_categories' => 'كل الأقسام',
     'featured' => 'مميز',
     'popular' => 'الأكثر طلبًا',
     'from_price' => 'ابتداءً من :price',

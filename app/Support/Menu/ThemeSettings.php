@@ -92,6 +92,15 @@ final readonly class ThemeSettings
     }
 
     /**
+     * Categories as a grid of cards (layout option `category_layout` = `tiles`)
+     * instead of one long list.
+     */
+    public function categoryTiles(): bool
+    {
+        return $this->option('category_layout') === 'tiles';
+    }
+
+    /**
      * CSS declarations for the menu root element, e.g. "--menu-primary:#23443A;".
      */
     public function cssVariables(): string

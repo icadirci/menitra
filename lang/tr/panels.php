@@ -308,10 +308,12 @@ return [
                 'show_featured' => 'Öne çıkanlar bölümü',
                 'image_shape' => 'Görsel biçimi',
                 'card_ratio' => 'Kart biçimi',
+                'category_layout' => 'Kategori görünümü',
             ],
             'layout_choices' => [
                 'image_shape' => ['arch' => 'Kemerli', 'rounded' => 'Yuvarlatılmış köşe'],
                 'card_ratio' => ['square' => 'Kare', 'portrait' => 'Dikey'],
+                'category_layout' => ['list' => 'Liste (tüm kategoriler tek sayfada)', 'tiles' => 'Kategori kartları (dokununca açılır)'],
             ],
             'location_field' => 'Tema',
             'location_field_help' => 'Boş bırakılırsa işletmenin teması kullanılır. Renk ve yazı tipi ayarları Tema ve görünüm sayfasından gelir.',

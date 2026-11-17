@@ -308,10 +308,12 @@ return [
                 'show_featured' => 'Featured section',
                 'image_shape' => 'Image shape',
                 'card_ratio' => 'Card shape',
+                'category_layout' => 'Category display',
             ],
             'layout_choices' => [
                 'image_shape' => ['arch' => 'Arched', 'rounded' => 'Rounded corners'],
                 'card_ratio' => ['square' => 'Square', 'portrait' => 'Portrait'],
+                'category_layout' => ['list' => 'List (all categories on one page)', 'tiles' => 'Category cards (tap to open)'],
             ],
             'location_field' => 'Theme',
             'location_field_help' => 'Leave empty to use the business theme. Colours and fonts come from the Theme & appearance page.',

@@ -1,7 +1,7 @@
 {{--
     Gallery (grid) theme — menu page. Design reference: docs/design/source/MenuPetal + DetailPetal.
     Inputs: $menu (MenuSnapshot), $live (LiveMenuState), $theme (ThemeSettings). No other data source.
-    Layout options ($theme->option()): show_featured, card_ratio (square | portrait).
+    Layout options ($theme->option()): category_layout (list | tiles, via $theme->categoryTiles()), show_featured, card_ratio (square | portrait).
 --}}
 @extends('layouts.menu')
 
@@ -9,7 +9,7 @@
 @section('description', \Illuminate\Support\Str::limit((string) $menu->brand->description, 160))
 
 @section('content')
-    <div class="g-page g-page--{{ $theme->option('card_ratio') === 'portrait' ? 'portrait' : 'square' }}" x-data="menuPage" data-search="{{ collect($menu->menu->categories)->flatMap(fn ($c) => $c->items)->map(fn ($i) => mb_strtolower($i->name.' '.$i->description))->implode('|') }}">
+    <div class="g-page g-page--{{ $theme->option('card_ratio') === 'portrait' ? 'portrait' : 'square' }}" x-data="menuPage({{ $theme->categoryTiles() ? 'true' : 'false' }})" data-search="{{ collect($menu->menu->categories)->flatMap(fn ($c) => $c->items)->map(fn ($i) => mb_strtolower($i->name.' '.$i->description))->implode('|') }}">
         @include('themes.grid.partials.header')
 
         @if (count($menu->menus) > 1)
@@ -31,7 +31,7 @@
                 <span class="menu-sr">{{ __('menu.search') }}</span>
                 <input type="search" x-model.debounce.150ms="query" placeholder="{{ __('menu.search_placeholder') }}" autocomplete="off" enterkeyhint="search">
             </label>
-            @if (count($menu->menu->categories) > 1)
+            @if (count($menu->menu->categories) > 1 && ! $theme->categoryTiles())
                 <nav class="g-chips" aria-label="{{ __('menu.categories') }}" x-show="query === ''">
                     @foreach ($menu->menu->categories as $category)
                         <a href="#{{ $category->anchor }}"><span aria-hidden="true"></span>{{ $category->name }}</a>
@@ -40,8 +40,12 @@
             @endif
         </div>
 
+        @if ($theme->categoryTiles())
+            <x-menu.category-tiles :categories="$menu->menu->categories" />
+        @endif
+
         @if ($menu->menu->featured !== [] && $theme->option('show_featured') !== false)
-            <section class="g-featured" x-show="query === ''" aria-labelledby="g-featured-title">
+            <section class="g-featured" x-show="query === '' && cat === null" aria-labelledby="g-featured-title">
                 <h2 id="g-featured-title">{{ __('menu.featured') }}</h2>
                 <ul class="g-featured__list">
                     @foreach ($menu->menu->featured as $item)
@@ -65,7 +69,7 @@
         @endif
 
         @forelse ($menu->menu->categories as $category)
-            <section id="{{ $category->anchor }}" class="g-section" x-show="matches($el.dataset.search)"
+            <section id="{{ $category->anchor }}" class="g-section" x-show="visible($el)" @if ($theme->categoryTiles()) x-cloak @endif
                      data-search="{{ collect($category->items)->map(fn ($i) => mb_strtolower($i->name.' '.$i->description))->implode('|') }}">
                 <h2>{{ $category->name }}</h2>
                 @if ($category->description)

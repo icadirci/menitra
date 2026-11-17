@@ -113,6 +113,29 @@ class ThemeIndependenceTest extends TestCase
         $this->assertSame(0, $queries);
     }
 
+    public function test_every_theme_offers_category_cards_and_keeps_the_list_by_default(): void
+    {
+        $snapshot = $this->snapshot();
+        $live = LiveMenuState::for($snapshot->location, CarbonImmutable::parse('2026-11-16 10:00', 'Europe/Istanbul'));
+
+        foreach (MenuTheme::cases() as $theme) {
+            $defaults = $theme->defaults();
+            $this->assertSame('list', $defaults['layout']['category_layout'], "{$theme->value} must default to the list.");
+
+            // Settings saved before the option existed render as the list.
+            $list = view($theme->view(), ['menu' => $snapshot, 'live' => $live, 'theme' => ThemeSettings::fromStored($theme, ['layout' => array_diff_key($defaults['layout'], ['category_layout' => true])] + $defaults)])->render();
+            $this->assertStringNotContainsString('menu-tiles', $list, "{$theme->value} shows category cards in list mode.");
+            $this->assertStringContainsString('menuPage(false)', $list);
+
+            $tiles = view($theme->view(), ['menu' => $snapshot, 'live' => $live, 'theme' => ThemeSettings::fromStored($theme, ['layout' => ['category_layout' => 'tiles'] + $defaults['layout']] + $defaults)])->render();
+            $this->assertStringContainsString('menuPage(true)', $tiles);
+            $this->assertStringContainsString('data-tile="c1"', $tiles, "{$theme->value} ignores category_layout.");
+            $this->assertStringContainsString(__('menu.all_categories'), $tiles);
+            // Items are still rendered (shown per category on the client).
+            $this->assertStringContainsString('Türk Kahvesi', $tiles);
+        }
+    }
+
     public function test_every_theme_stylesheet_declares_the_fonts_it_offers(): void
     {
         $families = [

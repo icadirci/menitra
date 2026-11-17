@@ -53,6 +53,7 @@ return [
     'search_placeholder' => 'Menüde ara…',
     'no_results' => 'Aramanızla eşleşen ürün yok.',
     'categories' => 'Kategoriler',
+    'all_categories' => 'Tüm kategoriler',
     'featured' => 'Öne çıkanlar',
     'popular' => 'Popüler',
     'from_price' => ':price’den başlayan',

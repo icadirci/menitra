@@ -778,3 +778,8 @@
         text-transform: uppercase;
     }
 }
+
+/* Category cards (shared markup in menu-base.css) take the theme's corner style. */
+[data-theme='cafe'] {
+    --menu-tile-radius: 18px;
+}

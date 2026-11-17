@@ -159,10 +159,11 @@ To override a component, a theme places a variant in `themes/{key}/components/` 
   {"colors": {"primary": "#23443A", "accent": "#9C4A2F", "bg": "#F4EBDD", "surface": "#FBF5EA",
               "text": "#2B1D16", "muted": "#6B5446", "ornament": "#C49A45"},
    "font_pair": "young_serif_figtree",
-   "layout": {"show_images": true, "show_featured": true, "image_shape": "arch"}}
+   "layout": {"show_images": true, "show_featured": true, "image_shape": "arch", "category_layout": "list"}}
   ```
 
 - Layout options are per theme (see the [registry](#theme-registry)). `classic`: `show_images` (pictures in the item list), `show_featured` (featured strip), `image_shape` (`arch` | `rounded`); `grid`: `card_ratio` (`square` | `portrait`) instead of `show_images`, since it is photo-first (items without a picture get a pastel placeholder).
+- **Category display (`category_layout`, every theme, added 2026-11-17):** `list` (default — all categories on one page with the category bar, the original behaviour) or `tiles` (the page starts with a two-column grid of category cards using the category picture with a dark overlay, or the theme's `primary`/`surface` without one; a tap shows only that category's items with an "All categories" button). The cards are the shared component `x-menu.category-tiles` styled in `menu-base.css` (themes only set `--menu-tile-radius`); the switching is client-side in `menuPage` (`#c{id}` is a history entry, so the phone's back button returns to the cards; a search always covers every category). Settings stored before the option existed, or holding an unknown value, render as `list`. Theme views read it through `ThemeSettings::categoryTiles()`.
 - Mobile-first: every theme must work at 320px wide and with large text settings.
 
 ## Enforcing independence

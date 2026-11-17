@@ -168,6 +168,99 @@ span.menu-flip-rtl {
     color: inherit;
 }
 
+/* Category cards (layout option category_layout = tiles, all themes).
+ * Pictures get a dark overlay so the white name stays readable; cards without
+ * a picture use primary/surface (a pair the contrast check covers). */
+.menu-tiles {
+    padding: 14px 16px 6px;
+}
+
+.menu-tiles__grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.menu-tile {
+    position: relative;
+    isolation: isolate;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    aspect-ratio: 4 / 3;
+    overflow: hidden;
+    border-radius: var(--menu-tile-radius, 12px);
+    background: var(--menu-primary, #1c1917);
+    color: var(--menu-surface, #ffffff);
+    text-decoration: none;
+}
+
+.menu-tile img {
+    position: absolute;
+    inset: 0;
+    z-index: -2;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.35s ease;
+}
+
+.menu-tile--image {
+    color: #ffffff;
+}
+
+.menu-tile--image::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: rgb(0 0 0 / 0.45);
+}
+
+.menu-tile__name {
+    padding: 8px 10px;
+    font-family: var(--menu-font-heading, inherit);
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 1.2;
+    letter-spacing: 0.06em;
+    text-align: center;
+    text-transform: uppercase;
+    overflow-wrap: anywhere;
+}
+
+.menu-tile--image .menu-tile__name {
+    text-shadow: 0 1px 3px rgb(0 0 0 / 0.55);
+}
+
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+    .menu-tile:hover img {
+        transform: scale(1.05);
+    }
+}
+
+.menu-tiles-bar {
+    padding: 14px 16px 0;
+}
+
+.menu-tiles-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    border: 1px solid color-mix(in srgb, var(--menu-text, #1c1917) 22%, transparent);
+    border-radius: 999px;
+    background: var(--menu-surface, #ffffff);
+    color: var(--menu-text, #1c1917);
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+    scroll-margin-top: 96px;
+}
+
 /* Location index (all themes) */
 .menu-index {
     position: relative;
