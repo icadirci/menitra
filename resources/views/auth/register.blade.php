@@ -52,6 +52,22 @@
                     />
                     <x-ui.field name="password" type="password" :label="__('auth.fields.password')" autocomplete="new-password" required />
                     <x-ui.field name="password_confirmation" type="password" :label="__('auth.fields.password_confirmation')" autocomplete="new-password" required />
+                    @php
+                        $startChoice = old('start', 'trial');
+                        $trialDays = ($selectedPlan ?? null)?->trialDays() ?? (int) config('subscriptions.trial_days');
+                    @endphp
+                    <fieldset class="flex flex-col gap-2.5">
+                        <legend class="mb-2 text-[15px] font-semibold text-ink">{{ __('billing.register.start') }}</legend>
+                        @foreach (['trial' => [__('billing.register.trial', ['days' => $trialDays]), __('billing.register.trial_help')], 'pay' => [__('billing.register.pay_now'), __('billing.register.pay_now_help')]] as $value => [$title, $help])
+                            <label class="flex cursor-pointer items-start gap-3 rounded-input border border-line-strong px-4 py-3 has-[:checked]:border-forest-700 has-[:checked]:bg-forest-100/40">
+                                <input type="radio" name="start" value="{{ $value }}" class="mt-1 size-4 shrink-0 accent-forest-700" @checked($startChoice === $value)>
+                                <span class="flex flex-col gap-0.5">
+                                    <span class="text-[15px] font-semibold text-ink">{{ $title }}</span>
+                                    <span class="text-[13px] text-muted">{{ $help }}</span>
+                                </span>
+                            </label>
+                        @endforeach
+                    </fieldset>
                     <x-ui.terms-consent />
 
                     <x-ui.button size="lg" class="mt-1 w-full">{{ __('auth.register.submit') }}</x-ui.button>

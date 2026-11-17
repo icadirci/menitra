@@ -4,39 +4,41 @@ declare(strict_types=1);
 
 namespace App\Contracts;
 
-use App\Enums\SubscriptionStatus;
-use App\Models\PlanPrice;
-use App\Models\Subscription;
-use App\Models\Tenant;
+use App\Exceptions\PaymentGatewayException;
+use App\Support\Billing\CheckoutRequest;
+use App\Support\Billing\CheckoutResult;
+use App\Support\Billing\CheckoutSession;
+use App\Support\Billing\WebhookNotification;
 use Illuminate\Http\Request;
-use Symfony\Component\HttpFoundation\Response;
 
 /**
- * Provider-agnostic payment boundary (docs/architecture/subscriptions.md
- * § Payment architecture). No implementation exists yet; the adapter (iyzico)
- * comes with the payment phase and translates provider events into
- * SubscriptionService calls (activate, renew, markPastDue, resubscribe).
- * Lifecycle logic never lives in an adapter.
+ * Provider boundary for manual period payments (docs/architecture/subscriptions.md
+ * § Payments). The adapter (IyzicoGateway) only talks to the provider and
+ * verifies its signatures; amounts, periods and subscription transitions are
+ * decided by CheckoutService / PaymentProcessor and SubscriptionService.
  */
 interface PaymentGateway
 {
-    /**
-     * Starts a checkout for the price and returns the URL the customer is sent to.
-     */
-    public function createCheckout(Tenant $tenant, PlanPrice $price, string $returnUrl): string;
+    public function name(): string;
 
     /**
-     * Stops renewal at the provider (the period runs out; SubscriptionService::cancel()).
+     * Starts a hosted checkout and returns the page the customer is sent to.
+     *
+     * @throws PaymentGatewayException
      */
-    public function cancel(Subscription $subscription): void;
+    public function initializeCheckout(CheckoutRequest $request): CheckoutSession;
 
     /**
-     * Verifies a provider webhook and applies it through SubscriptionService.
+     * The provider's verified result for a checkout token. Never trust
+     * anything posted by the browser; this is the only source of truth.
+     *
+     * @throws PaymentGatewayException
      */
-    public function handleWebhook(Request $request): Response;
+    public function retrieveCheckout(string $token): CheckoutResult;
 
     /**
-     * The provider's view of the subscription, for reconciliation.
+     * Verifies a webhook notification; null when its signature is invalid or
+     * it isn't a checkout notification.
      */
-    public function fetchStatus(Subscription $subscription): SubscriptionStatus;
+    public function parseWebhook(Request $request): ?WebhookNotification;
 }

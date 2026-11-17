@@ -27,6 +27,7 @@ final readonly class AccountSummary
         public array $branches,
         public ?string $contactUrl = null,
         public ?ContactDetails $support = null,
+        public ?string $paymentUrl = null,
     ) {}
 
     /**

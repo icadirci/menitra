@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services\Account;
 
 use App\Enums\SubscriptionStatus;
+use App\Filament\App\Pages\Checkout;
 use App\Models\Location;
 use App\Models\QrCode;
 use App\Models\Subscription;
@@ -59,6 +60,7 @@ final class AccountOverview
             branches: $this->branches($user, $membership, $isOwner),
             contactUrl: $isOwner && ! $online ? MarketingUrl::to('contact') : null,
             support: $isOwner && ! $online ? $this->marketing->contactDetails() : null,
+            paymentUrl: $isOwner ? Checkout::getUrl(panel: 'app', tenant: $tenant) : null,
         );
     }
 

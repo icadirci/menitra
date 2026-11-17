@@ -12,6 +12,7 @@ use App\Filament\Admin\Resources\Tenants\Pages\ListTenants;
 use App\Filament\Admin\Resources\Tenants\Pages\ViewTenant;
 use App\Filament\Admin\Resources\Tenants\RelationManagers\LocationsRelationManager;
 use App\Filament\Admin\Resources\Tenants\RelationManagers\MembersRelationManager;
+use App\Filament\Admin\Resources\Tenants\RelationManagers\PaymentsRelationManager;
 use App\Filament\Admin\Resources\Tenants\RelationManagers\SubscriptionEventsRelationManager;
 use App\Models\Plan;
 use App\Models\Subscription;
@@ -201,6 +202,7 @@ class TenantResource extends Resource
             MembersRelationManager::class,
             LocationsRelationManager::class,
             SubscriptionEventsRelationManager::class,
+            PaymentsRelationManager::class,
         ];
     }
 

@@ -37,13 +37,14 @@ return [
     'grace' => [
         'title' => 'You are in your grace period',
         'body' => 'Your trial or subscription period has ended. Your menu stays online until :date; after that your guests will no longer see it.',
-        'action' => 'Contact us to avoid an interruption.',
+        'action' => 'Pay now to avoid an interruption.',
     ],
 
     'expired' => [
         'title' => 'Your menu is offline',
         'body' => 'Your menu is not shown to guests because you have no active subscription. All your data, including menus, items and QR codes, is kept safe.',
-        'reactivate' => 'Contact us to bring your menu back online.',
+        'reactivate' => 'Pay to bring your menu back online; contact us if you have any questions.',
+        'pay' => 'Pay now',
         'contact' => 'Contact page',
         'email' => 'Email',
         'phone' => 'Phone',

@@ -28,11 +28,20 @@ return [
         'no_subscription' => 'Abonelik yok',
         'members' => 'Üyeler',
         'locations' => 'Şubeler',
+        'payments' => [
+            'title' => 'Ödemeler',
+            'created_at' => 'Tarih',
+            'amount' => 'Tutar',
+            'interval' => 'Dönem',
+            'receipt' => 'Makbuz',
+            'provider_reference' => 'iyzico ödeme no',
+            'failure' => 'Hata kodu',
+        ],
         'subscription_events' => 'Abonelik geçmişi',
         'sections' => [
             'general' => 'Genel',
             'subscription' => 'Abonelik',
-            'subscription_help' => 'Salt okunur. Abonelik değişiklikleri ödeme altyapısıyla gelecek.',
+            'subscription_help' => 'Salt okunur. Ödemeler sahibinin /app üzerinden yaptığı iyzico ödemeleriyle işlenir; iadeler iyzico panelinden yapılır.',
         ],
         'fields' => [
             'name' => 'Ad',

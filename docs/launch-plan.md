@@ -10,7 +10,9 @@ Oturum kuralları:
 - Faz bitince aşağıdaki durum tablosunu güncelle ve bulduğun yeni bilgileri ilgili faz bölümüne kısa not olarak ekle.
 - "Sorulacak" diye işaretli konularda kod yazmadan önce kullanıcıya sor.
 
-**Kapsam dışı (ayrı iş):** ödeme / iyzico ve ücretli aboneliğin elle aktivasyonu (`SubscriptionService::activate()`, `renew()`, `resubscribe()` hiçbir yerden çağrılmıyor), proxy / HTTPS (`trustProxies`, SSL sonlandırma, HSTS).
+**Ödeme (2026-11-18, yapıldı):** iyzico Checkout Form ile dönemlik manuel ödeme, kayıtta "hemen öde", makbuz, hatırlatma mailleri, webhook ve mutabakat; ayrıntılar [subscriptions.md § Payments](architecture/subscriptions.md#payments). Canlıya çıkış için kullanıcı kontrol listesi orada.
+
+**Kapsam dışı (ayrı iş):** otomatik tekrarlı çekim, kıst hesabı, e-Arşiv entegrasyonu, proxy / HTTPS (`trustProxies`, SSL sonlandırma, HSTS).
 
 ## Durum
 

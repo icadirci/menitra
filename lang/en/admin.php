@@ -28,11 +28,20 @@ return [
         'no_subscription' => 'No subscription',
         'members' => 'Members',
         'locations' => 'Branches',
+        'payments' => [
+            'title' => 'Payments',
+            'created_at' => 'Date',
+            'amount' => 'Amount',
+            'interval' => 'Period',
+            'receipt' => 'Receipt',
+            'provider_reference' => 'iyzico payment ID',
+            'failure' => 'Error code',
+        ],
         'subscription_events' => 'Subscription history',
         'sections' => [
             'general' => 'General',
             'subscription' => 'Subscription',
-            'subscription_help' => 'Read-only. Subscription changes come with the payment integration.',
+            'subscription_help' => 'Read-only. Payments are applied from the owner\'s iyzico payments in /app; refunds are made in the iyzico panel.',
         ],
         'fields' => [
             'name' => 'Name',

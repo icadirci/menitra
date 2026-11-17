@@ -26,6 +26,9 @@ class TenantScopeBypassTest extends TestCase
         'app/Services/Menu/QrCodeResolver.php' => 'the QR code identifies the tenant',
         'app/Services/Team/InvitationTokenResolver.php' => 'the invitation token identifies the tenant',
         'app/Console/Commands/ProcessSubscriptionLifecycle.php' => 'TenantAgnostic command',
+        'app/Services/Billing/PaymentTokenResolver.php' => 'the provider checkout token identifies the tenant',
+        'app/Console/Commands/ReconcilePayments.php' => 'TenantAgnostic command',
+        'app/Console/Commands/SendBillingReminders.php' => 'TenantAgnostic command',
     ];
 
     /**

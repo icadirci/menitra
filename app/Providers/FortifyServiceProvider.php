@@ -6,12 +6,14 @@ namespace App\Providers;
 
 use App\Actions\Fortify\CreateNewUser;
 use App\Actions\Fortify\ResetUserPassword;
+use App\Http\Responses\RegisteredResponse;
 use App\Models\Plan;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
+use Laravel\Fortify\Contracts\RegisterResponse;
 use Laravel\Fortify\Fortify;
 
 class FortifyServiceProvider extends ServiceProvider
@@ -21,6 +23,9 @@ class FortifyServiceProvider extends ServiceProvider
         // Login lives in the Filament panels; only the routes in
         // routes/auth.php are exposed (no Fortify POST /login or /logout).
         Fortify::ignoreRoutes();
+
+        // "Pay now" at registration goes to the payment page (RegisteredResponse).
+        $this->app->singleton(RegisterResponse::class, RegisteredResponse::class);
     }
 
     public function boot(): void

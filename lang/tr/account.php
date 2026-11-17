@@ -37,13 +37,14 @@ return [
     'grace' => [
         'title' => 'Ek süredesiniz',
         'body' => 'Deneme veya abonelik döneminiz sona erdi. Menünüz :date tarihine kadar yayında kalacak; sonrasında misafirleriniz menünüzü göremeyecek.',
-        'action' => 'Kesintiye uğramamak için bizimle iletişime geçin.',
+        'action' => 'Kesintiye uğramamak için şimdi ödeyin.',
     ],
 
     'expired' => [
         'title' => 'Menünüz kapalı',
         'body' => 'Aktif bir aboneliğiniz olmadığı için menünüz misafirlerinize gösterilmiyor. Menüleriniz, ürünleriniz ve QR kodlarınız dahil tüm verileriniz korunuyor.',
-        'reactivate' => 'Menünüzü yeniden yayına almak için bizimle iletişime geçin.',
+        'reactivate' => 'Menünüzü yeniden yayına almak için ödemenizi yapın; sorularınız için bize ulaşabilirsiniz.',
+        'pay' => 'Şimdi öde',
         'contact' => 'İletişim sayfası',
         'email' => 'E-posta',
         'phone' => 'Telefon',

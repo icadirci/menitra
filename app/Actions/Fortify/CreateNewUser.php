@@ -51,6 +51,8 @@ class CreateNewUser implements CreatesNewUsers
             ],
             // A hint only: TenantRegistrationService falls back to the default plan.
             'plan' => ['nullable', 'string', 'max:64'],
+            // "trial" (default) or "pay": only where RegisteredResponse sends the user next.
+            'start' => ['nullable', 'in:trial,pay'],
             // Recorded by TenantRegistrationService (users.terms_accepted_at / terms_version).
             'terms' => ['accepted'],
         ], [

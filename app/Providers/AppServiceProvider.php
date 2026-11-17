@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
+use App\Contracts\PaymentGateway;
 use App\Http\Middleware\RestrictLivewireFileEndpoints;
+use App\Services\Billing\Iyzico\IyzicoGateway;
 use App\Services\Marketing\MarketingContent;
 use App\Support\ErrorPage;
 use App\Support\MarketingUrl;
@@ -14,6 +16,7 @@ use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
+use InvalidArgumentException;
 use Livewire\Features\SupportFileUploads\FilePreviewController;
 use Livewire\Livewire;
 
@@ -23,6 +26,16 @@ class AppServiceProvider extends ServiceProvider
     {
         // Memoizes platform content (e.g. contact details) within one request.
         $this->app->scoped(MarketingContent::class);
+
+        // Payment provider (config/billing.php, credentials in config/services.php).
+        $this->app->singleton(PaymentGateway::class, fn (): PaymentGateway => match (config('billing.gateway')) {
+            'iyzico' => new IyzicoGateway(
+                apiKey: (string) config('services.iyzico.api_key'),
+                secretKey: (string) config('services.iyzico.secret_key'),
+                baseUrl: (string) config('services.iyzico.base_url'),
+            ),
+            default => throw new InvalidArgumentException('Unknown payment gateway ['.config('billing.gateway').'].'),
+        });
     }
 
     public function boot(): void
@@ -63,6 +76,9 @@ class AppServiceProvider extends ServiceProvider
         // Public menu pages: per-IP ceiling against slug/branch enumeration
         // (unknown slugs are not cached, so each probe costs a query).
         RateLimiter::for('menu', fn (Request $request) => Limit::perMinute((int) config('tenancy.menu_rate_limit'))->by('menu|'.$request->ip()));
+
+        // Payment provider callback / webhook (routes/billing.php).
+        RateLimiter::for('billing', fn (Request $request) => Limit::perMinute(60)->by('billing|'.$request->ip()));
 
         RateLimiter::for('contact', function (Request $request) {
             $back = fn () => redirect()

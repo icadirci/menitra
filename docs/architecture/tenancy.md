@@ -139,8 +139,9 @@ Livewire is used only by the panels, so its endpoints follow the panels:
 | Tenant resolvers (`ResolvedTenantFactory`) | The tenant isn't known yet |
 | `QrCodeResolver` | The QR code identifies the tenant |
 | `InvitationTokenResolver` (launch plan Faz 7) | The invitation token identifies the tenant. Looks up one invitation by token hash; `TeamInvitationService` then sets the context to that tenant only for the acceptance |
+| `PaymentTokenResolver` (payments, 2026-11-18) | The provider's checkout token identifies the tenant: the iyzico browser callback and webhook carry no session. Looks up one payment by token; the controller then sets the context to that tenant for `PaymentProcessor` and clears it. The result is always re-read from the provider's API, never taken from the request |
 | `ResolveTenantFromMembership` / membership lookups | The tenant is derived from the user's verified membership |
-| Commands and jobs implementing `TenantAgnostic` | Cross-tenant maintenance, e.g. subscription lifecycle |
+| Commands and jobs implementing `TenantAgnostic` | Cross-tenant maintenance, e.g. subscription lifecycle, payment reconciliation (`billing:reconcile-payments`) and payment reminders (`billing:send-reminders`); they only find tenant ids and dispatch one tenant-scoped job per tenant |
 | `TenantRegistrationService` | Creates the tenant, then sets the context for the remaining inserts and restores the previous context afterwards |
 | **Admin area** (launch plan Faz 8): `app/Filament/Admin/Resources/Tenants/**` and `app/Services/Admin/**` (`TenantInspector`) | Platform management must list and inspect every tenant. Rules below |
 

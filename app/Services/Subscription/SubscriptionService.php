@@ -221,9 +221,13 @@ class SubscriptionService
      * active with the new period. A period end at or before the current one
      * is a repeat and changes nothing.
      */
-    public function renew(Subscription $subscription, CarbonImmutable $periodEndsAt, ?CarbonImmutable $periodStartsAt = null): Subscription
-    {
-        return $this->transition($subscription, function (Subscription $locked, CarbonImmutable $now) use ($periodEndsAt, $periodStartsAt): void {
+    public function renew(
+        Subscription $subscription,
+        CarbonImmutable $periodEndsAt,
+        ?CarbonImmutable $periodStartsAt = null,
+        ?PlanPrice $price = null,
+    ): Subscription {
+        return $this->transition($subscription, function (Subscription $locked, CarbonImmutable $now) use ($periodEndsAt, $periodStartsAt, $price): void {
             $currentEnd = $locked->current_period_ends_at;
 
             if (! in_array($locked->status, [...self::PAID, SubscriptionStatus::Grace], true) || $currentEnd === null) {
@@ -236,6 +240,7 @@ class SubscriptionService
 
             $startsAt = $periodStartsAt ?? $currentEnd;
             $this->ensurePeriod($startsAt, $periodEndsAt);
+            $this->ensurePriceOfPlan($price, (int) $locked->plan_id);
             $from = $locked->status;
 
             $locked->forceFill([
@@ -245,10 +250,38 @@ class SubscriptionService
                 'grace_ends_at' => null,
                 'cancel_at_period_end' => false,
                 'canceled_at' => null,
+                'plan_price_id' => $price?->getKey() ?? $locked->plan_price_id,
             ])->save();
 
             $this->record($locked, SubscriptionEventType::Renewed, $from, SubscriptionStatus::Active, $now, [
                 'period_ends_at' => $periodEndsAt->toIso8601String(),
+            ]);
+        });
+    }
+
+    /**
+     * Switches the plan while no paid period is running (trialing, grace or
+     * past due), so there is nothing to prorate. Used by the payment flow just
+     * before activate() when the owner pays for a different plan. The same
+     * plan again is a no-op.
+     */
+    public function changePlan(Subscription $subscription, Plan $plan): Subscription
+    {
+        return $this->transition($subscription, function (Subscription $locked, CarbonImmutable $now) use ($plan): void {
+            if ((int) $locked->plan_id === (int) $plan->getKey()) {
+                return;
+            }
+
+            if (! in_array($locked->status, [SubscriptionStatus::Trialing, SubscriptionStatus::Grace, SubscriptionStatus::PastDue], true)) {
+                throw InvalidSubscriptionTransitionException::from($locked->status);
+            }
+
+            $previous = Plan::query()->find($locked->plan_id);
+
+            $locked->forceFill(['plan_id' => $plan->getKey(), 'plan_price_id' => null])->save();
+            $this->record($locked, SubscriptionEventType::PlanChanged, $locked->status, $locked->status, $now, [
+                'from_plan' => $previous?->code,
+                'to_plan' => $plan->code,
             ]);
         });
     }

@@ -68,6 +68,16 @@
 - Marketing and auth routes are registered for the central domain only; a tenant subdomain's `/` is 404 until public menus exist.
 - Queued jobs carry `tenant_id` in the payload and never inherit a context; jobs of missing, deleted or suspended tenants fail without running.
 
+## Payments (iyzico)
+- Amounts, plans and periods are decided only on the server (`BillingCalculator`, `CheckoutService`); the checkout form submits a plan code and an interval, never an amount.
+- Never trust the browser callback or the webhook payload: the token only finds the payment (`PaymentTokenResolver`, documented scope bypass), the result always comes from iyzico's retrieve API with a verified HMAC response signature, and `conversationId`, `basketId` and the paid amount must match the stored payment before `SubscriptionService` is called. A mismatch is never applied.
+- Webhooks require a valid `X-IYZ-SIGNATURE-V3`; invalid ones get 403 and trigger nothing.
+- `/billing/iyzico/*` runs without the `web` group (no session, no CSRF), is throttled and central-domain only. Never add session middleware there (it would replace the customer's session cookie).
+- A payment is applied at most once (row lock, `succeeded` is final). Subscription changes go only through `SubscriptionService`.
+- Only owners start checkouts and edit billing details (checked in `canAccess()` and in the services). Card data never reaches the app; only masked card info (association, family, last four) is stored. `tenant_billing_profiles.tax_id` and `payments.billing_details` are encrypted and hidden from serialization; `/admin` never shows them.
+- Payment logs and Sentry get the payment's public id and tenant id only, never billing details or card data.
+- iyzico credentials only in `.env` (`IYZICO_*`); the SDK is used only inside `IyzicoGateway`, with timeouts (`IyzicoCurl`) and TLS verification on.
+
 ## Public forms
 - The contact form validates through `ContactRequest`, is rate limited per IP (`throttle:contact`) and has a honeypot; a filled honeypot answers like a success and sends nothing.
 - Contact messages are only mailed (queued), never stored. The mail renders visitor input escaped (HTML view + plain text, no Markdown) and uses it only as Reply-To, never as From; names with line breaks are rejected.

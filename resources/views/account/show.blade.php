@@ -31,12 +31,12 @@
             <h2 class="text-lg font-bold">{{ __('account.grace.title') }}</h2>
             <p>{{ __('account.grace.body', ['date' => $subscription->keyDate]) }}</p>
             <p class="font-semibold">
-                <a href="{{ \App\Support\MarketingUrl::to('contact') }}" class="text-forest-700 underline underline-offset-4 hover:text-forest-900">{{ __('account.grace.action') }}</a>
+                <a href="{{ $account->paymentUrl }}" class="text-forest-700 underline underline-offset-4 hover:text-forest-900" data-test="grace-pay">{{ __('account.grace.action') }}</a>
             </p>
         </section>
     @endif
 
-    {{-- Offline: data kept, reactivation through support (no payment yet). --}}
+    {{-- Offline: data kept; reactivation by paying (or through support). --}}
     @if ($account->needsReactivation())
         <section class="flex flex-col gap-3 rounded-card border-2 border-danger/40 bg-white p-5 sm:p-6" role="alert" data-test="expired-message">
             <h2 class="text-lg font-bold text-danger">{{ __('account.expired.title') }}</h2>
@@ -64,7 +64,10 @@
                 </dl>
             @endif
 
-            <div>
+            <div class="flex flex-wrap gap-3">
+                @if ($account->paymentUrl)
+                    <x-ui.button :href="$account->paymentUrl" size="sm" class="shadow-none" data-test="reactivate-pay">{{ __('account.expired.pay') }}</x-ui.button>
+                @endif
                 <x-ui.button :href="$account->contactUrl" variant="secondary" size="sm">{{ __('account.expired.contact') }}</x-ui.button>
             </div>
         </section>

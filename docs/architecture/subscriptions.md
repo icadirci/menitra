@@ -1,6 +1,6 @@
 # Subscriptions and Pricing
 
-> Status: **Approved — v0.4** (2026-11-15: Phase 3 lifecycle — transitions, hourly command, grace anchored to the missed boundary, `/register?plan=`). v0.3: `max_qr_codes`, `FeatureGate` semantics for missing subscriptions, placeholder limits. v0.2: Provider-agnostic foundation. **No payment integration is implemented yet.** iyzico or PayTR will be added later behind the `PaymentGateway` contract.
+> Status: **Approved — v0.5** (2026-11-18: **payments** — manual period payments through iyzico Checkout Form, see [Payments](#payments)). v0.4 (2026-11-15): Phase 3 lifecycle — transitions, hourly command, grace anchored to the missed boundary, `/register?plan=`. v0.3: `max_qr_codes`, `FeatureGate` semantics for missing subscriptions, placeholder limits. v0.2: Provider-agnostic foundation.
 
 ## Contents
 
@@ -10,7 +10,7 @@
 - [Public menu access](#public-menu-access)
 - [Scheduled processing](#scheduled-processing)
 - [Plan features and limits](#plan-features-and-limits)
-- [Payment architecture](#payment-architecture)
+- [Payments](#payments)
 - [Pricing page](#pricing-page)
 - [Data retention](#data-retention)
 - [Configuration](#configuration)
@@ -20,11 +20,13 @@
 
 | Supported now | Later |
 |---|---|
-| Monthly and annual prices (TRY) | Payment gateway (iyzico / PayTR) |
-| Free trials | Invoices and payment records |
-| Cancellation at period end | Proration on plan change |
-| Expiration and grace periods | Coupons |
-| Plan-based feature restrictions | Per-plan grace overrides |
+| Monthly and annual prices (TRY) | Automatic recurring charges (iyzico Subscription API or stored cards) |
+| Free trials, optional "pay now" at registration | e-Arşiv invoice integration (receipts only now) |
+| Manual period payments through iyzico Checkout Form (3-D Secure) | Proration on plan change during a paid period |
+| Payment records, receipts, reminder mails | Refunds from the app (iyzico merchant panel now) |
+| Cancellation at period end | Coupons |
+| Expiration and grace periods | Per-plan grace overrides |
+| Plan-based feature restrictions | |
 
 ## Data model
 
@@ -98,7 +100,7 @@ Each method runs in a transaction on the subscription row re-read `FOR UPDATE` t
 | `resubscribe()` | no live subscription → **new row** `active` | the same call again returns the existing row; any other live subscription is refused (and the partial unique index backs it up) | `reactivated` (`previous_subscription_id`) |
 | `startComplimentary()` | no live subscription → **new row** `active` | free, platform-granted period (no price, no provider) ending at the given date; same call again returns the existing row, any other live subscription is refused. Used only by `ShowcaseSeeder` (period until 2099-12-31), not a payment flow | `complimentary_started` (`plan`, `reason`, `period_ends_at`) |
 
-`processDue()` applies transitions in a loop, so a subscription that missed several (e.g. trial and grace both over) gets `grace_started` and `expired` in one run. `activate`, `renew`, `markPastDue` and `resubscribe` are the entry points for the future gateway adapter; nothing calls them yet.
+`processDue()` applies transitions in a loop, so a subscription that missed several (e.g. trial and grace both over) gets `grace_started` and `expired` in one run. `activate`, `renew` (optionally with the paid `PlanPrice`), `changePlan` and `resubscribe` are called by `PaymentProcessor` (see [Payments](#payments)). `changePlan()` switches the plan only while no paid period runs (`trialing`, `grace`, `past_due`; event `plan_changed`); `markPastDue` stays unused because nothing is charged automatically.
 
 ## Public menu access
 
@@ -115,7 +117,7 @@ menu is online  ⇔  tenant.status = active  AND  access_until ≠ null  AND  no
 
 - `access_until` is implemented by `Subscription::accessUntil()` (also shown on the read-only subscription page in `/app`). It is computed when the tenant is resolved and stored in the cached `ResolvedTenant`. Requests compare it to the current time with **no query**, so expiry takes effect on time even before the scheduled job runs.
 - After access ends, the public menu renders the professional unavailable page (503, `no-store`, `noindex`); see [menu-system.md](menu-system.md#access-rules-and-the-unavailable-page). QR redirects lead to the same page.
-- The tenant can still log in and see `/account` with the reactivation path. *Implemented 2026-11-15 (see [overview.md § Authentication](overview.md#authentication)):* owners see plan, status, the next key date, `access_until` and whether the menu is online; a prominent warning during `grace`; and whenever the menu is offline (expired, no subscription, or `access_until` already passed before the lifecycle job ran) "menu closed, your data is kept" with the reactivation path — the contact page and the site settings' support details, no payment button until the payment phase (`resubscribe()` is ready for it). Managers and branch staff see only whether the menu is online. The `/app` dashboard (`SubscriptionStatusWidget`) and the subscription page show the same information to owners. Subscription management in `/admin` remains out of scope.
+- The tenant can still log in and see `/account` with the reactivation path. *Implemented 2026-11-15 (see [overview.md § Authentication](overview.md#authentication)):* owners see plan, status, the next key date, `access_until` and whether the menu is online; a prominent warning during `grace`; and whenever the menu is offline (expired, no subscription, or `access_until` already passed before the lifecycle job ran) "menu closed, your data is kept" with the reactivation path — the contact page and the site settings' support details, and (since 2026-11-18) a "pay now" link to the checkout page in `/app`. Managers and branch staff see only whether the menu is online. The `/app` dashboard (`SubscriptionStatusWidget`) and the subscription page show the same information to owners. Subscription management in `/admin` remains out of scope.
 - The online rule exists once, in `App\Support\Menu\MenuAvailability::isOnline()`; `ResolvedTenant::isOnline()` (public menu, QR) and `BusinessDashboard::isMenuOnline()` (dashboard, `/account`) both delegate to it.
 
 ## Scheduled processing
@@ -164,16 +166,63 @@ menu is online  ⇔  tenant.status = active  AND  access_until ≠ null  AND  no
   - extra locales are still stored, but menus are served only in locales within the limit (the default first)
   - creating new resources beyond limits is blocked by the services; the `/app` dashboard shows usage against limits (`PlanUsageWidget`, information only)
 
-## Payment architecture
+## Payments
 
-- `App\Contracts\PaymentGateway` is defined now, with no implementation. Expected operations:
-  - create a checkout or subscription
-  - cancel
-  - handle a webhook
-  - fetch status
-- `subscriptions.provider` and `subscriptions.provider_reference` are reserved for the gateway's identifiers.
-- The gateway adapter (iyzico or PayTR) will translate provider events into `SubscriptionService` calls (`activate`, `renew`, `markPastDue`). **The lifecycle logic stays provider-independent.**
-- `payments` and `invoices` tables, and Turkish e-invoice (e-fatura / e-arşiv) requirements, are designed with the integration phase.
+> Decided 2026-11-18: iyzico, **manual period payments** (the owner pays each period; nothing is charged automatically), official SDK `iyzico/iyzipay-php`, trial kept with an optional "pay now" at registration, receipts instead of invoices.
+
+### Flow
+
+```
+/app/{slug}/subscription ──"Pay / renew"──▶ Checkout page (plan, period, amount, billing details, terms)
+        │ CheckoutService::start()
+        │   eligibility + plan check, billing profile required, ≤ 10 checkouts/hour
+        │   BillingCalculator: plan price + extra branches × extra_location_amount
+        │   payments row (pending, encrypted billing snapshot) → PaymentGateway::initializeCheckout()
+        ▼
+iyzico hosted payment page (3-D Secure, single payment, no installments)
+        │ browser POST token ──▶ /billing/iyzico/callback ──┐
+        │ webhook (X-IYZ-SIGNATURE-V3) ──▶ ProcessPayment job ─┤──▶ PaymentProcessor::complete()
+        │ every 10 min: billing:reconcile-payments ───────────┘     retrieveCheckout(token) from the API
+        ▼                                                           verify reference, basket, amount, signature
+303 ▶ /app/{slug}/subscription?payment={public_id}                 → SubscriptionService transition (locked, once)
+```
+
+- **Nothing the browser or webhook sends is trusted.** The token only finds the payment (`PaymentTokenResolver`, documented scope bypass); the result always comes from iyzico's retrieve API, whose HMAC response signature is verified (`paymentStatus:paymentId:currency:basketId:conversationId:paidPrice:price:token`). `conversationId` and `basketId` must equal the payment's `public_id` and `paidPrice` must equal the stored amount, otherwise the payment is marked `failed` (`verification_failed`), nothing is applied and a critical log line asks for a manual review/refund.
+- `fraudStatus` 1 = success; 0 (review) stays pending until the webhook / reconciliation; -1 = failed.
+- **Exactly once:** `PaymentProcessor` locks the payment row; a `succeeded` payment is never applied again, so the callback, the webhook job and the reconciliation job may race safely. A provider error leaves the payment `pending`.
+- **Which transition** is decided from the live subscription when the money arrives:
+
+| Live subscription | Transition | Period |
+|---|---|---|
+| none (expired) | `resubscribe()` (new row) | now → + interval |
+| `trialing` | [`changePlan()`] + `activate()` | trial end (or now) → + interval: trial days are kept |
+| `grace` / `past_due` | [`changePlan()`] + `activate()` | now → + interval |
+| `active` | `renew()` (same plan; a different plan is logged and extends the active plan) | current period end → + interval |
+
+- **Who and when** (`CheckoutService::eligibility()`): owners only (`TenantPolicy::manageSettings`, also in the service). Without a running paid period (none, trialing, grace, past due) any selectable plan; while `active` only the current plan and only within `billing.renewal_window_days` (30) before the period ends, so there is never anything to prorate.
+- **Amount:** `BillingCalculator` is the only place it is computed: the plan price for the interval plus `max(0, branches − included_locations) × extra_location_amount` (branches counted like `max_locations`). Sent to iyzico as basket items (plan + extra branches), KDV-inclusive.
+- **Callback route** (`routes/billing.php`) runs **without the `web` group**: iyzico's return is a cross-site POST without the session cookie, and a new session would overwrite the customer's cookie. No CSRF, `throttle:billing` (60/min/IP), central domain only. It redirects with 303 to the subscription page, which reports the payment's outcome through the tenant scope.
+- **Webhook:** `POST /billing/iyzico/webhook`, signature `HMAC-SHA256(secretKey, secretKey + iyziEventType + iyziPaymentId + token + paymentConversationId + status)` (hex), only `CHECKOUT_FORM_AUTH`. Invalid → 403; unknown or mismatched → 200 and ignored; valid → `ProcessPayment` job (tenant from the context, retried with backoff).
+- **Reconciliation:** `billing:reconcile-payments` (every 10 minutes, `TenantAgnostic`, active tenants only) settles pending checkouts older than 5 minutes; pending ones older than `billing.pending_expires_minutes` (120) become `expired`.
+- **Reminders:** `billing:send-reminders` (daily 09:00 Europe/Istanbul) mails the owner 7 and 1 days (`billing.reminder_days`) before the trial or period ends (only the closest threshold) and once when grace starts; at most once per subscription, type, boundary and threshold (`billing_reminders`). Cancelled subscriptions get no reminder.
+- **Receipts:** on success `receipt_number` `RST-{year}-{id:06}`, a queued `PaymentReceiptMail` to the billing email (business default locale) and a printable receipt page in `/app` (`subscription/receipt?payment=`). A receipt is not an invoice: the e-Arşiv invoice is issued outside the app from the billing details.
+- **Billing details** (`tenant_billing_profiles`, `BillingProfileService`, owner-only): individual (TCKN, checksum) or corporate (VKN, checksum, tax office), billing email, optional mobile (E.164), address. `tax_id` is encrypted; each payment stores an encrypted snapshot. They are sent to iyzico as buyer and billing address.
+- **Registration:** the form offers "try free for N days" (default) or "pay now" (`start=pay`). Both start the trial; "pay now" redirects (`RegisteredResponse`) to the checkout page, which first passes the email verification (intended URL).
+- **`/admin`:** a tenant's payments are listed read-only (`PaymentsRelationManager`, `TenantInspector`; no billing details). Refunds are made in the iyzico merchant panel.
+- **Adapter:** `App\Contracts\PaymentGateway` (`initializeCheckout`, `retrieveCheckout`, `parseWebhook`), implemented by `IyzicoGateway`, the only class that uses the SDK. The SDK's curl wrapper has no timeouts; `IyzicoCurl` adds 10 s connect / 30 s total and keeps TLS verification. Only masked card data (association, family, last four) leaves the adapter.
+
+### Production checklist (iyzico)
+
+1. Approved iyzico merchant account; production keys in `.env` (`IYZICO_API_KEY`, `IYZICO_SECRET_KEY`, `IYZICO_BASE_URL=https://api.iyzipay.com`); sandbox keys from sandbox-merchant.iyzipay.com for staging.
+2. HTTPS central domain; in the merchant panel (Settings → Merchant Notifications) the webhook URL `https://restano.app/billing/iyzico/webhook`, and ask iyzico (entegrasyon@iyzico.com) to enable **X-IYZ-SIGNATURE-V3**, otherwise every webhook is refused and payments are settled by the callback and the reconciliation only.
+3. The queue worker and scheduler must run (`ProcessPayment`, reconciliation, reminders, mails).
+4. Behind a proxy/load balancer configure `trustProxies`, so the buyer IP sent to iyzico is the customer's.
+5. Legal: distance-sales pre-information and contract texts reviewed (the checkout links the terms page); KVKK: add iyzico to the processor list (Faz 10).
+6. Test in sandbox with iyzico's test cards (success, decline, 3-D Secure) before switching keys.
+
+### Configuration
+
+`config/billing.php`: `gateway` (`iyzico`), `renewal_window_days` (30), `pending_expires_minutes` (120), `reconcile_after_minutes` (5), `reminder_days` ([7, 1]). Credentials: `config/services.php` → `iyzico`.
 
 ## Pricing page
 
@@ -223,4 +272,5 @@ The 14-day trial and 7-day grace defaults are working values pending confirmatio
 - Grace is anchored to the missed boundary; a late run never extends access; transitions clear the resolution cache after commit (not on rollback); `FeatureGate` follows transitions within the same request; expiry deletes no data.
 - `/register?plan=`: an active public plan is used with its own trial days; inactive, hidden or unknown codes fall back to the default plan; pricing CTAs carry the plan code. *(RegistrationTest, PricingPageTest)*
 - The dashboard widget and subscription page show grace (with its end date), cancellation and expired subscriptions (ended date, menu offline, data kept). *(DashboardTest, SubscriptionPageTest)*
+- Payments *(tests/Feature/Billing)*: server-computed amounts incl. extra branches; eligibility (renewal window, plan change only without a paid period, hidden plans, owners only, tenant in context, attempt limit); provider error keeps a failed payment; callback applies trial → active from the trial end, active → renewed from the period end, grace + plan change, expired → new row; never twice; declined, wrong amount, wrong reference and pending/stale results change nothing; unknown tokens reveal nothing; no session cookie on the callback; webhook signature (valid, invalid, missing, mismatched) and its status never trusted; reconciliation and suspended tenants; reminders once per threshold, closest only, grace once, escaped names; billing profile validation (TCKN/VKN checksums), encryption and owner-only; receipt page and other tenants' payments (404); "pay now" at registration.
 - `FeatureGate` handles unlimited, count limits, boolean features and missing rows; trialing / active / past_due / grace apply the plan, expired or no subscription allows no creation; a downgrade falls back to `classic` without deleting settings.

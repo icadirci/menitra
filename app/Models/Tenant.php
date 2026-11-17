@@ -104,6 +104,14 @@ class Tenant extends Model implements HasName
         return $this->hasMany(Subscription::class);
     }
 
+    /**
+     * Checkouts (iyzico); read through the tenant scope, or by /admin in its bypass area.
+     */
+    public function payments(): HasMany
+    {
+        return $this->hasMany(Payment::class);
+    }
+
     public function isActive(): bool
     {
         return $this->status === TenantStatus::Active && ! $this->trashed();
