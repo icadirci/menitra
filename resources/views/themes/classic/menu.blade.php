@@ -41,10 +41,6 @@
             @endif
         </div>
 
-        @if ($theme->categoryTiles())
-            <x-menu.category-tiles :categories="$menu->menu->categories" />
-        @endif
-
         @if ($menu->menu->featured !== [] && $theme->option('show_featured') !== false)
             <section class="k-featured" x-show="query === '' && cat === null" aria-labelledby="k-featured-title">
                 <div class="k-heading"><h2 id="k-featured-title">{{ __('menu.featured') }}</h2><span aria-hidden="true"></span></div>
@@ -65,6 +61,10 @@
                     @endforeach
                 </ul>
             </section>
+        @endif
+
+        @if ($theme->categoryTiles())
+            <x-menu.category-tiles :categories="$menu->menu->categories" />
         @endif
 
         @forelse ($menu->menu->categories as $category)

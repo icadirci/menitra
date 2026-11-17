@@ -422,13 +422,34 @@
         color: var(--menu-accent);
     }
 
-    /* Featured */
+    /* Featured: a tinted band with photo-led cards (name and price on a
+     * dark shade, so they stay readable on any picture). Without a picture
+     * the card is a primary→accent gradient; surface text on both is a
+     * validated pair, and the shade only darkens it further. */
     & .c-featured {
-        padding: 14px 0 8px;
+        margin-top: 10px;
+        padding: 20px 0 18px;
+        background: linear-gradient(180deg, color-mix(in srgb, var(--menu-accent) 13%, var(--menu-bg)), var(--menu-bg));
+        border-top: 1px solid color-mix(in srgb, var(--menu-accent) 18%, transparent);
     }
 
-    & .c-featured h2 {
+    & .c-featured__head {
+        display: flex;
+        align-items: center;
+        gap: 10px;
         padding: 0 16px;
+    }
+
+    & .c-featured__icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        border-radius: 999px;
+        background: var(--menu-accent);
+        color: var(--menu-surface);
+        box-shadow: 0 6px 14px -6px var(--menu-accent);
     }
 
     & .c-featured__list {
@@ -437,58 +458,120 @@
         display: flex;
         gap: 12px;
         overflow-x: auto;
-        padding: 14px 16px 6px;
+        padding: 14px 16px 10px;
         scroll-snap-type: x mandatory;
+        scroll-padding-inline: 16px;
+        scrollbar-width: none;
+    }
+
+    & .c-featured__list::-webkit-scrollbar {
+        display: none;
     }
 
     & .c-featured__list li {
         flex: none;
-        width: min(210px, 62vw);
+        width: min(232px, 68vw);
         scroll-snap-align: start;
     }
 
     & .c-feature {
+        position: relative;
+        isolation: isolate;
         width: 100%;
-        height: 100%;
+        aspect-ratio: 4 / 5;
         display: flex;
         flex-direction: column;
+        justify-content: flex-end;
         padding: 0;
         border: 0;
-        border-radius: 22px;
-        background: var(--menu-surface);
+        border-radius: 24px;
+        background: var(--menu-primary);
         overflow: hidden;
         font: inherit;
-        color: var(--menu-text);
+        color: #ffffff;
         text-align: start;
         cursor: pointer;
-        box-shadow: 0 1px 0 var(--c-line);
+        box-shadow: var(--c-shadow);
     }
 
     & .c-feature__pic {
-        position: relative;
-        display: block;
-        aspect-ratio: 4 / 3;
+        position: absolute;
+        inset: 0;
+        z-index: -2;
     }
 
-    & .c-feature__pic .c-pill {
+    & .c-feature .c-pic {
+        background: linear-gradient(145deg, var(--menu-accent), var(--menu-primary));
+    }
+
+    & .c-feature .c-pic img {
+        transition: transform 0.4s ease;
+    }
+
+    & .c-feature .c-pic__initial {
+        align-items: flex-start;
+        justify-content: flex-end;
+        padding: 6px 18px;
+        font-size: 120px;
+        line-height: 1;
+        color: var(--menu-surface);
+        opacity: 0.18;
+    }
+
+    & .c-feature__shade {
         position: absolute;
-        top: 10px;
-        inset-inline-start: 10px;
+        inset: 0;
+        z-index: -1;
+        background: linear-gradient(to top, rgb(0 0 0 / 0.78), rgb(0 0 0 / 0.35) 45%, rgb(0 0 0 / 0) 70%);
+    }
+
+    & .c-feature__badge {
+        position: absolute;
+        top: 12px;
+        inset-inline-start: 12px;
+    }
+
+    & .c-pill--light {
+        background: var(--menu-surface);
+        color: var(--menu-text);
+        box-shadow: 0 4px 10px -4px rgb(0 0 0 / 0.4);
     }
 
     & .c-feature__body {
-        padding: 12px 14px 14px;
+        padding: 14px 16px 16px;
         display: flex;
         flex-direction: column;
-        gap: 2px;
+        gap: 3px;
+        text-shadow: 0 1px 2px rgb(0 0 0 / 0.35);
     }
 
     & .c-feature__name {
-        font-weight: 700;
+        font-family: var(--menu-font-heading);
+        font-size: 17px;
+        font-weight: 800;
+        line-height: 1.25;
     }
 
-    & .c-feature .c-price {
-        margin-top: 6px;
+    & .c-feature__desc {
+        font-size: 13px;
+        line-height: 1.4;
+        opacity: 0.88;
+    }
+
+    & .c-feature .c-feature__price {
+        align-self: flex-start;
+        margin-top: 8px;
+        padding: 4px 12px;
+        border-radius: 999px;
+        background: var(--menu-surface);
+        color: var(--menu-text);
+        text-shadow: none;
+    }
+
+    @media (hover: hover) and (prefers-reduced-motion: no-preference) {
+        & .c-feature:hover .c-pic img {
+            transform: scale(1.05);
+        }
     }
 
     /* Sections + cards */

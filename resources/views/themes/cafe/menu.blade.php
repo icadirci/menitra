@@ -40,35 +40,41 @@
             @endif
         </div>
 
-        @if ($theme->categoryTiles())
-            <x-menu.category-tiles :categories="$menu->menu->categories" />
-        @endif
-
         @if ($menu->menu->featured !== [] && $theme->option('show_featured') !== false)
             <section class="c-featured" x-show="query === '' && cat === null" aria-labelledby="c-featured-title">
-                <h2 id="c-featured-title" class="c-heading">{{ __('menu.featured') }}</h2>
+                <div class="c-featured__head">
+                    <span class="c-featured__icon" aria-hidden="true">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.5l2.6 6.2 6.7.6-5.1 4.4 1.5 6.6L12 16.8l-5.7 3.5 1.5-6.6-5.1-4.4 6.7-.6z"></path></svg>
+                    </span>
+                    <h2 id="c-featured-title" class="c-heading">{{ __('menu.featured') }}</h2>
+                </div>
                 <ul class="c-featured__list">
                     @foreach ($menu->menu->featured as $item)
                         <li>
                             <button type="button" class="c-feature" @click="show('{{ $item->publicId }}')" aria-haspopup="dialog">
                                 <span class="c-feature__pic">
-                                    @include('themes.cafe.partials.picture', ['url' => $theme->option('show_images') !== false ? $item->imageUrl : null, 'label' => $item->name, 'width' => 210, 'height' => 158])
-                                    @if ($item->isPopular)
-                                        <span class="c-pill c-pill--dark">{{ __('menu.popular') }}</span>
-                                    @endif
+                                    @include('themes.cafe.partials.picture', ['url' => $theme->option('show_images') !== false ? $item->imageUrl : null, 'label' => $item->name, 'width' => 240, 'height' => 300])
                                 </span>
+                                <span class="c-feature__shade" aria-hidden="true"></span>
+                                @if ($item->isPopular)
+                                    <span class="c-pill c-pill--light c-feature__badge">{{ __('menu.popular') }}</span>
+                                @endif
                                 <span class="c-feature__body">
                                     <span class="c-feature__name">{{ $item->name }}</span>
                                     @if ($item->description)
-                                        <span class="c-muted c-clamp">{{ $item->description }}</span>
+                                        <span class="c-feature__desc c-clamp">{{ $item->description }}</span>
                                     @endif
-                                    <x-menu.price :item="$item" class="menu-price c-price" />
+                                    <x-menu.price :item="$item" class="menu-price c-price c-feature__price" />
                                 </span>
                             </button>
                         </li>
                     @endforeach
                 </ul>
             </section>
+        @endif
+
+        @if ($theme->categoryTiles())
+            <x-menu.category-tiles :categories="$menu->menu->categories" />
         @endif
 
         @forelse ($menu->menu->categories as $category)
