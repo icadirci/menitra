@@ -51,7 +51,7 @@ class FeaturesPageTest extends TestCase
     public function test_every_localised_marketing_path_is_a_reserved_tenant_slug(): void
     {
         $reserved = config('tenancy.reserved_slugs');
-        $locales = array_keys(config('locales.supported'));
+        $locales = config('locales.interface');
 
         foreach (Route::getRoutes()->getRoutesByName() as $name => $route) {
             if (! str_starts_with($name, 'marketing.')) {
@@ -113,7 +113,7 @@ class FeaturesPageTest extends TestCase
 
     public function test_features_copy_has_the_same_keys_in_every_locale(): void
     {
-        $locales = array_keys(config('locales.supported'));
+        $locales = config('locales.interface');
         $reference = array_keys(Arr::dot(__('marketing.features_page', [], $locales[0])));
 
         foreach ($locales as $locale) {
@@ -126,14 +126,14 @@ class FeaturesPageTest extends TestCase
 
     /**
      * The design mock-up advertises things the product doesn't provide (PDF and
-     * print templates, table codes, 12 layouts, extra languages / RTL, custom
+     * print templates, table codes, 12 layouts, languages beyond tr/en/ar, custom
      * domains, automatic image compression). They must not reach the page.
      */
     public function test_page_does_not_advertise_unsupported_features(): void
     {
         $unsupported = [
-            'tr' => ['PDF', 'şablon', 'Masa 12', '12 tema', 'Almanca', 'Rusça', 'Arapça', 'sağdan sola', 'alan adı', 'sıkıştır'],
-            'en' => ['PDF', 'template', 'Table 12', '12 layouts', 'German', 'Russian', 'Arabic', 'right-to-left', 'domain', 'compress'],
+            'tr' => ['PDF', 'şablon', 'Masa 12', '12 tema', 'Almanca', 'Rusça', 'alan adı', 'sıkıştır'],
+            'en' => ['PDF', 'template', 'Table 12', '12 layouts', 'German', 'Russian', 'domain', 'compress'],
         ];
 
         foreach (['tr' => '/ozellikler', 'en' => '/en/features'] as $locale => $path) {

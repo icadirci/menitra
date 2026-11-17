@@ -163,7 +163,7 @@
     & .k-lang {
         position: absolute;
         top: 18px;
-        right: 16px;
+        inset-inline-end: 16px;
         z-index: 1;
         background: var(--menu-surface);
     }
@@ -461,7 +461,7 @@
         border: 0;
         background: none;
         color: var(--menu-text);
-        text-align: left;
+        text-align: start;
         cursor: pointer;
         font: inherit;
     }
@@ -473,7 +473,7 @@
     & .k-feature__pic .menu-badge {
         position: absolute;
         bottom: 8px;
-        left: 8px;
+        inset-inline-start: 8px;
         border-radius: 999px;
     }
 
@@ -590,7 +590,7 @@
         border-bottom: 1px dashed var(--k-line);
         background: none;
         color: var(--menu-text);
-        text-align: left;
+        text-align: start;
         font: inherit;
         cursor: pointer;
     }

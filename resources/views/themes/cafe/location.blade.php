@@ -24,7 +24,7 @@
                                     <span class="c-pill c-pill--soft">{{ __('menu.serving_now') }}</span>
                                 @endif
                             </span>
-                            <span class="c-card__go">{{ __('menu.view_menu') }} →</span>
+                            <span class="c-card__go">{{ __('menu.view_menu') }} <span class="menu-flip-rtl" aria-hidden="true">→</span></span>
                         </a>
                     </li>
                 @empty

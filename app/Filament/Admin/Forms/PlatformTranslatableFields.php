@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\Model;
 
 /**
  * Translatable fields for platform-level records (plans, marketing content):
- * one tab per platform locale (config('locales.supported'), default first),
+ * one tab per interface locale (config('locales.interface'), default first),
  * state path `translations.{locale}.{field}`. Save the state through
  * TranslationWriter::syncPlatform(), which re-validates it on the server.
  */
@@ -63,7 +63,7 @@ final class PlatformTranslatableFields
     private static function locales(): array
     {
         $default = config('locales.default');
-        $locales = array_keys(config('locales.supported'));
+        $locales = config('locales.interface');
 
         return array_values(array_unique([$default, ...$locales]));
     }

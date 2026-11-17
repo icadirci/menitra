@@ -50,7 +50,7 @@ return [
         'aside_title' => 'Ürünlerinizi ekleyin, temanızı seçin, QR kodunuzu yazdırın. Misafirleriniz aynı gün menünüze ulaşsın.',
         'aside_points' => [
             'Fiyatları ve tükenen ürünleri saniyeler içinde güncelleyin',
-            'Türkçe ve İngilizce menüleri tek yerden yönetin',
+            'Türkçe, İngilizce ve Arapça menüleri tek yerden yönetin',
             'Masalarınızda hiç yeniden basmanız gerekmeyen QR kodlar',
         ],
     ],

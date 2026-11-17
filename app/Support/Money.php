@@ -80,10 +80,12 @@ final readonly class Money
     /**
      * Localised display string, e.g. "₺85,00" (tr) or "TRY 85.00" style (en).
      * The float is used for display only, never for storage or arithmetic.
+     * Digits are always Western (0-9), also in Arabic, matching prices on
+     * receipts and signs in Turkey.
      */
     public function format(?string $locale = null, bool $omitZeroFraction = false): string
     {
-        $formatter = new NumberFormatter($locale ?? app()->getLocale(), NumberFormatter::CURRENCY);
+        $formatter = new NumberFormatter(($locale ?? app()->getLocale()).'@numbers=latn', NumberFormatter::CURRENCY);
 
         if ($omitZeroFraction && $this->minor % 100 === 0) {
             $formatter->setAttribute(NumberFormatter::FRACTION_DIGITS, 0);

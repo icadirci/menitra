@@ -26,7 +26,7 @@
                                 </span>
                                 <span class="n-item__desc">{{ $summary->description ?: $summary->typeLabel }}</span>
                             </span>
-                            <span class="n-item__go">{{ __('menu.view_menu') }} →</span>
+                            <span class="n-item__go">{{ __('menu.view_menu') }} <span class="menu-flip-rtl" aria-hidden="true">→</span></span>
                         </a>
                     </li>
                 @empty

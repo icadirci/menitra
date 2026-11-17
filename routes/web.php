@@ -38,7 +38,7 @@ $marketingPaths = [
 Route::domain(config('tenancy.central_domain'))->group(function () use ($marketingPaths): void {
     Route::get('sitemap.xml', SitemapController::class)->name('sitemap');
 
-    foreach (array_keys(config('locales.supported')) as $locale) {
+    foreach (config('locales.interface') as $locale) {
         Route::prefix(MarketingUrl::prefix($locale))
             ->middleware([SetMarketingLocale::class.':'.$locale, PreventSharedCaching::class])
             ->name("marketing.{$locale}.")

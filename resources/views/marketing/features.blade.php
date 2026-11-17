@@ -88,7 +88,7 @@
                 @endforeach
             </div>
             @foreach (__('marketing.features_page.languages.demo') as $dish)
-                <div lang="{{ $dish['locale'] }}" @class([
+                <div lang="{{ $dish['locale'] }}" dir="{{ in_array($dish['locale'], config('locales.rtl'), true) ? 'rtl' : 'ltr' }}" @class([
                     'flex items-center gap-3.5 rounded-[18px] p-3.5',
                     'bg-[#F4EBDD]' => $loop->first,
                     'bg-[#F4EBDD]/90' => ! $loop->first,

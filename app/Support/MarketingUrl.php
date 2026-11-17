@@ -12,7 +12,7 @@ final class MarketingUrl
 {
     /**
      * Public marketing pages (GET), in sitemap order. Every page exists in
-     * every platform locale (routes/web.php).
+     * every interface locale (routes/web.php).
      *
      * @var list<string>
      */
@@ -22,7 +22,7 @@ final class MarketingUrl
     {
         $locale ??= app()->getLocale();
 
-        if (! array_key_exists($locale, config('locales.supported'))) {
+        if (! in_array($locale, config('locales.interface'), true)) {
             $locale = config('locales.default');
         }
 
@@ -36,7 +36,7 @@ final class MarketingUrl
     {
         $urls = [];
 
-        foreach (array_keys(config('locales.supported')) as $locale) {
+        foreach (config('locales.interface') as $locale) {
             $urls[$locale] = self::to($page, $locale);
         }
 

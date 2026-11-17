@@ -217,15 +217,15 @@ Composite foreign keys:
 | **One `{entity}_translations` table per entity** | **Chosen**: real FKs with cascade, unique per locale, typed columns, eager-loadable |
 
 - Base tables contain **no** translatable text columns. Each piece of text has a single source of truth.
-- Translatable entities: tenants, locations, menus, menu categories, menu items, variants, extra groups, extras, plans, marketing FAQ, testimonials, site settings. Platform-level ones (plans, FAQ, testimonials, site settings) use the platform locales (`config('locales.supported')`, default `config('locales.default')`) and are written by `TranslationWriter::syncPlatform()`.
+- Translatable entities: tenants, locations, menus, menu categories, menu items, variants, extra groups, extras, plans, marketing FAQ, testimonials, site settings. Platform-level ones (plans, FAQ, testimonials, site settings) use the interface locales (`config('locales.interface')`, default `config('locales.default')`) and are written by `TranslationWriter::syncPlatform()`.
 - The in-house trait `App\Models\Concerns\HasTranslations` provides:
   - `translations()` (hasMany)
   - `translate(?string $locale)`, with fallback order: requested locale → tenant default locale → first available
   - `scopeWithTranslations(array $locales)` to eager load only the needed locales
-- **Platform locales** are listed in `config/locales.php` (initially `tr`, `en`, with native names).
+- **Platform locales** (`config('locales.supported')`, with native names: `tr`, `en`, `ar`) are the languages tenants can enable for their menus. **Interface locales** (`config('locales.interface')`: `tr`, `en`) are the subset with a full UI translation: marketing site routes, auth pages, mails, panels and platform content. A menu-only locale such as `ar` needs only `lang/{xx}/menu.php` and `errors.php` (key parity with `en` is enforced by `MenuLocalesTest`). **Right-to-left** locales (`config('locales.rtl')`: `ar`) render public menu pages with `dir="rtl"` (theme CSS uses logical properties; direction-bearing glyphs carry `menu-flip-rtl`) and their translation tabs in `/app` with `dir="rtl"`. Prices always use Western digits (`Money::format()`, ICU `@numbers=latn`).
 - **Tenant locales** are stored in `tenant_locales` (enabled set + order); the default is `tenants.default_locale`. `locale` values are validated against the config in `TenantLocaleService` (and in Form Requests where a request carries them). `Tenant::enabledLocales()` returns the default first, then by `sort_order`.
 - Translation writes from the panel go through `App\Services\Translations\TranslationWriter`: only enabled locales are accepted, the default locale's required fields must be filled, and rows of locales that aren't enabled are never touched.
-- **Adding a language:** add a config entry, add `lang/{xx}/*.php` files, and let tenants enable it. No schema change is needed.
+- **Adding a menu language:** add a `supported` entry (plus `rtl` if needed) and `lang/{xx}/menu.php` + `errors.php`, and let tenants enable it. A full interface language additionally needs every `lang/{xx}/*.php` file and an `interface` entry (which adds its marketing routes). No schema change is needed.
 - UI strings (labels, allergen and dietary names, the unavailable page) live in `lang/{locale}/`. They are never hard-coded.
 
 ## Enums

@@ -49,7 +49,7 @@ final class TranslationWriter
 
     /**
      * Same rules for platform-level records (plans, marketing FAQ and
-     * testimonials): the locale set is config('locales.supported') and the
+     * testimonials): the locale set is config('locales.interface') and the
      * default is config('locales.default'). Tenant-owned models are refused.
      *
      * @param  array<string, mixed>  $input
@@ -65,7 +65,7 @@ final class TranslationWriter
             throw new InvalidArgumentException($model::class.' is tenant-owned; use sync().');
         }
 
-        $this->write($model, $input, array_keys(config('locales.supported')), config('locales.default'), $required);
+        $this->write($model, $input, config('locales.interface'), config('locales.default'), $required);
     }
 
     /**

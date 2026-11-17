@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\Model;
 /**
  * Translatable form fields without a translation package: one tab per enabled
  * tenant locale (default first), state path `translations.{locale}.{field}`.
+ * Tabs of right-to-left locales (config('locales.rtl')) render with dir="rtl".
  *
  *     TranslatableFields::make(fn (string $locale, bool $isDefault): array => [
  *         TextInput::make('name')->required($isDefault)->maxLength(255),
@@ -37,6 +38,7 @@ final class TranslatableFields
             fn (string $locale): Tab => Tab::make(config("locales.supported.{$locale}", $locale))
                 ->badge($locale === $tenant->default_locale ? __('panels.app.translations.default') : null)
                 ->statePath($locale)
+                ->extraAttributes(in_array($locale, config('locales.rtl'), true) ? ['dir' => 'rtl'] : [])
                 ->schema($fields($locale, $locale === $tenant->default_locale)),
             $tenant->enabledLocales(),
         );

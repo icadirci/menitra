@@ -8,7 +8,7 @@ return [
         'home_title' => 'Kafe ve restoranlar için QR menü',
         'home_description' => 'Menünüzü misafirlerin tek bir okutmayla açtığı hızlı, fotoğraflı bir sayfaya dönüştürün. Fiyatları ve tükenen ürünleri saniyeler içinde güncelleyin.',
         'features_title' => 'Özellikler — QR menü, çok dilli menüler ve temalar',
-        'features_description' => 'Kalıcı QR kodlar, telefon için tasarlanmış hızlı menüler, Türkçe ve İngilizce içerik, mekânınıza uyan temalar; alerjenler, ekstralar ve tükendi bilgisi.',
+        'features_description' => 'Kalıcı QR kodlar, telefon için tasarlanmış hızlı menüler, Türkçe, İngilizce ve Arapça içerik, mekânınıza uyan temalar; alerjenler, ekstralar ve tükendi bilgisi.',
         'pricing_title' => 'Fiyatlar — QR menü paketleri',
         'pricing_description' => 'Restano paketlerini, aylık ve yıllık fiyatları ve paket limitlerini karşılaştırın. Ücretsiz denemeyle başlayın, kredi kartı gerekmez.',
         'contact_title' => 'İletişim — Restano ekibine yazın',
@@ -72,7 +72,7 @@ return [
         'items' => [
             ['title' => 'Saniyeler içinde değiştirin', 'body' => 'Yeni fiyat, günün önerisi, tükenen kruvasan. Bir kez güncelleyin, her masa anında görsün.'],
             ['title' => 'Misafirler gönül rahatlığıyla seçer', 'body' => 'Fotoğraflar, açıklamalar ve alerjen etiketleri soruları garsona ulaşmadan yanıtlar.'],
-            ['title' => 'Her misafire kendi dili', 'body' => 'Menünüzü Türkçe ve İngilizce sunun; misafirler dili tek dokunuşla değiştirir.'],
+            ['title' => 'Her misafire kendi dili', 'body' => 'Menünüzü Türkçe, İngilizce ve Arapça sunun; misafirler dili tek dokunuşla değiştirir.'],
             ['title' => 'Tamamen sizin', 'body' => 'Logonuz ve renkleriniz öne çıkar; Restano arka planda sessizce kalır.'],
         ],
         'live' => [
@@ -96,7 +96,7 @@ return [
             ['icon' => 'phone', 'title' => 'Önce mobil', 'body' => 'Masaüstünden küçültülmüş değil, parmak için tasarlandı.'],
             ['icon' => 'layers', 'title' => 'Sınırsız kategori', 'body' => 'Kahvaltı, kahve, tatlılar — dilediğiniz düzende.'],
             ['icon' => 'image', 'title' => 'Ürün fotoğrafları', 'body' => 'Her ürün için net ve hızlı yüklenen görseller.'],
-            ['icon' => 'globe', 'title' => 'Çok dilli', 'body' => 'Türkçe ve İngilizce menüler tek yerden.'],
+            ['icon' => 'globe', 'title' => 'Çok dilli', 'body' => 'Türkçe, İngilizce ve Arapça menüler tek yerden.'],
             ['icon' => 'sliders', 'title' => 'Size özel görünüm', 'body' => 'Mekânınıza uyan temalar ve renkler.'],
             ['icon' => 'bolt', 'title' => 'Göz açıp kapayıncaya kadar', 'body' => 'Kafe Wi-Fi’ında bile hızlı açılan hafif sayfalar.'],
             ['icon' => 'sparkle', 'title' => 'Markanız', 'body' => 'Logonuz ve kapak görseliniz.'],
@@ -139,10 +139,10 @@ return [
 
         'languages' => [
             'badge' => 'Çok dilli menüler',
-            'title' => 'Misafirlerinize Türkçe ve İngilizce seslenin.',
-            'body' => 'Her ürünün çevirisini yanına ekleyin. Menü işletmenizin varsayılan dilinde açılır; misafir tek dokunuşla diğer dile geçer.',
+            'title' => 'Misafirlerinize Türkçe, İngilizce ve Arapça seslenin.',
+            'body' => 'Her ürünün çevirisini yanına ekleyin. Menü işletmenizin varsayılan dilinde açılır; misafir tek dokunuşla kendi diline geçer. Arapça menüler sağdan sola gösterilir.',
             'points' => [
-                'Türkçe ve İngilizce içerik, tek panelden',
+                'Türkçe, İngilizce ve Arapça içerik, tek panelden',
                 'Çevirisi eksik bir metin varsayılan dilinizde görünür; menüde boşluk kalmaz',
                 'Fiyatlar, alerjenler ve diyet etiketleri her dilde aynı kalır',
             ],
@@ -150,6 +150,7 @@ return [
             'demo' => [
                 ['locale' => 'tr', 'name' => 'Türk Kahvesi', 'note' => 'Közde pişer, lokum ve su ile.', 'price' => '₺150'],
                 ['locale' => 'en', 'name' => 'Turkish coffee', 'note' => 'Brewed over embers, with lokum and water.', 'price' => '₺150'],
+                ['locale' => 'ar', 'name' => 'قهوة تركية', 'note' => 'تُحضَّر على الجمر، مع الحلقوم والماء.', 'price' => '₺150'],
             ],
         ],
 
@@ -259,7 +260,7 @@ return [
             'link' => 'Tüm özellikleri gör',
             'items' => [
                 ['icon' => 'qr', 'label' => 'Kalıcı QR kodlar'],
-                ['icon' => 'globe', 'label' => 'Türkçe ve İngilizce menü'],
+                ['icon' => 'globe', 'label' => 'Türkçe, İngilizce ve Arapça menü'],
                 ['icon' => 'image', 'label' => 'Ürün fotoğrafları'],
                 ['icon' => 'tag', 'label' => 'Porsiyonlar ve ekstralar'],
                 ['icon' => 'leaf', 'label' => 'Alerjen ve diyet etiketleri'],

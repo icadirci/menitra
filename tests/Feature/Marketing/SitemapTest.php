@@ -32,9 +32,9 @@ class SitemapTest extends TestCase
             }
         }
 
-        $this->assertCount(count(MarketingUrl::PAGES) * count(config('locales.supported')), $locs);
+        $this->assertCount(count(MarketingUrl::PAGES) * count(config('locales.interface')), $locs);
         $this->assertContains(url('/en/themes'), array_map('strval', $xml->xpath('//s:url[s:loc="'.url('/temalar').'"]/x:link[@hreflang="en"]/@href')));
-        $this->assertCount(count(MarketingUrl::PAGES) * count(config('locales.supported')), $xml->xpath('//x:link[@hreflang="x-default"]'));
+        $this->assertCount(count(MarketingUrl::PAGES) * count(config('locales.interface')), $xml->xpath('//x:link[@hreflang="x-default"]'));
     }
 
     public function test_every_marketing_get_route_is_in_the_page_list(): void

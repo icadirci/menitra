@@ -126,7 +126,7 @@
     & .n-lang {
         position: absolute;
         top: 12px;
-        right: 12px;
+        inset-inline-end: 12px;
         border-radius: 8px;
         background: var(--menu-bg);
         border-color: var(--n-line);
@@ -361,7 +361,7 @@
         background: none;
         font: inherit;
         color: var(--menu-text);
-        text-align: left;
+        text-align: start;
         cursor: pointer;
     }
 
@@ -425,7 +425,7 @@
         background: none;
         font: inherit;
         color: var(--menu-text);
-        text-align: left;
+        text-align: start;
         text-decoration: none;
         cursor: pointer;
     }

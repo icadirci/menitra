@@ -17,6 +17,7 @@ use App\Models\Tenant;
 use App\Services\Menu\MenuCacheKeys;
 use App\Services\Menu\MenuUrlGenerator;
 use App\Services\Menu\PublicMenuService;
+use App\Services\Tenancy\TenantLocaleService;
 use App\Tenancy\ResolvedTenantFactory;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -160,6 +161,42 @@ class PublicMenuTest extends TestCase
         // Missing translation falls back to the default locale.
         $this->item($this->coffee, 'Salep');
         $this->get(self::PATH.'/moda/menu?lang=en')->assertSee('Salep');
+    }
+
+    public function test_arabic_menus_render_right_to_left_with_western_digits(): void
+    {
+        $this->inTenant($this->tenant, function (): void {
+            $this->tenant->locales()->create(['locale' => 'ar', 'sort_order' => 1]);
+            $this->turkish->translations()->create(['locale' => 'ar', 'name' => 'قهوة تركية']);
+        });
+
+        $this->get(self::PATH.'/moda/menu?lang=ar')->assertOk()
+            ->assertSee('<html lang="ar" dir="rtl">', false)
+            ->assertSee('قهوة تركية')
+            ->assertSee(__('menu.prices_note', [], 'ar'))
+            ->assertSee('150')
+            ->assertDontSee('١٥٠');
+
+        $this->get(self::PATH.'/moda/menu')->assertOk()->assertSee('<html lang="tr" dir="ltr">', false);
+    }
+
+    public function test_enabling_disabling_and_reordering_locales_take_effect_while_the_resolution_cache_is_warm(): void
+    {
+        $this->inTenant($this->tenant, fn () => $this->tenant->locales()->create(['locale' => 'en', 'sort_order' => 1]));
+        $this->get(self::PATH.'/moda/menu')->assertOk()->assertDontSee('?lang=ar', false);
+
+        $this->inTenant($this->tenant, fn () => app(TenantLocaleService::class)->enable('ar'));
+        $this->get(self::PATH.'/moda/menu?lang=ar')->assertOk()
+            ->assertSee('<html lang="ar" dir="rtl">', false)
+            ->assertSee('?lang=ar', false);
+
+        $this->inTenant($this->tenant, fn () => app(TenantLocaleService::class)->reorder(['tr', 'ar', 'en']));
+        $this->assertSame(['tr', 'ar', 'en'], app(ResolvedTenantFactory::class)->byId($this->tenant->id)->locales);
+
+        $this->inTenant($this->tenant, fn () => app(TenantLocaleService::class)->disable('ar'));
+        $this->get(self::PATH.'/moda/menu?lang=ar')->assertOk()
+            ->assertSee('<html lang="tr" dir="ltr">', false)
+            ->assertDontSee('?lang=ar', false);
     }
 
     public function test_suspended_or_expired_tenants_get_the_unavailable_page(): void

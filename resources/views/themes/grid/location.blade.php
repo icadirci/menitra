@@ -24,7 +24,7 @@
                             @if ($summary->servingHours !== [] && $live->isServing($summary))
                                 <span class="g-pill g-pill--accent">{{ __('menu.serving_now') }}</span>
                             @endif
-                            <span class="g-row__go">{{ __('menu.view_menu') }} →</span>
+                            <span class="g-row__go">{{ __('menu.view_menu') }} <span class="menu-flip-rtl" aria-hidden="true">→</span></span>
                         </a>
                     </li>
                 @empty

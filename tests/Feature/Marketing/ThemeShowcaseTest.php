@@ -54,7 +54,7 @@ class ThemeShowcaseTest extends TestCase
                 ->assertOk()
                 ->assertSee('data-theme="'.$theme.'"', escape: false);
 
-            $this->get("/m/{$slug}/merkez/menu?lang=en")->assertOk()->assertSee('<html lang="en">', escape: false);
+            $this->get("/m/{$slug}/merkez/menu?lang=en")->assertOk()->assertSee('<html lang="en" dir="ltr">', escape: false);
         }
     }
 

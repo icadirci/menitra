@@ -160,7 +160,7 @@
     & .g-pill--badge {
         position: absolute;
         top: 8px;
-        left: 8px;
+        inset-inline-start: 8px;
         padding: 4px 10px;
         font-size: 11px;
         font-weight: 800;
@@ -190,7 +190,7 @@
     & .g-blob {
         position: absolute;
         top: -40px;
-        right: -30px;
+        inset-inline-end: -30px;
         width: 150px;
         height: 150px;
         border-radius: 999px;
@@ -200,7 +200,7 @@
     & .g-lang {
         position: absolute;
         top: 14px;
-        left: 14px;
+        inset-inline-start: 14px;
         border-color: transparent;
     }
 
@@ -462,7 +462,7 @@
         box-shadow: var(--g-shadow);
         font: inherit;
         color: var(--menu-text);
-        text-align: left;
+        text-align: start;
         cursor: pointer;
     }
 
@@ -523,7 +523,7 @@
         box-shadow: var(--g-shadow);
         font: inherit;
         color: var(--menu-text);
-        text-align: left;
+        text-align: start;
         cursor: pointer;
     }
 
@@ -677,7 +677,7 @@
 
     & .g-sheet__media .g-pill--badge {
         top: 18px;
-        left: 16px;
+        inset-inline-start: 16px;
         font-size: 12px;
         padding: 6px 12px;
     }
@@ -685,7 +685,7 @@
     & .g-close {
         position: absolute;
         top: 14px;
-        right: 14px;
+        inset-inline-end: 14px;
         width: 44px;
         height: 44px;
         border: 0;

@@ -28,7 +28,7 @@
                             @endif
                         </span>
                     </span>
-                    <span class="k-card__cta">{{ __('menu.view_menu') }} →</span>
+                    <span class="k-card__cta">{{ __('menu.view_menu') }} <span class="menu-flip-rtl" aria-hidden="true">→</span></span>
                 </a>
             @empty
                 <p class="k-empty">{{ __('menu.no_menus') }}</p>

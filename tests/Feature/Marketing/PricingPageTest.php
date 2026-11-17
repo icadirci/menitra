@@ -390,7 +390,7 @@ class PricingPageTest extends TestCase
 
     public function test_pricing_copy_has_the_same_keys_in_every_locale(): void
     {
-        $locales = array_keys(config('locales.supported'));
+        $locales = config('locales.interface');
 
         foreach (['marketing.pricing_page', 'plans.allowance', 'plans.allowance_unlimited'] as $key) {
             $reference = array_keys(Arr::dot(__($key, [], $locales[0])));

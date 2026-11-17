@@ -8,7 +8,7 @@ return [
         'home_title' => 'QR menus for cafés and restaurants',
         'home_description' => 'Turn your menu into a fast, photo-rich page guests open with a single scan. Update prices and sold-out items in seconds.',
         'features_title' => 'Features — QR menus, multi-language menus and themes',
-        'features_description' => 'Permanent QR codes, fast phone-first menus, Turkish and English content, themes that fit your place; allergens, add-ons and sold-out status.',
+        'features_description' => 'Permanent QR codes, fast phone-first menus, Turkish, English and Arabic content, themes that fit your place; allergens, add-ons and sold-out status.',
         'pricing_title' => 'Pricing — QR menu plans',
         'pricing_description' => 'Compare Restano plans, monthly and yearly prices and plan limits. Start with a free trial, no credit card needed.',
         'contact_title' => 'Contact — talk to the Restano team',
@@ -72,7 +72,7 @@ return [
         'items' => [
             ['title' => 'Change it in seconds', 'body' => 'New price, new special, sold-out croissants. Update once and every table sees it instantly.'],
             ['title' => 'Guests choose with confidence', 'body' => 'Photos, descriptions and allergen labels answer questions before they reach your staff.'],
-            ['title' => 'Every guest, their language', 'body' => 'Offer your menu in Turkish and English. Guests switch with a single tap.'],
+            ['title' => 'Every guest, their language', 'body' => 'Offer your menu in Turkish, English and Arabic. Guests switch with a single tap.'],
             ['title' => 'Unmistakably yours', 'body' => 'Your logo and colours up front. Restano stays quietly in the background.'],
         ],
         'live' => [
@@ -96,7 +96,7 @@ return [
             ['icon' => 'phone', 'title' => 'Mobile-first', 'body' => 'Designed for thumbs, not shrunk from a desktop site.'],
             ['icon' => 'layers', 'title' => 'Unlimited categories', 'body' => 'Breakfast, coffee, desserts — organised your way.'],
             ['icon' => 'image', 'title' => 'Product photos', 'body' => 'Sharp, fast-loading images for every dish.'],
-            ['icon' => 'globe', 'title' => 'Multi-language', 'body' => 'Turkish and English menus from one place.'],
+            ['icon' => 'globe', 'title' => 'Multi-language', 'body' => 'Turkish, English and Arabic menus from one place.'],
             ['icon' => 'sliders', 'title' => 'Custom appearance', 'body' => 'Themes and colours that match your room.'],
             ['icon' => 'bolt', 'title' => 'Loads in a blink', 'body' => 'Lightweight pages that open fast on café Wi-Fi.'],
             ['icon' => 'sparkle', 'title' => 'Your branding', 'body' => 'Your logo and cover image.'],
@@ -139,10 +139,10 @@ return [
 
         'languages' => [
             'badge' => 'Multi-language menus',
-            'title' => 'Speak to guests in Turkish and English.',
-            'body' => 'Add translations next to each dish. The menu opens in your default language and guests switch to the other with one tap.',
+            'title' => 'Speak to guests in Turkish, English and Arabic.',
+            'body' => 'Add translations next to each dish. The menu opens in your default language and guests switch to their own with one tap. Arabic menus read right to left.',
             'points' => [
-                'Turkish and English content from one panel',
+                'Turkish, English and Arabic content from one panel',
                 'Text without a translation falls back to your default language, so nothing is left blank',
                 'Prices, allergens and dietary labels stay the same in every language',
             ],
@@ -150,6 +150,7 @@ return [
             'demo' => [
                 ['locale' => 'tr', 'name' => 'Türk Kahvesi', 'note' => 'Közde pişer, lokum ve su ile.', 'price' => '₺150'],
                 ['locale' => 'en', 'name' => 'Turkish coffee', 'note' => 'Brewed over embers, with lokum and water.', 'price' => '₺150'],
+                ['locale' => 'ar', 'name' => 'قهوة تركية', 'note' => 'تُحضَّر على الجمر، مع الحلقوم والماء.', 'price' => '₺150'],
             ],
         ],
 
@@ -259,7 +260,7 @@ return [
             'link' => 'See all features',
             'items' => [
                 ['icon' => 'qr', 'label' => 'Permanent QR codes'],
-                ['icon' => 'globe', 'label' => 'Turkish and English menus'],
+                ['icon' => 'globe', 'label' => 'Turkish, English and Arabic menus'],
                 ['icon' => 'image', 'label' => 'Item photos'],
                 ['icon' => 'tag', 'label' => 'Portions and extras'],
                 ['icon' => 'leaf', 'label' => 'Allergen and dietary labels'],

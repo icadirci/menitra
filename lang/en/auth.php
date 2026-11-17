@@ -47,7 +47,7 @@ return [
         'aside_title' => 'Add your dishes, pick a theme, print your QR. Guests start browsing the same day.',
         'aside_points' => [
             'Update prices and sold-out items in seconds',
-            'Turkish and English menus from one place',
+            'Turkish, English and Arabic menus from one place',
             'One QR code per table that never needs reprinting',
         ],
     ],

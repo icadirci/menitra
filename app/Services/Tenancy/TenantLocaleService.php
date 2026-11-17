@@ -69,9 +69,15 @@ final class TenantLocaleService
                 throw TenantLocaleException::cannotDisableDefault();
             }
 
-            if ($tenant->locales()->where('locale', $locale)->delete() === 0) {
+            // Model writes (not bulk queries) so MenuCacheObserver clears the
+            // cached tenant resolution, which carries the enabled locales.
+            $row = $tenant->locales()->where('locale', $locale)->first();
+
+            if ($row === null) {
                 throw TenantLocaleException::notEnabled($locale);
             }
+
+            $row->delete();
         });
     }
 
@@ -110,8 +116,10 @@ final class TenantLocaleService
                 throw TenantLocaleException::invalidOrder();
             }
 
+            $rows = $tenant->locales()->get()->keyBy('locale');
+
             foreach (array_values($locales) as $position => $locale) {
-                $tenant->locales()->where('locale', $locale)->update(['sort_order' => $position]);
+                $rows[$locale]->forceFill(['sort_order' => $position])->save();
             }
         });
     }

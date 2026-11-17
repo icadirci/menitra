@@ -52,7 +52,7 @@ final class MenuCacheObserver
     public const array TENANT_MODELS = [
         Menu::class, MenuCategory::class, MenuItem::class, MenuItemVariant::class, ExtraGroup::class,
         Extra::class, MenuItemExtraGroup::class, MenuItemAllergen::class, MenuItemDietaryLabel::class,
-        Location::class, TenantLocale::class,
+        Location::class,
     ];
 
     /** Operational state of one branch (model has location_id). */
@@ -80,7 +80,7 @@ final class MenuCacheObserver
             ...self::TENANT_MODELS,
             ...self::LOCATION_MODELS,
             ...array_keys(self::TRANSLATIONS),
-            LocationMenuHour::class, Tenant::class, TenantTranslation::class, ThemeSetting::class, Subscription::class, QrCode::class,
+            LocationMenuHour::class, Tenant::class, TenantTranslation::class, TenantLocale::class, ThemeSetting::class, Subscription::class, QrCode::class,
         ];
     }
 
@@ -114,8 +114,9 @@ final class MenuCacheObserver
             isset(self::TRANSLATIONS[$class]) => $this->translation($model, ...self::TRANSLATIONS[$class]),
             $model instanceof LocationMenuHour => $this->menuHour($model),
             $model instanceof Tenant => $this->tenant($model),
-            // Theme settings travel in the resolution entries (ResolvedTenant::$themeSettings).
-            $model instanceof TenantTranslation, $model instanceof ThemeSetting => $this->tenantId((int) $model->getAttribute('tenant_id')),
+            // Theme settings and enabled locales travel in the resolution entries
+            // (ResolvedTenant::$themeSettings, ::$locales).
+            $model instanceof TenantTranslation, $model instanceof ThemeSetting, $model instanceof TenantLocale => $this->tenantId((int) $model->getAttribute('tenant_id')),
             // Resolution entries hold access_until.
             $model instanceof Subscription => $this->cache->forgetTenant(
                 (string) DB::table('tenants')->where('id', $model->getAttribute('tenant_id'))->value('slug'),

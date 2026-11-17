@@ -324,7 +324,7 @@ class ContactPageTest extends TestCase
 
     public function test_contact_copy_has_the_same_keys_in_every_locale(): void
     {
-        $locales = array_keys(config('locales.supported'));
+        $locales = config('locales.interface');
 
         foreach (['marketing.contact_page', 'marketing.contact_mail', 'panels.admin.site_settings'] as $key) {
             $reference = array_keys(Arr::dot(__($key, [], $locales[0])));

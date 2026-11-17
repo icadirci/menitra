@@ -261,7 +261,7 @@
         justify-content: space-between;
         align-items: baseline;
         gap: 12px;
-        text-align: right;
+        text-align: end;
     }
 
     & .b-info__key {
@@ -270,7 +270,7 @@
         letter-spacing: 0.12em;
         text-transform: uppercase;
         font-size: 11px;
-        text-align: left;
+        text-align: start;
     }
 
     & .b-open .menu-open-state__dot {
@@ -415,7 +415,7 @@
         background: var(--menu-surface);
         font: inherit;
         color: var(--menu-text);
-        text-align: left;
+        text-align: start;
         cursor: pointer;
     }
 
@@ -504,7 +504,7 @@
         background: none;
         font: inherit;
         color: var(--menu-text);
-        text-align: left;
+        text-align: start;
         text-decoration: none;
         cursor: pointer;
     }

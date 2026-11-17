@@ -352,7 +352,7 @@ final class TeamInvitationService
     {
         $locale = app()->getLocale();
 
-        return array_key_exists($locale, (array) config('locales.supported')) ? $locale : (string) config('locales.default');
+        return in_array($locale, (array) config('locales.interface'), true) ? $locale : (string) config('locales.default');
     }
 
     /**

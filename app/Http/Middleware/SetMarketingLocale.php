@@ -16,7 +16,7 @@ class SetMarketingLocale
 {
     public function handle(Request $request, Closure $next, string $locale): Response
     {
-        abort_unless(array_key_exists($locale, config('locales.supported')), 404);
+        abort_unless(in_array($locale, config('locales.interface'), true), 404);
 
         app()->setLocale($locale);
 

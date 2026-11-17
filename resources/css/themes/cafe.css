@@ -186,7 +186,7 @@
     & .c-lang {
         position: absolute;
         top: 16px;
-        right: 16px;
+        inset-inline-end: 16px;
         background: color-mix(in srgb, var(--menu-surface) 92%, transparent);
         border-color: transparent;
     }
@@ -459,7 +459,7 @@
         overflow: hidden;
         font: inherit;
         color: var(--menu-text);
-        text-align: left;
+        text-align: start;
         cursor: pointer;
         box-shadow: 0 1px 0 var(--c-line);
     }
@@ -473,7 +473,7 @@
     & .c-feature__pic .c-pill {
         position: absolute;
         top: 10px;
-        left: 10px;
+        inset-inline-start: 10px;
     }
 
     & .c-feature__body {
@@ -532,7 +532,7 @@
         background: var(--menu-surface);
         font: inherit;
         color: var(--menu-text);
-        text-align: left;
+        text-align: start;
         text-decoration: none;
         cursor: pointer;
     }
@@ -665,7 +665,7 @@
     & .c-round {
         position: absolute;
         top: 16px;
-        left: 16px;
+        inset-inline-start: 16px;
         width: 44px;
         height: 44px;
         border: 0;

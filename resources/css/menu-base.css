@@ -30,6 +30,16 @@ html.menu-lock {
     overflow: hidden;
 }
 
+/* Direction-bearing glyphs (back arrows, "→") point the other way in
+ * right-to-left menus (html[dir=rtl], config('locales.rtl')). */
+span.menu-flip-rtl {
+    display: inline-block;
+}
+
+[dir='rtl'] .menu-flip-rtl {
+    transform: scaleX(-1);
+}
+
 .menu-body {
     margin: 0;
     background: var(--menu-bg, #faf7f2);
@@ -136,7 +146,7 @@ html.menu-lock {
     flex-wrap: wrap;
     justify-content: flex-end;
     gap: 4px 10px;
-    text-align: right;
+    text-align: end;
 }
 
 .menu-hours__closed {
@@ -172,7 +182,7 @@ html.menu-lock {
 .menu-index__lang {
     position: absolute;
     top: 16px;
-    right: 16px;
+    inset-inline-end: 16px;
 }
 
 .menu-index__header {

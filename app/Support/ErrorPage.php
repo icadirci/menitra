@@ -60,7 +60,7 @@ final class ErrorPage
 
         $segment = (string) $request->segment(1);
 
-        if ($segment !== '' && array_key_exists($segment, config('locales.supported'))) {
+        if ($segment !== '' && in_array($segment, config('locales.interface'), true)) {
             app()->setLocale($segment);
         }
     }
