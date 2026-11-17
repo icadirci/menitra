@@ -309,6 +309,10 @@ return [
                 'image_shape' => 'Image shape',
                 'card_ratio' => 'Card shape',
                 'category_layout' => 'Category display',
+                'cart' => 'Cart (guest order list)',
+            ],
+            'layout_help' => [
+                'cart' => 'Guests can collect items in a list and show it to the staff when ordering; “I’ve ordered” clears it. The list stays on the guest’s phone; no order is sent to the business.',
             ],
             'layout_choices' => [
                 'image_shape' => ['arch' => 'Arched', 'rounded' => 'Rounded corners'],

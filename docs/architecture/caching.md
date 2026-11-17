@@ -34,12 +34,14 @@ All keys are built **only** by `App\Services\Menu\MenuCacheKeys`. Ad-hoc string 
 | `qrmenu:qr:{code}` | `{tenant_id, location_id, menu_id, is_active}` | 1h |
 | `qrmenu:tenant:{t}:version` | int, tenant content version | none |
 | `qrmenu:tenant:{t}:location:{l}:version` | int, location version | none |
-| `qrmenu:tenant:{t}:location:{l}:menu:{m}:{locale}:v{tv}.{lv}` | `MenuSnapshot` | 24h |
-| `qrmenu:tenant:{t}:location:{l}:index:{locale}:v{tv}.{lv}` | Location landing data | 24h |
-| `qrmenu:tenant:{t}:locations:{locale}:v{tv}` | Tenant location index (several branches) | 24h |
+| `qrmenu:tenant:{t}:location:{l}:menu:{m}:{locale}:v{tv}.{lv}:s{schema}` | `MenuSnapshot` | 24h |
+| `qrmenu:tenant:{t}:location:{l}:index:{locale}:v{tv}.{lv}:s{schema}` | Location landing data | 24h |
+| `qrmenu:tenant:{t}:locations:{locale}:v{tv}:s{schema}` | Tenant location index (several branches) | 24h |
 | `qrmenu:plans:{locale}` | Pricing page data | 6h |
 
 `{t}`, `{l}` and `{m}` are internal numeric IDs. Every key built for tenant data contains the tenant ID.
+
+`{schema}` is `MenuCacheKeys::SNAPSHOT_SCHEMA`, the shape version of the cached snapshot DTOs. It is bumped whenever a cached DTO gains or loses a property (2026-11-17: `TenantBrand::$currency`, schema 2), so a deploy never reads back objects serialized by the previous code; the old entries expire through their TTL.
 
 ## Version-based invalidation
 

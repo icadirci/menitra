@@ -7,11 +7,13 @@
 </div>
 <header class="c-venue">
     <div class="c-venue__top">
-        @if ($menu->brand->logoUrl)
-            <img class="c-logo" src="{{ $menu->brand->logoUrl }}" alt="{{ __('menu.logo_alt', ['name' => $menu->brand->name]) }}" width="60" height="60">
-        @else
-            <span class="c-logo" aria-hidden="true">{{ mb_substr($menu->brand->name, 0, 1) }}</span>
-        @endif
+        <x-menu.home-link :menu="$menu" class="menu-home--logo">
+            @if ($menu->brand->logoUrl)
+                <img class="c-logo" src="{{ $menu->brand->logoUrl }}" alt="{{ __('menu.logo_alt', ['name' => $menu->brand->name]) }}" width="60" height="60">
+            @else
+                <span class="c-logo" aria-hidden="true">{{ mb_substr($menu->brand->name, 0, 1) }}</span>
+            @endif
+        </x-menu.home-link>
         <div class="c-venue__name">
             <h1>{{ $menu->brand->name }}</h1>
             <x-menu.open-state :live="$live" class="c-open" />

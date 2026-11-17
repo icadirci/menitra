@@ -1,5 +1,5 @@
 {{-- Product detail card (DetailPetal), client-side over rendered data. --}}
-<div class="menu-sheet g-sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title-{{ $item->publicId }}"
+<div class="menu-sheet g-sheet" role="dialog" x-data="menuItem({{ $theme->cartEnabled() ? \Illuminate\Support\Js::from($item->cartPayload()) : 'null' }})" aria-modal="true" aria-labelledby="sheet-title-{{ $item->publicId }}"
      x-show="open === '{{ $item->publicId }}'" x-cloak x-transition.opacity tabindex="-1" x-ref="dlg-{{ $item->publicId }}">
     <div class="menu-sheet__inner g-sheet__inner">
         <div class="g-sheet__card">
@@ -24,8 +24,11 @@
                         <p class="g-muted">{{ $item->description }}</p>
                     @endif
                 </div>
-                <x-menu.item-details :item="$item" class="g-detail" />
+                <x-menu.item-details :item="$item" :selectable="$theme->cartEnabled()" class="g-detail" />
             </div>
         </div>
+        @if ($theme->cartEnabled())
+            <x-menu.cart-add :item="$item" :live="$live" />
+        @endif
     </div>
 </div>

@@ -569,3 +569,357 @@ span.menu-flip-rtl {
     margin: 0 auto;
     min-height: 100%;
 }
+
+/* ---------------------------------------------------------------------------
+ * Navigation dock, order list ("cart", layout option `cart`) and toast,
+ * shared by every theme (components/menu/dock, cart-add). Colours only from
+ * --menu-* pairs the contrast check covers (text/surface, surface/primary,
+ * bg/text).
+ * ------------------------------------------------------------------------- */
+.menu-root:has(.menu-dock) {
+    padding-bottom: calc(84px + env(safe-area-inset-bottom));
+}
+
+.menu-dock {
+    position: fixed;
+    inset-inline: 0;
+    bottom: calc(12px + env(safe-area-inset-bottom));
+    z-index: 40;
+    display: flex;
+    justify-content: center;
+    padding: 0 12px;
+    pointer-events: none;
+}
+
+.menu-dock__bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    max-width: 100%;
+    pointer-events: auto;
+}
+
+.menu-dock__btn,
+.menu-dock__cart {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 48px;
+    padding: 0 18px;
+    border-radius: 999px;
+    font: inherit;
+    font-weight: 700;
+    font-size: 14px;
+    line-height: 1;
+    white-space: nowrap;
+    text-decoration: none;
+    cursor: pointer;
+    box-shadow: 0 10px 28px -10px rgb(0 0 0 / 0.45);
+}
+
+.menu-dock__btn {
+    border: 1px solid color-mix(in srgb, var(--menu-text, #1c1917) 16%, transparent);
+    background: var(--menu-surface, #ffffff);
+    color: var(--menu-text, #1c1917);
+}
+
+.menu-dock__btn--icon {
+    width: 48px;
+    padding: 0;
+    justify-content: center;
+}
+
+.menu-dock__cart {
+    min-width: 0;
+    border: 0;
+    background: var(--menu-primary, #1c1917);
+    color: var(--menu-surface, #ffffff);
+}
+
+.menu-dock__count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 22px;
+    height: 22px;
+    padding: 0 6px;
+    border-radius: 999px;
+    background: var(--menu-surface, #ffffff);
+    color: var(--menu-primary, #1c1917);
+    font-size: 12px;
+}
+
+.menu-dock__total {
+    padding-inline-start: 8px;
+    border-inline-start: 1px solid color-mix(in srgb, var(--menu-surface, #ffffff) 40%, transparent);
+}
+
+@media (max-width: 380px) {
+    .menu-dock__btn span:not(.menu-sr):not([aria-hidden]),
+    .menu-dock__total {
+        display: none;
+    }
+
+    .menu-dock__btn {
+        width: 48px;
+        padding: 0;
+        justify-content: center;
+    }
+}
+
+/* Toast (added to the order list, list cleared + undo) */
+.menu-toast {
+    position: fixed;
+    inset-inline: 0;
+    bottom: calc(76px + env(safe-area-inset-bottom));
+    z-index: 60;
+    display: flex;
+    justify-content: center;
+    padding: 0 16px;
+    pointer-events: none;
+}
+
+.menu-toast__box {
+    display: inline-flex;
+    align-items: center;
+    gap: 14px;
+    max-width: 480px;
+    padding: 12px 16px;
+    border-radius: 14px;
+    background: var(--menu-text, #1c1917);
+    color: var(--menu-bg, #ffffff);
+    font-weight: 600;
+    box-shadow: 0 12px 30px -12px rgb(0 0 0 / 0.5);
+    pointer-events: auto;
+}
+
+.menu-toast__box button {
+    min-height: 36px;
+    padding: 0 10px;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    font-weight: 800;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+/* Quantity stepper */
+.menu-qty {
+    display: inline-flex;
+    align-items: center;
+    flex: none;
+    border: 1px solid color-mix(in srgb, var(--menu-text, #1c1917) 20%, transparent);
+    border-radius: 999px;
+    background: var(--menu-surface, #ffffff);
+    color: var(--menu-text, #1c1917);
+}
+
+.menu-qty > span {
+    min-width: 28px;
+    text-align: center;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+.menu-qty button {
+    width: 44px;
+    height: 44px;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    font-size: 20px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.menu-qty button:disabled {
+    opacity: 0.35;
+    cursor: default;
+}
+
+/* "Add to order" bar, sticky at the bottom of a product sheet */
+.menu-cart-add {
+    position: sticky;
+    bottom: 0;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 8px;
+    padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
+    background: var(--menu-bg, #ffffff);
+    border-top: 1px solid color-mix(in srgb, var(--menu-text, #1c1917) 12%, transparent);
+}
+
+.menu-cart-add__row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.menu-cart-add__button,
+.menu-cart__done {
+    flex: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    min-height: 50px;
+    padding: 0 20px;
+    border: 0;
+    border-radius: 999px;
+    background: var(--menu-primary, #1c1917);
+    color: var(--menu-surface, #ffffff);
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.menu-cart-add__error {
+    margin: 0;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--menu-accent, #b91c1c);
+}
+
+.menu-root .is-missing {
+    border-radius: 12px;
+    outline: 2px solid var(--menu-accent, #b91c1c);
+    outline-offset: 6px;
+}
+
+/* Order list sheet */
+.menu-cart__inner {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 0 16px calc(24px + env(safe-area-inset-bottom));
+}
+
+.menu-cart__bar {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: 8px;
+    margin: 0 -16px;
+    padding: 10px 16px;
+    background: var(--menu-bg, #ffffff);
+    border-bottom: 1px solid color-mix(in srgb, var(--menu-text, #1c1917) 10%, transparent);
+}
+
+.menu-cart__bar h2 {
+    margin: 0;
+    font-family: var(--menu-font-heading, inherit);
+    font-size: 18px;
+    color: var(--menu-primary, inherit);
+}
+
+.menu-cart__back {
+    justify-self: start;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 44px;
+    padding: 0 6px;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.menu-cart__note,
+.menu-cart__hint {
+    margin: 0;
+    font-size: 13px;
+    color: var(--menu-muted, #57534e);
+}
+
+.menu-cart__empty {
+    margin: 24px 0;
+    text-align: center;
+    color: var(--menu-muted, #57534e);
+}
+
+.menu-cart__lines {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+}
+
+.menu-cart__line {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 14px 0;
+    border-bottom: 1px dashed color-mix(in srgb, var(--menu-muted, #57534e) 35%, transparent);
+}
+
+.menu-cart__info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.menu-cart__info strong {
+    overflow-wrap: anywhere;
+}
+
+.menu-cart__info small {
+    color: var(--menu-muted, #57534e);
+}
+
+.menu-cart__info .menu-price {
+    font-weight: 700;
+    color: var(--menu-primary, inherit);
+}
+
+.menu-cart__footer {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.menu-cart__total {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    font-size: 17px;
+}
+
+.menu-cart__done {
+    justify-content: center;
+}
+
+/* Brand logo as the "home" link (components/menu/home-link). */
+.menu-home {
+    color: inherit;
+    text-decoration: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.menu-home--logo {
+    display: inline-flex;
+    flex: none;
+    border-radius: 999px;
+}
+
+.menu-home--fill {
+    display: grid;
+    place-items: center;
+    width: 100%;
+    height: 100%;
+}

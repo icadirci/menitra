@@ -1,7 +1,7 @@
 {{--
     Gallery (grid) theme — menu page. Design reference: docs/design/source/MenuPetal + DetailPetal.
     Inputs: $menu (MenuSnapshot), $live (LiveMenuState), $theme (ThemeSettings). No other data source.
-    Layout options ($theme->option()): category_layout (list | tiles, via $theme->categoryTiles()), show_featured, card_ratio (square | portrait).
+    Layout options ($theme->option()): category_layout (list | tiles, via $theme->categoryTiles()), cart (order list, via $theme->cartEnabled()), show_featured, card_ratio (square | portrait).
 --}}
 @extends('layouts.menu')
 
@@ -9,7 +9,7 @@
 @section('description', \Illuminate\Support\Str::limit((string) $menu->brand->description, 160))
 
 @section('content')
-    <div class="g-page g-page--{{ $theme->option('card_ratio') === 'portrait' ? 'portrait' : 'square' }}" x-data="menuPage({{ $theme->categoryTiles() ? 'true' : 'false' }})" data-search="{{ collect($menu->menu->categories)->flatMap(fn ($c) => $c->items)->map(fn ($i) => mb_strtolower($i->name.' '.$i->description))->implode('|') }}">
+    <div class="g-page g-page--{{ $theme->option('card_ratio') === 'portrait' ? 'portrait' : 'square' }}" x-data="menuPage({{ $theme->categoryTiles() ? 'true' : 'false' }})" @if ($theme->cartEnabled()) data-cart="{{ $menu->location->url }}" data-currency="{{ $menu->brand->currency }}" @endif data-search="{{ collect($menu->menu->categories)->flatMap(fn ($c) => $c->items)->map(fn ($i) => mb_strtolower($i->name.' '.$i->description))->implode('|') }}">
         @include('themes.grid.partials.header')
 
         @if (count($menu->menus) > 1)
@@ -34,7 +34,7 @@
             @if (count($menu->menu->categories) > 1 && ! $theme->categoryTiles())
                 <nav class="g-chips" aria-label="{{ __('menu.categories') }}" x-show="query === ''">
                     @foreach ($menu->menu->categories as $category)
-                        <a href="#{{ $category->anchor }}"><span aria-hidden="true"></span>{{ $category->name }}</a>
+                        <a href="#{{ $category->anchor }}" @click.prevent="jump('{{ $category->anchor }}')"><span aria-hidden="true"></span>{{ $category->name }}</a>
                     @endforeach
                 </nav>
             @endif
@@ -88,6 +88,8 @@
         <p class="g-empty" x-show="query !== '' && ! matches($root.dataset.search)" x-cloak>{{ __('menu.no_results') }}</p>
 
         @include('themes.grid.partials.footer')
+
+        <x-menu.dock :menu="$menu" :cart="$theme->cartEnabled()" />
 
         @foreach ($menu->menu->categories as $category)
             @foreach ($category->items as $item)

@@ -30,6 +30,7 @@ use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
+use Illuminate\Support\Facades\Lang;
 use UnitEnum;
 
 /**
@@ -214,6 +215,7 @@ class ManageTheme extends Page
 
                 $fields[$name] = $field
                     ->label(__("panels.app.theme.layout.{$name}"))
+                    ->helperText(Lang::has("panels.app.theme.layout_help.{$name}") ? __("panels.app.theme.layout_help.{$name}") : null)
                     ->visible(fn (Get $get): bool => array_key_exists($name, $this->selectedTheme($get)->defaults()['layout']));
             }
         }

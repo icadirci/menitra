@@ -1,11 +1,27 @@
 {{--
-    Shared body of a product detail sheet: variants, extra groups (display-only
-    choices, Alpine), preparation / calories / allergens and dietary labels.
-    Themes style it under [data-theme] (classes menu-detail*).
+    Shared body of a product detail sheet: variants, extra groups (choices kept
+    in the sheet's menuItem scope), preparation / calories / allergens and
+    dietary labels. With `selectable` (theme option `cart`) the variants are a
+    choice for the order list. Themes style it under [data-theme] (classes menu-detail*).
 --}}
-@props(['item'])
+@props(['item', 'selectable' => false])
 <div {{ $attributes->merge(['class' => 'menu-detail']) }}>
-    @if ($item->variants !== [])
+    @if ($item->variants !== [] && $selectable)
+        <section class="menu-detail__section">
+            <h3 class="menu-detail__title">{{ __('menu.variants') }}</h3>
+            <div class="menu-choices" role="radiogroup" aria-label="{{ __('menu.variants') }}">
+                @foreach ($item->variants as $variant)
+                    <button type="button" class="menu-choice" role="radio"
+                            :aria-checked="(variant === '{{ $variant->publicId }}').toString()"
+                            @click="variant = '{{ $variant->publicId }}'"
+                            @disabled(! $variant->isAvailable)>
+                        <span>{{ $variant->name }}</span>
+                        <small class="menu-price">{{ $variant->isAvailable ? $variant->price->formatted : __('menu.sold_out') }}</small>
+                    </button>
+                @endforeach
+            </div>
+        </section>
+    @elseif ($item->variants !== [])
         <section class="menu-detail__section">
             <h3 class="menu-detail__title">{{ __('menu.variants') }}</h3>
             <dl class="menu-detail__list">
@@ -20,7 +36,7 @@
     @endif
 
     @foreach ($item->extraGroups as $group)
-        <section class="menu-detail__section" x-data="{ picked: [] }">
+        <section class="menu-detail__section" data-group="{{ $loop->index }}" :class="{ 'is-missing': missing === {{ $loop->index }} }">
             <h3 class="menu-detail__title">
                 {{ $group->name }}
                 <small>
@@ -37,8 +53,8 @@
                     <button type="button"
                             class="menu-choice"
                             role="{{ $group->selectionType === 'single' ? 'radio' : 'checkbox' }}"
-                            :aria-checked="picked.includes('{{ $extra->publicId }}').toString()"
-                            @click="picked = {{ $group->selectionType === 'single' ? "['{$extra->publicId}']" : "picked.includes('{$extra->publicId}') ? picked.filter(p => p !== '{$extra->publicId}') : [...picked, '{$extra->publicId}']" }}"
+                            :aria-checked="isPicked({{ $loop->parent->index }}, '{{ $extra->publicId }}').toString()"
+                            @click="pick({{ $loop->parent->index }}, '{{ $extra->publicId }}', {{ $group->selectionType === 'single' ? 'true' : 'false' }}, {{ $group->selectionType === 'single' ? 'null' : ($group->maxSelect ?? 'null') }})"
                             @disabled(! $extra->isAvailable)>
                         <span>{{ $extra->name }}</span>
                         @if ($extra->priceDelta)

@@ -1,7 +1,7 @@
 {{--
     Classic theme — menu page. Design reference: docs/design/source/MenuKonak + DetailKonak.
     Inputs: $menu (MenuSnapshot), $live (LiveMenuState), $theme (ThemeSettings). No other data source.
-    Layout options ($theme->option()): category_layout (list | tiles, via $theme->categoryTiles()), show_images, show_featured, image_shape (arch | rounded).
+    Layout options ($theme->option()): category_layout (list | tiles, via $theme->categoryTiles()), cart (order list, via $theme->cartEnabled()), show_images, show_featured, image_shape (arch | rounded).
 --}}
 @extends('layouts.menu')
 
@@ -9,7 +9,7 @@
 @section('description', \Illuminate\Support\Str::limit((string) $menu->brand->description, 160))
 
 @section('content')
-    <div class="k-page k-page--{{ $theme->option('image_shape') === 'rounded' ? 'rounded' : 'arch' }}" x-data="menuPage({{ $theme->categoryTiles() ? 'true' : 'false' }})" data-search="{{ collect($menu->menu->categories)->flatMap(fn ($c) => $c->items)->map(fn ($i) => mb_strtolower($i->name.' '.$i->description))->implode('|') }}">
+    <div class="k-page k-page--{{ $theme->option('image_shape') === 'rounded' ? 'rounded' : 'arch' }}" x-data="menuPage({{ $theme->categoryTiles() ? 'true' : 'false' }})" @if ($theme->cartEnabled()) data-cart="{{ $menu->location->url }}" data-currency="{{ $menu->brand->currency }}" @endif data-search="{{ collect($menu->menu->categories)->flatMap(fn ($c) => $c->items)->map(fn ($i) => mb_strtolower($i->name.' '.$i->description))->implode('|') }}">
         @include('themes.classic.partials.header')
         @include('themes.classic.partials.info')
 
@@ -35,7 +35,7 @@
             @if (count($menu->menu->categories) > 1 && ! $theme->categoryTiles())
                 <nav class="k-cats" aria-label="{{ __('menu.categories') }}" x-show="query === ''">
                     @foreach ($menu->menu->categories as $category)
-                        <a href="#{{ $category->anchor }}">{{ $category->name }}</a>
+                        <a href="#{{ $category->anchor }}" @click.prevent="jump('{{ $category->anchor }}')">{{ $category->name }}</a>
                     @endforeach
                 </nav>
             @endif
@@ -90,6 +90,8 @@
         <p class="k-empty" x-show="query !== '' && ! matches($root.dataset.search)" x-cloak>{{ __('menu.no_results') }}</p>
 
         @include('themes.classic.partials.footer')
+
+        <x-menu.dock :menu="$menu" :cart="$theme->cartEnabled()" />
 
         @foreach ($menu->menu->categories as $category)
             @foreach ($category->items as $item)

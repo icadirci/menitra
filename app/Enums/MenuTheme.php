@@ -55,7 +55,7 @@ enum MenuTheme: string
                     'text' => '#2B1D16', 'muted' => '#6B5446', 'ornament' => '#C49A45',
                 ],
                 'font_pair' => MenuFontPair::YoungSerifFigtree->value,
-                'layout' => ['show_images' => true, 'show_featured' => true, 'image_shape' => 'arch', 'category_layout' => 'list'],
+                'layout' => ['show_images' => true, 'show_featured' => true, 'image_shape' => 'arch', 'category_layout' => 'list', 'cart' => false],
             ],
             // Design reference: MenuNoon / DetailNoon (DM Sans / DM Mono in the
             // design; self-hosted Inter here, prices in the system monospace).
@@ -65,7 +65,7 @@ enum MenuTheme: string
                     'text' => '#111111', 'muted' => '#62625F', 'ornament' => '#1D6B3A',
                 ],
                 'font_pair' => MenuFontPair::Inter->value,
-                'layout' => ['show_images' => true, 'show_featured' => true, 'category_layout' => 'list'],
+                'layout' => ['show_images' => true, 'show_featured' => true, 'category_layout' => 'list', 'cart' => false],
             ],
             // Design reference: MenuArdoise / DetailArdoise (Cormorant Garamond /
             // Jost in the design; Georgia + system sans by default here).
@@ -75,7 +75,7 @@ enum MenuTheme: string
                     'text' => '#EDE6D8', 'muted' => '#A79F90', 'ornament' => '#3A352D',
                 ],
                 'font_pair' => MenuFontPair::System->value,
-                'layout' => ['show_images' => true, 'show_featured' => true, 'category_layout' => 'list'],
+                'layout' => ['show_images' => true, 'show_featured' => true, 'category_layout' => 'list', 'cart' => false],
             ],
             // Design reference: MenuKiln / DetailKiln (Manrope in the design;
             // self-hosted Figtree here).
@@ -85,7 +85,7 @@ enum MenuTheme: string
                     'text' => '#3B2A20', 'muted' => '#6E5C50', 'ornament' => '#CDB79E',
                 ],
                 'font_pair' => MenuFontPair::Figtree->value,
-                'layout' => ['show_images' => true, 'show_featured' => true, 'category_layout' => 'list'],
+                'layout' => ['show_images' => true, 'show_featured' => true, 'category_layout' => 'list', 'cart' => false],
             ],
             // Design reference: MenuPetal / DetailPetal (Fraunces / Nunito Sans in
             // the design; Young Serif / Figtree here).
@@ -95,7 +95,7 @@ enum MenuTheme: string
                     'text' => '#3D2A35', 'muted' => '#6E5763', 'ornament' => '#F6C9D0',
                 ],
                 'font_pair' => MenuFontPair::YoungSerifFigtree->value,
-                'layout' => ['show_featured' => true, 'card_ratio' => 'square', 'category_layout' => 'list'],
+                'layout' => ['show_featured' => true, 'card_ratio' => 'square', 'category_layout' => 'list', 'cart' => false],
             ],
         };
     }
@@ -120,7 +120,9 @@ enum MenuTheme: string
      * Allowed values of the non-boolean layout options. Boolean options are
      * the layout defaults that are booleans. `category_layout` is shared by
      * every theme: `list` (all categories on one page, default) or `tiles`
-     * (a grid of category cards; a tap shows that category's items).
+     * (a grid of category cards; a tap shows that category's items). The
+     * boolean `cart` (off by default) is shared too: guests can collect items
+     * in a client-side order list (see ThemeSettings::cartEnabled()).
      *
      * @return array<string, list<string>>
      */

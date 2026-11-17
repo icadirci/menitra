@@ -1,5 +1,5 @@
 {{-- Product detail sheet (DetailArdoise), client-side over rendered data. --}}
-<div class="menu-sheet b-sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title-{{ $item->publicId }}"
+<div class="menu-sheet b-sheet" role="dialog" x-data="menuItem({{ $theme->cartEnabled() ? \Illuminate\Support\Js::from($item->cartPayload()) : 'null' }})" aria-modal="true" aria-labelledby="sheet-title-{{ $item->publicId }}"
      x-show="open === '{{ $item->publicId }}'" x-cloak x-transition.opacity tabindex="-1" x-ref="dlg-{{ $item->publicId }}">
     <div class="menu-sheet__inner">
         <div class="b-sheet__bar">
@@ -27,7 +27,10 @@
                     <p class="b-italic">{{ $item->description }}</p>
                 @endif
             </div>
-            <x-menu.item-details :item="$item" class="b-detail" />
+            <x-menu.item-details :item="$item" :selectable="$theme->cartEnabled()" class="b-detail" />
         </div>
+        @if ($theme->cartEnabled())
+            <x-menu.cart-add :item="$item" :live="$live" />
+        @endif
     </div>
 </div>

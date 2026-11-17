@@ -745,10 +745,13 @@
         display: block;
     }
 
+    /* Fixed: the sheet's only back button stays reachable while it scrolls. */
     & .c-round {
-        position: absolute;
-        top: 16px;
-        inset-inline-start: 16px;
+        position: fixed;
+        z-index: 3;
+        top: calc(16px + env(safe-area-inset-top));
+        inset-inline-start: max(16px, calc(50% - 264px));
+        box-shadow: 0 6px 18px -8px rgb(0 0 0 / 0.45);
         width: 44px;
         height: 44px;
         border: 0;

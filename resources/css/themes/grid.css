@@ -682,10 +682,13 @@
         padding: 6px 12px;
     }
 
+    /* Fixed: the sheet's only close button stays reachable while it scrolls. */
     & .g-close {
-        position: absolute;
-        top: 14px;
-        inset-inline-end: 14px;
+        position: fixed;
+        z-index: 3;
+        top: calc(28px + env(safe-area-inset-top));
+        inset-inline-end: max(26px, calc(50% - 254px));
+        box-shadow: 0 6px 18px -8px rgb(0 0 0 / 0.45);
         width: 44px;
         height: 44px;
         border: 0;

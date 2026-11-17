@@ -12,6 +12,13 @@ final class MenuCacheKeys
 {
     public const string PREFIX = 'qrmenu:';
 
+    /**
+     * Shape version of the cached snapshot DTOs. Bump it whenever a cached
+     * DTO gains or loses a property, so entries serialized by the previous
+     * code are never read back (they expire through their TTL).
+     */
+    public const int SNAPSHOT_SCHEMA = 2;
+
     public static function host(string $host): string
     {
         return self::PREFIX.'host:'.strtolower($host);
@@ -39,16 +46,16 @@ final class MenuCacheKeys
 
     public static function menuSnapshot(int $tenantId, int $locationId, int $menuId, string $locale, int $tenantVersion, int $locationVersion): string
     {
-        return self::PREFIX."tenant:{$tenantId}:location:{$locationId}:menu:{$menuId}:{$locale}:v{$tenantVersion}.{$locationVersion}";
+        return self::PREFIX."tenant:{$tenantId}:location:{$locationId}:menu:{$menuId}:{$locale}:v{$tenantVersion}.{$locationVersion}:s".self::SNAPSHOT_SCHEMA;
     }
 
     public static function locationIndex(int $tenantId, int $locationId, string $locale, int $tenantVersion, int $locationVersion): string
     {
-        return self::PREFIX."tenant:{$tenantId}:location:{$locationId}:index:{$locale}:v{$tenantVersion}.{$locationVersion}";
+        return self::PREFIX."tenant:{$tenantId}:location:{$locationId}:index:{$locale}:v{$tenantVersion}.{$locationVersion}:s".self::SNAPSHOT_SCHEMA;
     }
 
     public static function tenantLocations(int $tenantId, string $locale, int $tenantVersion): string
     {
-        return self::PREFIX."tenant:{$tenantId}:locations:{$locale}:v{$tenantVersion}";
+        return self::PREFIX."tenant:{$tenantId}:locations:{$locale}:v{$tenantVersion}:s".self::SNAPSHOT_SCHEMA;
     }
 }

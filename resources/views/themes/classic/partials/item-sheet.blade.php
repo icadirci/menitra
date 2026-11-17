@@ -1,5 +1,5 @@
-{{-- Product detail sheet (DetailKonak), client-side over rendered data. --}}
-<div class="k-sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title-{{ $item->publicId }}"
+{{-- Product detail sheet (DetailKonak), client-side over rendered data; choices in menuItem. --}}
+<div class="k-sheet" role="dialog" x-data="menuItem({{ $theme->cartEnabled() ? \Illuminate\Support\Js::from($item->cartPayload()) : 'null' }})" aria-modal="true" aria-labelledby="sheet-title-{{ $item->publicId }}"
      x-show="open === '{{ $item->publicId }}'" x-cloak x-transition.opacity tabindex="-1" x-ref="dlg-{{ $item->publicId }}">
     <div class="k-sheet__bar">
         <button type="button" class="k-back" @click="close()">
@@ -33,7 +33,22 @@
             @endif
         </div>
 
-        @if ($item->variants !== [])
+        @if ($item->variants !== [] && $theme->cartEnabled())
+            <section class="k-sheet__section">
+                <h3>{{ __('menu.variants') }}</h3>
+                <div class="k-choices" role="radiogroup" aria-label="{{ __('menu.variants') }}">
+                    @foreach ($item->variants as $variant)
+                        <button type="button" class="k-choice" role="radio"
+                                :aria-checked="(variant === '{{ $variant->publicId }}').toString()"
+                                @click="variant = '{{ $variant->publicId }}'"
+                                @disabled(! $variant->isAvailable)>
+                            <span>{{ $variant->name }}</span>
+                            <small>{{ $variant->isAvailable ? $variant->price->formatted : __('menu.sold_out') }}</small>
+                        </button>
+                    @endforeach
+                </div>
+            </section>
+        @elseif ($item->variants !== [])
             <section class="k-sheet__section">
                 <h3>{{ __('menu.variants') }}</h3>
                 <ul class="k-variants">
@@ -48,7 +63,7 @@
         @endif
 
         @foreach ($item->extraGroups as $group)
-            <section class="k-sheet__section" x-data="{ picked: [] }">
+            <section class="k-sheet__section" data-group="{{ $loop->index }}" :class="{ 'is-missing': missing === {{ $loop->index }} }">
                 <h3>
                     {{ $group->name }}
                     <small>
@@ -65,8 +80,8 @@
                         <button type="button"
                                 class="k-choice"
                                 role="{{ $group->selectionType === 'single' ? 'radio' : 'checkbox' }}"
-                                :aria-checked="picked.includes('{{ $extra->publicId }}').toString()"
-                                @click="picked = {{ $group->selectionType === 'single' ? "['{$extra->publicId}']" : "picked.includes('{$extra->publicId}') ? picked.filter(p => p !== '{$extra->publicId}') : [...picked, '{$extra->publicId}']" }}"
+                                :aria-checked="isPicked({{ $loop->parent->index }}, '{{ $extra->publicId }}').toString()"
+                                @click="pick({{ $loop->parent->index }}, '{{ $extra->publicId }}', {{ $group->selectionType === 'single' ? 'true' : 'false' }}, {{ $group->selectionType === 'single' ? 'null' : ($group->maxSelect ?? 'null') }})"
                                 @disabled(! $extra->isAvailable)>
                             <span>{{ $extra->name }}</span>
                             @if ($extra->priceDelta)
@@ -97,4 +112,7 @@
             <div class="k-tags"><x-menu.badges :labels="$item->dietaryLabels" /></div>
         @endif
     </div>
+    @if ($theme->cartEnabled())
+        <x-menu.cart-add :item="$item" :live="$live" />
+    @endif
 </div>

@@ -16,5 +16,7 @@ final readonly class TenantBrand
         public ?string $logoUrl,
         public ?string $coverUrl,
         public bool $showPlatformBranding,
+        /** ISO 4217 code of the tenant's prices (client-side order list totals). */
+        public string $currency = 'TRY',
     ) {}
 }

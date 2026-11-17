@@ -10,11 +10,13 @@
     </div>
 </div>
 <header class="g-header">
-    @if ($menu->brand->logoUrl)
-        <img class="g-logo" src="{{ $menu->brand->logoUrl }}" alt="{{ __('menu.logo_alt', ['name' => $menu->brand->name]) }}" width="76" height="76">
-    @else
-        <span class="g-logo" aria-hidden="true">{{ mb_substr($menu->brand->name, 0, 1) }}</span>
-    @endif
+    <x-menu.home-link :menu="$menu" class="menu-home--logo">
+        @if ($menu->brand->logoUrl)
+            <img class="g-logo" src="{{ $menu->brand->logoUrl }}" alt="{{ __('menu.logo_alt', ['name' => $menu->brand->name]) }}" width="76" height="76">
+        @else
+            <span class="g-logo" aria-hidden="true">{{ mb_substr($menu->brand->name, 0, 1) }}</span>
+        @endif
+    </x-menu.home-link>
     <h1>{{ $menu->brand->name }}</h1>
     @if ($menu->brand->description || $menu->brand->tagline)
         <p class="g-muted">{{ $menu->brand->description ?: $menu->brand->tagline }}</p>

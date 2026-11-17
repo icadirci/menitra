@@ -58,6 +58,7 @@ final class MenuSnapshotBuilder
             logoUrl: $this->mediaUrl($tenant->logo_path),
             coverUrl: $this->mediaUrl($tenant->cover_path),
             showPlatformBranding: $showPlatformBranding,
+            currency: $tenant->currency,
         );
     }
 

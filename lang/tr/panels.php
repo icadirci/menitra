@@ -309,6 +309,10 @@ return [
                 'image_shape' => 'Görsel biçimi',
                 'card_ratio' => 'Kart biçimi',
                 'category_layout' => 'Kategori görünümü',
+                'cart' => 'Sepet (misafir sipariş listesi)',
+            ],
+            'layout_help' => [
+                'cart' => 'Misafirler ürünleri sepete ekleyip sipariş verirken garsona gösterebilir; “Siparişimi verdim” ile sepet boşalır. Liste yalnızca misafirin telefonunda tutulur, işletmeye sipariş iletilmez.',
             ],
             'layout_choices' => [
                 'image_shape' => ['arch' => 'Kemerli', 'rounded' => 'Yuvarlatılmış köşe'],

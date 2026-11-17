@@ -113,6 +113,86 @@ class ThemeIndependenceTest extends TestCase
         $this->assertSame(0, $queries);
     }
 
+    public function test_every_theme_offers_the_order_list_only_when_enabled(): void
+    {
+        $queries = 0;
+        DB::listen(function () use (&$queries): void {
+            $queries++;
+        });
+
+        $snapshot = $this->snapshot();
+        $live = LiveMenuState::for($snapshot->location, CarbonImmutable::parse('2026-11-16 10:00', 'Europe/Istanbul'));
+
+        foreach (MenuTheme::cases() as $theme) {
+            $defaults = $theme->defaults();
+            $this->assertFalse($defaults['layout']['cart'], "{$theme->value} must ship with the order list off.");
+
+            // Off (also for settings saved before the option existed): no order list, but the dock is there.
+            $off = view($theme->view(), ['menu' => $snapshot, 'live' => $live, 'theme' => ThemeSettings::fromStored($theme, ['layout' => array_diff_key($defaults['layout'], ['cart' => true])] + $defaults)])->render();
+            $this->assertStringContainsString('menu-dock', $off, "{$theme->value} has no navigation dock.");
+            $this->assertStringContainsString(__('menu.menus'), $off, "{$theme->value} offers no way back to the branch's menus.");
+            $this->assertStringNotContainsString('data-cart=', $off);
+            $this->assertStringNotContainsString('menu-cart-add', $off);
+            $this->assertStringNotContainsString('dlg-cart', $off);
+            $this->assertStringContainsString('menuItem(null)', $off);
+
+            $on = view($theme->view(), ['menu' => $snapshot, 'live' => $live, 'theme' => ThemeSettings::fromStored($theme, ['layout' => ['cart' => true] + $defaults['layout']] + $defaults)])->render();
+            $this->assertStringContainsString('data-cart="http://konak.localhost/moda"', $on, "{$theme->value} ignores the cart option.");
+            $this->assertStringContainsString('data-currency="TRY"', $on);
+            $this->assertStringContainsString('dlg-cart', $on);
+            $this->assertStringContainsString(__('menu.cart_done'), $on);
+            // Variants become a choice; only the available item can be added (Sütlaç is sold out).
+            $this->assertStringContainsString("variant = 'v2'", $on);
+            $this->assertSame(1, substr_count($on, 'menu-cart-add__button'), "{$theme->value} offers sold-out items for the order list.");
+        }
+
+        $this->assertSame(0, $queries);
+    }
+
+    public function test_every_theme_links_its_logo_to_the_branch_home(): void
+    {
+        $snapshot = $this->snapshot();
+        $live = LiveMenuState::for($snapshot->location, CarbonImmutable::parse('2026-11-16 10:00', 'Europe/Istanbul'));
+        $location = new MenuSnapshot($snapshot->version, $snapshot->locale, $snapshot->availableLocales, $snapshot->brand, $snapshot->location, $snapshot->menus);
+
+        foreach (MenuTheme::cases() as $theme) {
+            $settings = ThemeSettings::defaults($theme);
+
+            foreach ([$theme->view() => $snapshot, $theme->locationView() => $location] as $view => $data) {
+                $html = view($view, ['menu' => $data, 'live' => $live, 'theme' => $settings])->render();
+
+                $this->assertMatchesRegularExpression('/<a class="menu-home[^"]*"\s+href="http:\/\/konak\.localhost\/moda\?lang=tr"/', $html, "{$view} has no home link on its logo.");
+                $this->assertStringContainsString(__('menu.home_link', ['name' => 'Kahve Konağı']), $html);
+            }
+        }
+
+        // A branch with a single menu: home is that menu (the location URL renders it too).
+        $single = new MenuSnapshot($snapshot->version, $snapshot->locale, $snapshot->availableLocales, $snapshot->brand, $snapshot->location, [$snapshot->menus[0]], $snapshot->menu);
+        $html = view(MenuTheme::Classic->view(), ['menu' => $single, 'live' => $live, 'theme' => ThemeSettings::defaults(MenuTheme::Classic)])->render();
+        $this->assertStringContainsString('href="http://konak.localhost/moda/menu?lang=tr"', $html);
+    }
+
+    public function test_cart_payload_carries_only_ids_names_and_prices(): void
+    {
+        $item = $this->snapshot()->menu->categories[0]->items[0];
+
+        $this->assertSame([
+            'id' => $item->publicId,
+            'name' => 'Türk Kahvesi',
+            'price' => null,
+            'variants' => [
+                ['id' => 'v1', 'name' => 'Tek', 'price' => 15000, 'default' => true, 'available' => true],
+                ['id' => 'v2', 'name' => 'Duble', 'price' => 21000, 'default' => false, 'available' => true],
+            ],
+            'groups' => [
+                ['name' => 'Şeker tercihi', 'min' => 0, 'extras' => [
+                    ['id' => 'e1', 'name' => 'Sade', 'delta' => 0],
+                    ['id' => 'e2', 'name' => 'Orta', 'delta' => 0],
+                ]],
+            ],
+        ], $item->cartPayload());
+    }
+
     public function test_every_theme_offers_category_cards_and_keeps_the_list_by_default(): void
     {
         $snapshot = $this->snapshot();

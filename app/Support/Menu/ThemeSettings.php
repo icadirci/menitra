@@ -101,6 +101,17 @@ final readonly class ThemeSettings
     }
 
     /**
+     * Order list ("cart", layout option `cart`): guests add items from the
+     * detail sheet to a list kept only in their browser (localStorage) and
+     * show it to the staff. Nothing is sent to the server; it is not online
+     * ordering.
+     */
+    public function cartEnabled(): bool
+    {
+        return $this->option('cart') === true;
+    }
+
+    /**
      * CSS declarations for the menu root element, e.g. "--menu-primary:#23443A;".
      */
     public function cssVariables(): string

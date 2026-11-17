@@ -7,7 +7,7 @@
 </div>
 <header class="n-header">
     <div class="n-header__top">
-        <div class="n-brand">
+        <x-menu.home-link :menu="$menu" class="n-brand">
             @if ($menu->brand->logoUrl)
                 <img class="n-mark" src="{{ $menu->brand->logoUrl }}" alt="{{ __('menu.logo_alt', ['name' => $menu->brand->name]) }}" width="44" height="44">
             @else
@@ -19,7 +19,7 @@
                     <span class="n-muted">{{ $menu->brand->tagline }}</span>
                 @endif
             </div>
-        </div>
+        </x-menu.home-link>
         <x-menu.open-state :live="$live" class="n-open" />
     </div>
     @if ($menu->brand->description)
