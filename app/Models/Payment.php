@@ -39,6 +39,8 @@ class Payment extends Model
             'extra_locations' => 'integer',
             'extra_location_amount' => 'integer',
             'amount' => 'integer',
+            'credit_amount' => 'integer',
+            'prorated_days' => 'integer',
             'billing_details' => 'encrypted:array',
             'period_starts_at' => 'immutable_datetime',
             'period_ends_at' => 'immutable_datetime',
@@ -89,7 +91,17 @@ class Payment extends Model
 
     public function extraLocationsMoney(): Money
     {
-        return Money::fromMinor($this->amount - $this->base_amount, $this->currency);
+        return Money::fromMinor($this->extra_locations * (int) $this->extra_location_amount, $this->currency);
+    }
+
+    public function creditMoney(): ?Money
+    {
+        return $this->credit_amount === null ? null : Money::fromMinor($this->credit_amount, $this->currency);
+    }
+
+    public function isUpgrade(): bool
+    {
+        return $this->kind === PaymentKind::Upgrade;
     }
 
     public function isPending(): bool

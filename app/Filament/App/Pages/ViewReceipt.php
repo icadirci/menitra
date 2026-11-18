@@ -94,7 +94,12 @@ class ViewReceipt extends Page
             Section::make(__('billing.receipt.sections.amount'))
                 ->columns(['default' => 1, 'md' => 3])
                 ->schema(array_values(array_filter([
-                    TextEntry::make('base')->label(__('billing.checkout.summary.base'))->state($payment->baseMoney()->format()),
+                    $payment->isUpgrade()
+                        ? TextEntry::make('base')->label(__('billing.checkout.summary.upgrade_charge', ['days' => $payment->prorated_days]))->state($payment->baseMoney()->format())
+                        : TextEntry::make('base')->label(__('billing.checkout.summary.base'))->state($payment->baseMoney()->format()),
+                    $payment->isUpgrade() && $payment->creditMoney() !== null
+                        ? TextEntry::make('credit')->label(__('billing.checkout.summary.upgrade_credit'))->state('−'.$payment->creditMoney()->format())
+                        : null,
                     $payment->extra_locations > 0
                         ? TextEntry::make('extra')->label(__('billing.checkout.summary.extra'))
                             ->state(__('billing.checkout.summary.extra_value', ['count' => $payment->extra_locations, 'amount' => $payment->extraLocationsMoney()->format()]))

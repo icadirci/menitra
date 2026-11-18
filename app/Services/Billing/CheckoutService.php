@@ -6,6 +6,7 @@ namespace App\Services\Billing;
 
 use App\Contracts\PaymentGateway;
 use App\Enums\BillingInterval;
+use App\Enums\PaymentKind;
 use App\Enums\PaymentStatus;
 use App\Enums\SubscriptionStatus;
 use App\Exceptions\CheckoutNotAllowedException;
@@ -44,24 +45,34 @@ class CheckoutService
     public function eligibility(): CheckoutEligibility
     {
         $subscription = Subscription::query()->with('plan')->whereNull('ended_at')->latest('id')->first();
+        $now = CarbonImmutable::now();
 
-        if ($subscription === null || $subscription->status !== SubscriptionStatus::Active) {
+        if ($subscription === null
+            || $subscription->status !== SubscriptionStatus::Active
+            || $subscription->current_period_ends_at === null
+            || ! $subscription->current_period_ends_at->isAfter($now)) {
             return new CheckoutEligibility(allowed: true, canChangePlan: true, subscription: $subscription);
         }
 
-        $endsAt = $subscription->current_period_ends_at;
-        $opensAt = $endsAt?->subDays((int) config('billing.renewal_window_days'));
+        $interval = $this->calculator->intervalOf($subscription);
+        $opensAt = $subscription->current_period_ends_at->subDays((int) config('billing.renewal_window_days'));
+        $renewalOpen = ! $opensAt->isAfter($now);
 
-        if ($endsAt !== null && $opensAt->isFuture()) {
-            return new CheckoutEligibility(allowed: false, canChangePlan: false, subscription: $subscription, reason: 'renewal_not_open', opensAt: $opensAt);
-        }
-
-        return new CheckoutEligibility(allowed: true, canChangePlan: false, subscription: $subscription);
+        return new CheckoutEligibility(
+            allowed: $renewalOpen,
+            canChangePlan: false,
+            subscription: $subscription,
+            reason: $renewalOpen ? null : 'renewal_not_open',
+            opensAt: $renewalOpen ? null : $opensAt,
+            canUpgrade: $this->upgradePlans($subscription, $interval) !== [],
+            fixedInterval: $interval,
+        );
     }
 
     /**
-     * Plans the owner can pay for now: the current plan, plus every selectable
-     * plan when a plan change is allowed.
+     * Plans the owner can pay for now: every selectable plan without a
+     * running paid period; during one, the current plan (renewal window) and
+     * the higher-priced plans (upgrade).
      *
      * @return list<Plan>
      */
@@ -69,15 +80,55 @@ class CheckoutService
     {
         $current = $eligibility->subscription?->plan;
 
-        $plans = $eligibility->canChangePlan
-            ? Plan::query()->selectable()->with(['translations', 'prices'])->orderBy('sort_order')->get()->all()
-            : [];
+        if ($eligibility->isActivePeriod()) {
+            $plans = $this->upgradePlans($eligibility->subscription, $eligibility->fixedInterval);
+
+            if ($eligibility->allowed && $current !== null && $current->is_active && $current->load(['translations', 'prices', 'limits'])->prices->contains(fn ($price): bool => $price->is_active)) {
+                array_unshift($plans, $current);
+            }
+
+            return $plans;
+        }
+
+        $plans = $this->selectablePlans();
 
         if ($current !== null && $current->is_active && ! collect($plans)->contains(fn (Plan $plan): bool => $plan->is($current))) {
-            array_unshift($plans, $current->load(['translations', 'prices']));
+            array_unshift($plans, $current->load(['translations', 'prices', 'limits']));
         }
 
         return array_values(array_filter($plans, fn (Plan $plan): bool => $plan->prices->contains(fn ($price): bool => $price->is_active)));
+    }
+
+    /**
+     * Whether paying for $plan now is a prorated upgrade of the running period.
+     */
+    public function isUpgrade(CheckoutEligibility $eligibility, Plan $plan): bool
+    {
+        return $eligibility->isActivePeriod() && ! $plan->is($eligibility->subscription?->plan);
+    }
+
+    /**
+     * Selectable plans priced above the current plan in the period's interval.
+     *
+     * @return list<Plan>
+     */
+    private function upgradePlans(Subscription $subscription, BillingInterval $interval): array
+    {
+        $current = Plan::query()->with('prices')->find($subscription->plan_id);
+        $currentPrice = $current?->priceFor($interval)?->amount ?? 0;
+
+        return array_values(array_filter(
+            $this->selectablePlans(),
+            fn (Plan $plan): bool => ! $plan->is($current) && ($plan->priceFor($interval)?->amount ?? 0) > $currentPrice,
+        ));
+    }
+
+    /**
+     * @return list<Plan>
+     */
+    private function selectablePlans(): array
+    {
+        return Plan::query()->selectable()->with(['translations', 'prices', 'limits'])->orderBy('sort_order')->orderBy('id')->get()->all();
     }
 
     /**
@@ -95,15 +146,23 @@ class CheckoutService
 
         $eligibility = $this->eligibility();
 
-        if (! $eligibility->allowed) {
+        if (! $eligibility->canPayAnything()) {
             throw CheckoutNotAllowedException::because($eligibility->reason ?? 'not_allowed', [
                 'date' => $eligibility->opensAt?->setTimezone('Europe/Istanbul')->locale($locale)->isoFormat('LL'),
             ]);
         }
 
         if (! collect($this->payablePlans($eligibility))->contains(fn (Plan $payable): bool => $payable->is($plan))) {
-            throw CheckoutNotAllowedException::because('plan_not_allowed');
+            throw CheckoutNotAllowedException::because($eligibility->isActivePeriod() && ! $eligibility->allowed && $plan->is($eligibility->subscription?->plan)
+                ? 'renewal_not_open'
+                : 'plan_not_allowed', [
+                    'date' => $eligibility->opensAt?->setTimezone('Europe/Istanbul')->locale($locale)->isoFormat('LL'),
+                ]);
         }
+
+        // An upgrade keeps the running period's interval; a renewal may switch it.
+        $upgrade = $this->isUpgrade($eligibility, $plan) ? $this->calculator->upgradeQuote($eligibility->subscription, $plan) : null;
+        $interval = $upgrade?->interval ?? $interval;
 
         $profile = $this->profiles->current() ?? throw CheckoutNotAllowedException::because('billing_profile_missing');
 
@@ -121,16 +180,28 @@ class CheckoutService
             'interval' => $interval,
             'status' => PaymentStatus::Pending,
             'currency' => $quote->total->currency,
-            'base_amount' => $quote->base->minor,
-            'extra_locations' => $quote->extraLocations,
-            'extra_location_amount' => $quote->extraLocations > 0 ? $quote->price->extra_location_amount : null,
-            'amount' => $quote->total->minor,
             'provider' => $this->gateway->name(),
             'billing_details' => $profile->snapshot(),
+            ...($upgrade === null ? [
+                'base_amount' => $quote->base->minor,
+                'extra_locations' => $quote->extraLocations,
+                'extra_location_amount' => $quote->extraLocations > 0 ? $quote->price->extra_location_amount : null,
+                'amount' => $quote->total->minor,
+            ] : [
+                // The new plan for the remaining days (branches included) minus the credit.
+                'kind' => PaymentKind::Upgrade,
+                'base_amount' => $upgrade->charge->minor,
+                'extra_locations' => 0,
+                'credit_amount' => $upgrade->credit->minor,
+                'prorated_days' => $upgrade->remainingDays,
+                'amount' => $upgrade->total->minor,
+                'period_starts_at' => CarbonImmutable::now(),
+                'period_ends_at' => $upgrade->periodEndsAt,
+            ]),
         ])->save();
 
         try {
-            $session = $this->gateway->initializeCheckout($this->request($payment, $quote, $user, $ip, $locale));
+            $session = $this->gateway->initializeCheckout($this->request($payment, $quote, $user, $ip, $locale, $upgrade));
         } catch (PaymentGatewayException $exception) {
             $payment->forceFill([
                 'status' => PaymentStatus::Failed,
@@ -149,20 +220,22 @@ class CheckoutService
         return $session->paymentPageUrl;
     }
 
-    private function request(Payment $payment, BillingQuote $quote, User $user, string $ip, string $locale): CheckoutRequest
+    private function request(Payment $payment, BillingQuote $quote, User $user, string $ip, string $locale, ?UpgradeQuote $upgrade): CheckoutRequest
     {
         $planName = $quote->plan->translate($locale)?->name ?? $quote->plan->code;
         $interval = __("plans.intervals.{$payment->interval->value}", [], $locale);
 
-        $lines = [new CheckoutLine('plan-'.$quote->plan->code, "{$planName} ({$interval})", $quote->base)];
+        $lines = $upgrade !== null
+            ? [new CheckoutLine('upgrade-'.$quote->plan->code, __('billing.checkout.upgrade_line', ['plan' => $planName, 'days' => $upgrade->remainingDays], $locale), $upgrade->total)]
+            : [new CheckoutLine('plan-'.$quote->plan->code, "{$planName} ({$interval})", $quote->base)];
 
-        if (! $quote->extra->isZero()) {
+        if ($upgrade === null && ! $quote->extra->isZero()) {
             $lines[] = new CheckoutLine('extra-locations', __('billing.checkout.extra_locations_line', ['count' => $quote->extraLocations], $locale), $quote->extra);
         }
 
         return new CheckoutRequest(
             reference: $payment->public_id,
-            amount: $quote->total,
+            amount: $payment->money(),
             lines: $lines,
             buyerId: 'user-'.$user->getKey(),
             buyerName: $user->name,

@@ -7,6 +7,7 @@ namespace Tests\Feature\Billing;
 use App\Enums\BillingInterval;
 use App\Enums\PaymentKind;
 use App\Enums\PaymentStatus;
+use App\Enums\PlanFeature;
 use App\Enums\SubscriptionEventType;
 use App\Enums\SubscriptionStatus;
 use App\Exceptions\CrossTenantWriteException;
@@ -18,6 +19,7 @@ use App\Models\Subscription;
 use App\Models\SubscriptionEvent;
 use App\Models\Tenant;
 use App\Services\Billing\PaymentProcessor;
+use App\Services\Subscription\FeatureGate;
 use App\Services\Subscription\SubscriptionService;
 use App\Tenancy\TenantContext;
 use Carbon\CarbonImmutable;
@@ -284,5 +286,57 @@ class PaymentCallbackTest extends TestCase
             ->get('/app/baska-kafe/subscription?payment='.$payment->public_id)
             ->assertOk()
             ->assertDontSee(__('billing.result.succeeded.title'));
+    }
+
+    public function test_a_paid_upgrade_switches_the_plan_at_once_and_keeps_the_period(): void
+    {
+        $pro = $this->pricedPlan('pro', 50000, null, [], ['premium_themes' => 1]);
+        $now = CarbonImmutable::now();
+        $this->inTenant($this->tenant, fn () => app(SubscriptionService::class)->activate(Subscription::query()->sole(), $now, $now->addDays(30), $this->starter->priceFor(BillingInterval::Monthly)));
+        $this->travel(10)->days();
+
+        $payment = $this->startCheckout($this->tenant, $pro);
+        $this->gateway->paid($payment->provider_token, $payment->public_id, $payment->amount);
+        $this->returnFromProvider($payment);
+
+        $subscription = $this->subscription();
+        $this->assertSame($pro->id, $subscription->plan_id);
+        $this->assertSame(SubscriptionStatus::Active, $subscription->status);
+        $this->assertTrue($subscription->current_period_ends_at->equalTo($now->addDays(30)), 'the period is unchanged');
+        $this->assertSame($pro->priceFor(BillingInterval::Monthly)->id, $subscription->plan_price_id);
+
+        $payment = $this->fresh($payment);
+        $this->assertSame(PaymentKind::Upgrade, $payment->kind);
+        $this->assertSame(PaymentStatus::Succeeded, $payment->status);
+        $this->assertTrue($this->inTenant($this->tenant, fn (): bool => app(FeatureGate::class)->allows($this->tenant, PlanFeature::PremiumThemes)));
+
+        $event = $this->inTenant($this->tenant, fn () => SubscriptionEvent::query()->where('type', SubscriptionEventType::PlanChanged)->sole());
+        $this->assertSame('upgrade', $event->meta['mode']);
+        $this->assertSame('pro', $event->meta['to_plan']);
+
+        app(TenantContext::class)->clear();
+        $this->actingAs($this->ownerOf($this->tenant))
+            ->get('/app/yaman-kahvesi/subscription/receipt?payment='.$payment->public_id)
+            ->assertOk()
+            ->assertSee(__('billing.checkout.summary.upgrade_credit'));
+    }
+
+    public function test_an_upgrade_paid_after_the_period_ended_still_raises_the_plan(): void
+    {
+        $pro = $this->pricedPlan('pro', 50000);
+        $now = CarbonImmutable::now();
+        $this->inTenant($this->tenant, fn () => app(SubscriptionService::class)->activate(Subscription::query()->sole(), $now, $now->addDays(30), $this->starter->priceFor(BillingInterval::Monthly)));
+        $this->travel(29)->days();
+        $payment = $this->startCheckout($this->tenant, $pro);
+        $this->travel(2)->days();
+        $this->inTenant($this->tenant, fn () => app(SubscriptionService::class)->processDue(Subscription::query()->sole()));
+
+        $this->gateway->paid($payment->provider_token, $payment->public_id, $payment->amount);
+        $this->returnFromProvider($payment);
+
+        $subscription = $this->subscription();
+        $this->assertSame(SubscriptionStatus::Grace, $subscription->status);
+        $this->assertSame($pro->id, $subscription->plan_id);
+        $this->assertSame(PaymentStatus::Succeeded, $this->fresh($payment)->status);
     }
 }

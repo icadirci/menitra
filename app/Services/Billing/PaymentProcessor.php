@@ -38,6 +38,7 @@ use Illuminate\Support\Facades\Mail;
  * - trialing                → [changePlan()] + activate(), period from the trial end
  * - grace / past due        → [changePlan()] + activate(), period from now
  * - active                  → renew(), period from the current period end
+ * - an upgrade payment      → upgrade(): the plan changes at once, the period stays
  */
 class PaymentProcessor
 {
@@ -103,7 +104,9 @@ class PaymentProcessor
         $tenant = $this->context->tenant();
         $plan = Plan::query()->findOrFail($payment->plan_id);
         $price = PlanPrice::query()->findOrFail($payment->plan_price_id);
-        [$subscription, $kind, $startsAt, $endsAt] = $this->applyToSubscription($tenant, $plan, $price, $payment, (string) $result->paymentId);
+        [$subscription, $kind, $startsAt, $endsAt] = $payment->isUpgrade()
+            ? $this->applyUpgrade($plan, $price, $payment)
+            : $this->applyToSubscription($tenant, $plan, $price, $payment, (string) $result->paymentId);
 
         $now = CarbonImmutable::now();
 
@@ -183,6 +186,41 @@ class PaymentProcessor
         $endsAt = $startsAt->addMonthsNoOverflow($months);
 
         return [$this->subscriptions->activate($live, $startsAt, $endsAt, $price, $provider, $reference), PaymentKind::Activation, $startsAt, $endsAt];
+    }
+
+    /**
+     * The upgrade was priced for the running period when the checkout
+     * started. If that period is still running, the plan changes now; if it
+     * ended meanwhile (grace), the plan still changes but the next period
+     * must be paid; anything else is logged for a manual review/refund.
+     *
+     * @return array{Subscription, PaymentKind, CarbonImmutable, CarbonImmutable}
+     */
+    private function applyUpgrade(Plan $plan, PlanPrice $price, Payment $payment): array
+    {
+        $live = Subscription::query()->whereNull('ended_at')->latest('id')->first();
+        $startsAt = $payment->period_starts_at ?? CarbonImmutable::now();
+        $endsAt = $payment->period_ends_at ?? CarbonImmutable::now();
+
+        if ($live?->status === SubscriptionStatus::Active && $live->current_period_ends_at?->isFuture()) {
+            return [$this->subscriptions->upgrade($live, $plan, $price), PaymentKind::Upgrade, $startsAt, $endsAt];
+        }
+
+        if ($live !== null && in_array($live->status, [SubscriptionStatus::Grace, SubscriptionStatus::PastDue], true)) {
+            Log::warning('Upgrade paid after the period ended; the plan was changed, the next period is still due.', [
+                'payment' => $payment->public_id,
+                'tenant_id' => $payment->tenant_id,
+            ]);
+
+            return [$this->subscriptions->changePlan($live, $plan), PaymentKind::Upgrade, $startsAt, $endsAt];
+        }
+
+        Log::critical('Upgrade paid without a running subscription; not applied, review for a refund.', [
+            'payment' => $payment->public_id,
+            'tenant_id' => $payment->tenant_id,
+        ]);
+
+        return [$live ?? Subscription::query()->latest('id')->firstOrFail(), PaymentKind::Upgrade, $startsAt, $endsAt];
     }
 
     private function fail(Payment $payment, string $code, ?string $message): void

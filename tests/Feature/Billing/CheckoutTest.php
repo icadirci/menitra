@@ -5,21 +5,26 @@ declare(strict_types=1);
 namespace Tests\Feature\Billing;
 
 use App\Enums\BillingInterval;
+use App\Enums\PaymentKind;
 use App\Enums\PaymentStatus;
 use App\Exceptions\CheckoutNotAllowedException;
 use App\Exceptions\CrossTenantWriteException;
+use App\Filament\App\Pages\Checkout;
 use App\Models\Location;
 use App\Models\Payment;
 use App\Models\Plan;
 use App\Models\Subscription;
 use App\Models\Tenant;
 use App\Models\TenantMembership;
+use App\Services\Billing\BillingCalculator;
 use App\Services\Billing\CheckoutService;
 use App\Services\Subscription\SubscriptionService;
 use App\Tenancy\TenantContext;
 use Carbon\CarbonImmutable;
+use Filament\Facades\Filament;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Livewire\Livewire;
 use Tests\Support\BuildsBilling;
 use Tests\Support\BuildsMenus;
 use Tests\TestCase;
@@ -100,37 +105,103 @@ class CheckoutTest extends TestCase
         $this->startCheckout($this->tenant, $hidden);
     }
 
-    public function test_an_active_period_can_be_renewed_only_within_the_window_and_only_on_its_plan(): void
+    public function test_an_active_period_is_renewed_only_within_the_window_but_upgraded_at_any_time(): void
     {
         $this->billingProfile($this->tenant);
-        $pro = $this->pricedPlan('pro', 50000);
-        $this->inTenant($this->tenant, function (): void {
-            $now = CarbonImmutable::now();
-            app(SubscriptionService::class)->activate(Subscription::query()->sole(), $now, $now->addDays(60));
-        });
+        $pro = $this->pricedPlan('pro', 50000, 400000);
+        $cheap = $this->pricedPlan('cheap', 10000);
+        $this->activateMonthly(60);
 
-        $this->inTenant($this->tenant, function (): void {
-            $this->assertFalse(app(CheckoutService::class)->eligibility()->allowed);
+        $this->inTenant($this->tenant, function () use ($cheap): void {
+            $service = app(CheckoutService::class);
+            $eligibility = $service->eligibility();
+            $this->assertFalse($eligibility->allowed);
+            $this->assertTrue($eligibility->canUpgrade);
+            $this->assertSame(BillingInterval::Monthly, $eligibility->fixedInterval);
+            $codes = collect($service->payablePlans($eligibility))->pluck('code')->all();
+            $this->assertSame(['pro'], $codes, 'only higher plans while the renewal window is closed');
+            $this->assertNotContains($cheap->code, $codes);
         });
 
         try {
             $this->startCheckout($this->tenant, $this->starter);
             $this->fail('Renewal outside the window was allowed.');
-        } catch (CheckoutNotAllowedException) {
+        } catch (CheckoutNotAllowedException $exception) {
+            $this->assertStringContainsString('aktif', $exception->getMessage());
         }
+
+        // An upgrade keeps the period's interval even when yearly is asked for.
+        $upgrade = $this->startCheckout($this->tenant, $pro, BillingInterval::Yearly);
+        $this->assertSame(PaymentKind::Upgrade, $upgrade->kind);
+        $this->assertSame(BillingInterval::Monthly, $upgrade->interval);
 
         $this->travel(31)->days();
 
         $this->inTenant($this->tenant, function (): void {
-            $eligibility = app(CheckoutService::class)->eligibility();
-            $this->assertTrue($eligibility->allowed);
-            $this->assertFalse($eligibility->canChangePlan);
+            $this->assertTrue(app(CheckoutService::class)->eligibility()->allowed);
         });
 
-        $this->assertSame($this->starter->id, $this->startCheckout($this->tenant, $this->starter)->plan_id);
+        $renewal = $this->startCheckout($this->tenant, $this->starter, BillingInterval::Yearly);
+        $this->assertNull($renewal->kind);
+        $this->assertSame(BillingInterval::Yearly, $renewal->interval, 'a renewal may switch to yearly');
 
         $this->expectException(CheckoutNotAllowedException::class);
-        $this->startCheckout($this->tenant, $pro);
+        $this->startCheckout($this->tenant, $cheap);
+    }
+
+    public function test_an_upgrade_charges_the_difference_for_the_remaining_days(): void
+    {
+        $this->freezeSecond();
+        $this->billingProfile($this->tenant);
+        $pro = $this->pricedPlan('pro', 50000, 400000);
+        $this->activateMonthly(30);
+        $this->travel(15)->days();
+
+        $payment = $this->startCheckout($this->tenant, $pro);
+
+        // Half of the period is left: ½ × ₺500 − ½ × ₺300.
+        $this->assertSame(25000, $payment->base_amount);
+        $this->assertSame(15000, $payment->credit_amount);
+        $this->assertSame(10000, $payment->amount);
+        $this->assertSame(15, $payment->prorated_days);
+        $this->assertSame(10000, $this->gateway->started[0]->amount->minor);
+        $this->assertCount(1, $this->gateway->started[0]->lines);
+    }
+
+    public function test_an_upgrade_credits_what_was_actually_paid_including_branches(): void
+    {
+        $multi = $this->pricedPlan('multi-branch', 70000, null, ['included_locations' => 1]);
+        $top = $this->pricedPlan('top', 150000, null, ['included_locations' => 5]);
+        Location::factory()->for($this->tenant)->create(); // 2 branches: 1 extra on multi-branch
+        $this->billingProfile($this->tenant);
+
+        $first = $this->startCheckout($this->tenant, $multi);
+        $this->assertSame(90000, $first->amount);
+        $this->gateway->paid($first->provider_token, $first->public_id, 90000);
+        $this->post('/billing/iyzico/callback', ['token' => $first->provider_token]);
+
+        // The trial (14 days) is still running: the paid period starts at its end.
+        $this->travel(14)->days();
+        $this->travel(15)->days();
+
+        $upgrade = $this->startCheckout($this->tenant, $top);
+        $this->inTenant($this->tenant, function () use ($upgrade): void {
+            $subscription = Subscription::query()->sole();
+            $period = $subscription->current_period_starts_at->diffInSeconds($subscription->current_period_ends_at);
+            $remaining = CarbonImmutable::now()->diffInSeconds($subscription->current_period_ends_at);
+            $this->assertSame(intdiv(90000 * (int) $remaining, (int) $period), $upgrade->credit_amount);
+            $this->assertSame(intdiv(150000 * (int) $remaining, (int) $period), $upgrade->base_amount);
+        });
+    }
+
+    public function test_an_upgrade_in_the_last_minutes_still_costs_the_minimum(): void
+    {
+        $this->billingProfile($this->tenant);
+        $pro = $this->pricedPlan('pro', 50000);
+        $this->activateMonthly(30);
+        $this->travel(30 * 24 * 60 - 1)->minutes();
+
+        $this->assertSame(BillingCalculator::MINIMUM_UPGRADE_AMOUNT, $this->startCheckout($this->tenant, $pro)->amount);
     }
 
     public function test_managers_can_not_start_a_checkout(): void
@@ -192,11 +263,17 @@ class CheckoutTest extends TestCase
     {
         $this->billingProfile($this->tenant);
 
+        // Yearly is preselected and its advantage spelled out: 8 months instead of 12.
         $this->actingAs($this->ownerOf($this->tenant))
             ->get('/app/yaman-kahvesi/subscription/checkout')
             ->assertOk()
-            ->assertSee(__('billing.checkout.pay'))
-            ->assertSee('₺300');
+            ->assertSee(__('billing.checkout.sections.summary'))
+            ->assertSee('₺2.400')
+            ->assertSee('₺200')
+            ->assertSee(trans_choice('billing.checkout.yearly_perk_months', 4, ['paid' => 8, 'free' => 4]))
+            ->assertSee(__('billing.checkout.saving', ['amount' => '₺1.200', 'percent' => 33]))
+            ->assertSee(__('billing.checkout.pay_amount', ['amount' => '₺2.400,00']))
+            ->assertSee(__('billing.checkout.trust.card'));
 
         $manager = TenantMembership::factory()->manager()->for($this->tenant)->create()->user;
         $this->actingAs($manager)->get('/app/yaman-kahvesi/subscription/checkout')->assertForbidden();
@@ -211,5 +288,82 @@ class CheckoutTest extends TestCase
             ->assertOk()
             ->assertSee(__('billing.actions.pay'))
             ->assertSee(__('billing.history.heading'));
+    }
+
+    public function test_the_page_switches_plans_and_periods_and_pays(): void
+    {
+        $this->billingProfile($this->tenant);
+        $this->pricedPlan('pro', 50000, 400000);
+        $this->enter();
+
+        Livewire::test(Checkout::class)
+            ->assertSet('data.interval', 'yearly')
+            ->assertSee('₺2.400')
+            ->set('data.interval', 'monthly')
+            ->assertSee(__('billing.checkout.switch_yearly_hint', ['amount' => '₺1.200', 'percent' => 33]))
+            ->assertSeeHtml('aria-checked="true"')
+            ->call('selectPlan', 'pro')
+            ->assertSet('data.plan', 'pro')
+            ->call('selectPlan', 'not-a-plan')
+            ->assertSet('data.plan', 'pro')
+            ->assertSee(__('billing.checkout.pay_amount', ['amount' => '₺500,00']))
+            ->set('data.terms', true)
+            ->call('pay')
+            ->assertRedirect('https://sandbox-cpp.iyzipay.com/?token=fake');
+
+        $this->assertSame(50000, $this->gateway->started[0]->amount->minor);
+    }
+
+    public function test_the_page_requires_the_terms(): void
+    {
+        $this->billingProfile($this->tenant);
+        $this->enter();
+
+        Livewire::test(Checkout::class)
+            ->call('pay')
+            ->assertHasErrors(['data.terms']);
+
+        $this->assertSame([], $this->gateway->started);
+    }
+
+    public function test_an_active_subscription_sees_the_upgrade_offer(): void
+    {
+        $this->freezeSecond();
+        $this->billingProfile($this->tenant);
+        $this->pricedPlan('pro', 50000, 400000);
+        // 45 of 60 days left: the renewal window is closed, only the upgrade is offered.
+        $this->activateMonthly(60);
+        $this->travel(15)->days();
+        app(TenantContext::class)->clear();
+
+        $this->actingAs($this->ownerOf($this->tenant))
+            ->get('/app/yaman-kahvesi/subscription/checkout')
+            ->assertOk()
+            ->assertSee(__('billing.checkout.title_upgrade'))
+            ->assertSee(__('billing.checkout.upgrade_today', ['amount' => '₺150', 'days' => 45]))
+            ->assertSee(__('billing.checkout.summary.upgrade_credit'))
+            ->assertSee('₺225,00');
+
+        $this->actingAs($this->ownerOf($this->tenant))
+            ->get('/app/yaman-kahvesi/subscription')
+            ->assertSee(__('billing.actions.upgrade'));
+    }
+
+    private function activateMonthly(int $days): void
+    {
+        $this->inTenant($this->tenant, function () use ($days): void {
+            $now = CarbonImmutable::now();
+            $price = $this->starter->priceFor(BillingInterval::Monthly);
+            app(SubscriptionService::class)->activate(Subscription::query()->sole(), $now, $now->addDays($days), $price);
+        });
+    }
+
+    private function enter(): void
+    {
+        app(TenantContext::class)->clear();
+        $this->actingAs($this->ownerOf($this->tenant));
+        Filament::setCurrentPanel('app');
+        Filament::setTenant($this->tenant);
+        app(TenantContext::class)->set($this->tenant);
     }
 }

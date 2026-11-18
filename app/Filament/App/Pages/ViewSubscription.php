@@ -89,10 +89,16 @@ class ViewSubscription extends Page implements HasTable
         $eligibility = app(CheckoutService::class)->eligibility();
 
         return [
+            Action::make('upgrade')
+                ->label(__('billing.actions.upgrade'))
+                ->icon(Heroicon::OutlinedArrowTrendingUp)
+                ->url(Checkout::getUrl())
+                ->visible($eligibility->canUpgrade && ! $eligibility->allowed),
             Action::make('pay')
                 ->label($eligibility->subscription?->status === SubscriptionStatus::Active ? __('billing.actions.renew') : __('billing.actions.pay'))
                 ->icon(Heroicon::OutlinedCreditCard)
                 ->url(Checkout::getUrl())
+                ->color($eligibility->canUpgrade && ! $eligibility->allowed ? 'gray' : 'primary')
                 ->disabled(! $eligibility->allowed)
                 ->tooltip($eligibility->allowed ? null : __('billing.errors.'.($eligibility->reason ?? 'not_allowed'), [
                     'date' => $eligibility->opensAt?->setTimezone('Europe/Istanbul')->locale(app()->getLocale())->isoFormat('LL'),

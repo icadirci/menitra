@@ -34,9 +34,9 @@ trait BuildsBilling
     /**
      * @param  array<string, mixed>  $attributes
      */
-    protected function pricedPlan(string $code, int $monthly = 30000, ?int $yearly = 240000, array $attributes = []): Plan
+    protected function pricedPlan(string $code, int $monthly = 30000, ?int $yearly = 240000, array $attributes = [], array $limits = []): Plan
     {
-        $plan = Plan::factory()->withLimits(['max_locations' => null, 'max_menus' => 10])->create(['code' => $code, ...$attributes]);
+        $plan = Plan::factory()->withLimits(['max_locations' => null, 'max_menus' => 10, ...$limits])->create(['code' => $code, ...$attributes]);
         $plan->prices()->create(['interval' => BillingInterval::Monthly, 'amount' => $monthly, 'extra_location_amount' => $attributes['included_locations'] ?? null ? 20000 : null]);
 
         if ($yearly !== null) {

@@ -15,6 +15,9 @@ enum PaymentKind: string
     case Renewal = 'renewal';
     // No live subscription → a new active row (resubscribe()).
     case Resubscription = 'resubscription';
+    // A higher plan during a running paid period, effective at once; the
+    // remaining days are prorated (upgrade()). Set when the checkout starts.
+    case Upgrade = 'upgrade';
 
     public function label(): string
     {

@@ -136,6 +136,15 @@ final class MarketingContent
             ->values();
     }
 
+    /**
+     * Display data of one plan (also used by the /app checkout page). The plan
+     * needs its translations, prices and limits loaded.
+     */
+    public function pricingPlan(Plan $plan): ?PricingPlan
+    {
+        return $this->toPricingPlan($plan);
+    }
+
     private function toPricingPlan(Plan $plan): ?PricingPlan
     {
         $monthly = $plan->priceFor(BillingInterval::Monthly);

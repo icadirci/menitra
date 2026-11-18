@@ -287,6 +287,32 @@ class SubscriptionService
     }
 
     /**
+     * A paid upgrade to a higher plan during a running paid period: the plan
+     * changes at once, the period stays (the remaining days were prorated by
+     * the payment). The same plan again is a no-op.
+     */
+    public function upgrade(Subscription $subscription, Plan $plan, PlanPrice $price): Subscription
+    {
+        return $this->transition($subscription, function (Subscription $locked, CarbonImmutable $now) use ($plan, $price): void {
+            if ((int) $locked->plan_id === (int) $plan->getKey()) {
+                return;
+            }
+
+            $this->ensureOpenPeriod($locked, $now);
+            $this->ensurePriceOfPlan($price, (int) $plan->getKey());
+            $previous = Plan::query()->find($locked->plan_id);
+
+            $locked->forceFill(['plan_id' => $plan->getKey(), 'plan_price_id' => $price->getKey()])->save();
+            $this->record($locked, SubscriptionEventType::PlanChanged, $locked->status, $locked->status, $now, [
+                'from_plan' => $previous?->code,
+                'to_plan' => $plan->code,
+                'mode' => 'upgrade',
+                'period_ends_at' => $locked->current_period_ends_at?->toIso8601String(),
+            ]);
+        });
+    }
+
+    /**
      * A failed renewal payment while the period is still running.
      */
     public function markPastDue(Subscription $subscription): Subscription
