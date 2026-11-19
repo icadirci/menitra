@@ -35,11 +35,13 @@ class PlanSeeder extends Seeder
         'max_items' => 150,
         'max_languages' => 2,
         'max_qr_codes' => 5,
+        'max_tables' => 0,
         'max_members' => 3,
         'premium_themes' => 1,
         'custom_domain' => 0,
         'remove_branding' => 0,
         'qr_analytics' => 0,
+        'waiter_call' => 0,
     ];
 
     public function run(): void
@@ -76,7 +78,7 @@ class PlanSeeder extends Seeder
                 'monthly' => 50_000,
                 'extra_location' => null,
                 'included_locations' => null,
-                'limits' => [],
+                'limits' => ['max_tables' => 30, 'waiter_call' => 1],
                 'translations' => [
                     'tr' => ['name' => 'Profesyonel', 'description' => 'Tüm menü temalarıyla markanızı öne çıkarın.'],
                     'en' => ['name' => 'Professional', 'description' => 'Make your brand stand out with every menu theme.'],
@@ -94,6 +96,8 @@ class PlanSeeder extends Seeder
                     'max_items' => 500,
                     'max_languages' => 3,
                     'max_qr_codes' => 50,
+                    'max_tables' => null,
+                    'waiter_call' => 1,
                     'max_members' => 15,
                 ],
                 'translations' => [

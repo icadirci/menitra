@@ -15,16 +15,18 @@ enum PlanFeature: string
     case MaxItems = 'max_items';
     case MaxLanguages = 'max_languages';
     case MaxQrCodes = 'max_qr_codes';
+    case MaxTables = 'max_tables';
     case MaxMembers = 'max_members';
     case PremiumThemes = 'premium_themes';
     case CustomDomain = 'custom_domain';
     case RemoveBranding = 'remove_branding';
     case QrAnalytics = 'qr_analytics';
+    case WaiterCall = 'waiter_call';
 
     public function isBoolean(): bool
     {
         return match ($this) {
-            self::PremiumThemes, self::CustomDomain, self::RemoveBranding, self::QrAnalytics => true,
+            self::PremiumThemes, self::CustomDomain, self::RemoveBranding, self::QrAnalytics, self::WaiterCall => true,
             default => false,
         };
     }
@@ -34,11 +36,15 @@ enum PlanFeature: string
      * analytics) can't be switched on in a plan (PlanService stores 0) and are
      * never advertised on the pricing page, so nothing is sold that doesn't
      * exist. Flip a case here when its implementation ships.
+     *
+     * Waiter calls are being built step by step (2026-11-18): the seeded
+     * plans already carry the feature, but it is advertised and editable in
+     * /admin only once guests can actually call.
      */
     public function isAvailable(): bool
     {
         return match ($this) {
-            self::CustomDomain, self::QrAnalytics => false,
+            self::CustomDomain, self::QrAnalytics, self::WaiterCall => false,
             default => true,
         };
     }

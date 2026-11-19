@@ -93,6 +93,9 @@ class QrCodeResource extends Resource
                         ->label(__('panels.app.qr_codes.fields.location'))
                         ->options(fn (): array => self::locationOptions())
                         ->required()
+                        // A table code stays at its table's branch (QrCodeService re-checks).
+                        ->disabled(fn (?QrCode $record): bool => $record?->isTableCode() ?? false)
+                        ->dehydrated()
                         ->live()
                         ->afterStateUpdated(fn (Set $set) => $set('menu_id', null)),
                     Select::make('menu_id')
@@ -138,6 +141,9 @@ class QrCodeResource extends Resource
                     ->state(fn (QrCode $record): string => $record->location === null
                         ? __('panels.app.qr_codes.deleted_location')
                         : ($record->location->translate()?->name ?? $record->location->slug)),
+                TextColumn::make('table.name')
+                    ->label(__('panels.app.qr_codes.fields.table'))
+                    ->placeholder('—'),
                 TextColumn::make('menu_name')
                     ->label(__('panels.app.qr_codes.fields.target'))
                     ->state(fn (QrCode $record): string => $record->menu?->translate()?->name ?? __('panels.app.qr_codes.fields.menu_none')),
@@ -280,7 +286,7 @@ class QrCodeResource extends Resource
         $membership = self::membership();
 
         return parent::getEloquentQuery()
-            ->with(['location.translations', 'menu.translations'])
+            ->with(['location.translations', 'menu.translations', 'table'])
             ->when(
                 $membership === null,
                 fn (Builder $query) => $query->whereRaw('1 = 0'),

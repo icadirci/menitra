@@ -10,11 +10,13 @@ return [
         'max_items' => 'Number of items',
         'max_languages' => 'Number of languages',
         'max_qr_codes' => 'Number of QR codes',
+        'max_tables' => 'Number of tables',
         'max_members' => 'Number of team members',
         'premium_themes' => 'Premium themes',
         'custom_domain' => 'Custom domain',
         'remove_branding' => 'Remove Restano branding',
         'qr_analytics' => 'QR scan analytics',
+        'waiter_call' => 'Waiter calls',
     ],
 
     'allowance' => [
@@ -23,6 +25,7 @@ return [
         'max_items' => '{1} :count product|[2,*] :count products',
         'max_languages' => '{1} :count language|[2,*] :count languages',
         'max_qr_codes' => '{1} :count QR code|[2,*] :count QR codes',
+        'max_tables' => '{1} :count table|[2,*] :count tables',
         'max_members' => '{1} :count team member|[2,*] :count team members',
     ],
 
@@ -32,6 +35,7 @@ return [
         'max_items' => 'Unlimited products',
         'max_languages' => 'Unlimited languages',
         'max_qr_codes' => 'Unlimited QR codes',
+        'max_tables' => 'Unlimited tables',
         'max_members' => 'Unlimited team members',
     ],
 

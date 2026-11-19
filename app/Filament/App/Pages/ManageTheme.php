@@ -11,6 +11,7 @@ use App\Filament\App\Support\ServiceCall;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Services\Themes\ThemeService;
+use App\Services\WaiterCalls\WaiterCallService;
 use App\Tenancy\TenantContext;
 use BackedEnum;
 use Filament\Actions\Action;
@@ -30,6 +31,7 @@ use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Lang;
 use UnitEnum;
 
@@ -39,6 +41,8 @@ use UnitEnum;
  * form loads that theme's saved settings, so earlier settings come back.
  * Themes without views are listed as "coming soon" and can't be chosen;
  * premium themes need the plan feature (ThemeService enforces both).
+ * The tenant-wide waiter call switch lives here too (table service section,
+ * written by WaiterCallService, which enforces the waiter_call feature).
  * Owner-only (TenantPolicy::manageSettings), checked on mount, on every
  * Livewire request and again in every action.
  */
@@ -82,6 +86,7 @@ class ManageTheme extends Page
         $this->form->fill([
             'theme' => $theme->value,
             'settings' => $this->themes()->settingsFor($theme),
+            'waiter_calls_enabled' => $this->tenant()->waiter_calls_enabled,
         ]);
     }
 
@@ -140,6 +145,7 @@ class ManageTheme extends Page
                     ->columns(['default' => 1, 'sm' => 3])
                     ->visible(fn (Get $get): bool => $this->selectedTheme($get)->defaults()['layout'] !== [])
                     ->schema($this->layoutFields()),
+                $this->tableServiceSection(),
             ]);
     }
 
@@ -174,7 +180,14 @@ class ManageTheme extends Page
         $theme = MenuTheme::tryFrom((string) ($data['theme'] ?? ''));
         abort_if($theme === null, 422);
 
-        ServiceCall::run(fn () => $this->themes()->save($this->tenant(), $theme, (array) ($data['settings'] ?? [])));
+        $tenant = $this->tenant();
+        // Absent while the switch is disabled (not in the plan and off): unchanged.
+        $waiterCalls = (bool) ($data['waiter_calls_enabled'] ?? $tenant->waiter_calls_enabled);
+
+        ServiceCall::run(fn () => DB::transaction(function () use ($tenant, $theme, $data, $waiterCalls): void {
+            $this->themes()->save($tenant, $theme, (array) ($data['settings'] ?? []));
+            $this->waiterCalls()->setEnabled($tenant, $waiterCalls);
+        }));
 
         Notification::make()->success()->title(__('panels.app.theme.saved'))->send();
     }
@@ -221,6 +234,33 @@ class ManageTheme extends Page
         }
 
         return array_values($fields);
+    }
+
+    /**
+     * Waiter call switch. Without the plan feature it can only be turned
+     * off; WaiterCallService refuses turning it on whatever the form sends.
+     */
+    private function tableServiceSection(): Section
+    {
+        return Section::make(__('panels.app.theme.waiter_calls.section'))
+            ->description(__('panels.app.theme.waiter_calls.section_help'))
+            ->columnSpanFull()
+            ->schema([
+                Callout::make(__('panels.app.theme.waiter_calls.plan_lost'))
+                    ->warning()
+                    ->visible(fn (): bool => $this->tenant()->waiter_calls_enabled && ! $this->waiterCalls()->planAllows($this->tenant())),
+                Toggle::make('waiter_calls_enabled')
+                    ->label(__('panels.app.theme.waiter_calls.enabled'))
+                    ->helperText(fn (): string => $this->waiterCalls()->planAllows($this->tenant())
+                        ? __('panels.app.theme.waiter_calls.enabled_help')
+                        : __('panels.app.theme.waiter_calls.not_in_plan'))
+                    ->disabled(fn (): bool => ! $this->tenant()->waiter_calls_enabled && ! $this->waiterCalls()->planAllows($this->tenant())),
+            ]);
+    }
+
+    private function waiterCalls(): WaiterCallService
+    {
+        return app(WaiterCallService::class);
     }
 
     private function selectable(MenuTheme $theme): bool

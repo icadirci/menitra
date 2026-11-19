@@ -17,7 +17,8 @@ use App\Tenancy\TenantContext;
  *
  * owner: everything on every location of the tenant (incl. the default branch
  * and the branch theme override).
- * manager: view and update assigned locations (details, hours, special days).
+ * manager: view and update assigned locations (details, hours, special days,
+ * creating and renaming tables).
  * branch_staff: view assigned locations.
  */
 class LocationPolicy
@@ -86,6 +87,16 @@ class LocationPolicy
     /**
      * Tenant data is never purged from the panel.
      */
+    /**
+     * Deleting a table deletes its QR code, which breaks the printed code for
+     * good: owner-only, like deleting a code. Creating and renaming tables
+     * follows update().
+     */
+    public function deleteTable(User $user, Location $location): bool
+    {
+        return $this->ownerOf($user, $location);
+    }
+
     public function forceDelete(User $user, Location $location): bool
     {
         return false;

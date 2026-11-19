@@ -85,8 +85,8 @@ class ShowcaseSeeder extends Seeder
         }
 
         $limits = [
-            'max_locations' => 5, 'max_menus' => 10, 'max_items' => 500, 'max_languages' => 3, 'max_qr_codes' => 50, 'max_members' => 10,
-            'premium_themes' => 1, 'custom_domain' => 0, 'remove_branding' => 0, 'qr_analytics' => 0,
+            'max_locations' => 5, 'max_menus' => 10, 'max_items' => 500, 'max_languages' => 3, 'max_qr_codes' => 50, 'max_tables' => 30, 'max_members' => 10,
+            'premium_themes' => 1, 'custom_domain' => 0, 'remove_branding' => 0, 'qr_analytics' => 0, 'waiter_call' => 1,
         ];
 
         foreach ($limits as $feature => $value) {

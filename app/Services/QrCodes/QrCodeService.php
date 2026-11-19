@@ -21,7 +21,9 @@ use Illuminate\Validation\ValidationException;
  * create and the integrity rules: the branch belongs to the tenant and isn't
  * deleted, and a deep-linked menu is attached to that branch.
  *
- * The code itself is never changed: printed codes must keep working.
+ * The code itself is never changed: printed codes must keep working. Table
+ * codes are created with their table (LocationTableService) and never move
+ * to another branch.
  */
 final class QrCodeService
 {
@@ -63,6 +65,10 @@ final class QrCodeService
     {
         $this->assertCurrentTenant($qrCode);
         $this->assertUsableLocation($location);
+
+        if ($qrCode->isTableCode() && (int) $location->getKey() !== (int) $qrCode->location_id) {
+            throw ValidationException::withMessages(['location_id' => __('panels.app.qr_codes.errors.table_location')]);
+        }
 
         $qrCode->update([
             'location_id' => $location->getKey(),

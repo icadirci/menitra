@@ -2,7 +2,7 @@
 
 > Status: **Approved — v0.4** (2026-11-15: `tenant_locales` without `is_default`, `location_item_states.sold_out_until`, `PlanFeature::max_qr_codes`). v0.3: platform roles, `TenantRole.branch_staff`, `location_user`.
 >
-> **Implemented so far:** `users.platform_role`, `tenants`, `tenant_translations`, `tenant_locales`, `tenant_user`, `locations`, `location_translations`, `location_opening_hours`, `location_special_hours`, `location_user`, `location_item_states`, `location_menu_hours`, `menu_categories` (+ translations), `menu_items` (+ translations), `menu_item_allergens`, `menu_item_dietary_labels`, `menu_item_variants` (+ translations), `extra_groups` (+ translations), `extras` (+ translations), `menu_item_extra_group`, `qr_codes`, `menus`, `menu_translations`, `location_menu`, `plans` (+ `is_featured`), `plan_translations`, `plan_prices`, `plan_limits`, `subscriptions` (+ `plan_price_id`), `subscription_events`, `faqs`, `faq_translations`, `testimonials`, `testimonial_translations`, `site_settings`, `site_setting_translations`, `tenant_invitations`, `tenant_invitation_location`, `tenant_billing_profiles`, `payments`, `billing_reminders`. The rest of this document is the approved target schema. PostgreSQL. Every change goes through a migration; this document must be updated with it.
+> **Implemented so far:** `users.platform_role`, `tenants`, `tenant_translations`, `tenant_locales`, `tenant_user`, `locations`, `location_translations`, `location_opening_hours`, `location_special_hours`, `location_user`, `location_item_states`, `location_menu_hours`, `menu_categories` (+ translations), `menu_items` (+ translations), `menu_item_allergens`, `menu_item_dietary_labels`, `menu_item_variants` (+ translations), `extra_groups` (+ translations), `extras` (+ translations), `menu_item_extra_group`, `qr_codes` (+ `location_table_id`), `location_tables`, `menus`, `menu_translations`, `location_menu`, `plans` (+ `is_featured`), `plan_translations`, `plan_prices`, `plan_limits`, `subscriptions` (+ `plan_price_id`), `subscription_events`, `faqs`, `faq_translations`, `testimonials`, `testimonial_translations`, `site_settings`, `site_setting_translations`, `tenant_invitations`, `tenant_invitation_location`, `tenant_billing_profiles`, `payments`, `billing_reminders`. The rest of this document is the approved target schema. PostgreSQL. Every change goes through a migration; this document must be updated with it.
 
 ## Contents
 
@@ -81,7 +81,7 @@
 
 | Table | Columns | Constraints / indexes |
 |---|---|---|
-| `tenants` | `public_id` ulid, `slug`, `status` (`TenantStatus`), `currency` char(3) default `TRY`, `default_locale` varchar(10), `theme` (`MenuTheme`), `logo_path`, `cover_path`, `deleted_at` | unique `slug`; unique `public_id`. **`default_locale` is the single source of truth for the tenant's default language**; it is always one of the tenant's `tenant_locales` (enforced by `TenantLocaleService`, covered by tests) |
+| `tenants` | `public_id` ulid, `slug`, `status` (`TenantStatus`), `currency` char(3) default `TRY`, `default_locale` varchar(10), `theme` (`MenuTheme`), `waiter_calls_enabled` boolean default false (tenant-wide waiter call switch, written only by `WaiterCallService`, not mass-assignable), `logo_path`, `cover_path`, `deleted_at` | unique `slug`; unique `public_id`. **`default_locale` is the single source of truth for the tenant's default language**; it is always one of the tenant's `tenant_locales` (enforced by `TenantLocaleService`, covered by tests) |
 | `tenant_translations` | `tenant_id` FK cascade, `locale`, `name`, `tagline` nullable, `description` nullable text | unique (`tenant_id`, `locale`) |
 | `tenant_locales` 🔒 | `locale`, `sort_order` | unique (`tenant_id`, `locale`); unique (`tenant_id`, `id`). The set of enabled locales and their order. **No `is_default` column** (decision 2026-11-15): the default is `tenants.default_locale`, so the two can never disagree. Disabling a locale never deletes translations. The creating migration backfilled one row per existing tenant from its `default_locale` |
 | `tenant_domains` 🔒 | `domain` (lowercase, `CHECK domain = lower(domain)`), `is_primary`, `verified_at` nullable | unique `domain`; unique (`tenant_id`, `id`); partial unique (`tenant_id`) where `is_primary`. **Created 2026-11-15 (autorun, decision: reserve the schema now, additive only):** model `TenantDomain` (`BelongsToTenant`, only `domain` fillable). Nothing reads or writes it yet — no resolver, no panel, no verification; custom domains stay a later phase |
@@ -130,7 +130,8 @@
 
 | Table | Columns | Constraints / indexes |
 |---|---|---|
-| `qr_codes` 🔒 | `code` (10-character random Crockford base32), `location_id`, `menu_id` nullable (deep link), `label`, `table_label` nullable (reserved for future table service), `is_active`, `last_scanned_at` nullable (set by `RecordQrCodeScan`, at most hourly) | unique `code` (global) |
+| `location_tables` 🔒 | `location_id`, `name` (≤ 64, e.g. "Masa 12"), `sort_order` — tables of a branch for table service (waiter calls); added 2026-11-18 | unique (`tenant_id`, `location_id`, `name`); unique (`tenant_id`, `location_id`, `id`) as the target of the table-code FK |
+| `qr_codes` 🔒 | `code` (10-character random Crockford base32), `location_id`, `menu_id` nullable (deep link), `location_table_id` nullable (table code; null = branch code), `label`, `table_label` nullable (unused legacy column, superseded by `location_table_id`), `is_active`, `last_scanned_at` nullable (set by `RecordQrCodeScan`, at most hourly) | unique `code` (global); unique `location_table_id` (one code per table) |
 | `qr_scans` | **Not created in v1.** Added with analytics, fed by the `QrCodeScanned` event | |
 
 ### Subscriptions
@@ -201,7 +202,8 @@ Composite foreign keys:
 | `menu_item_variants`, `menu_item_allergens`, `menu_item_dietary_labels` | `menu_items (tenant_id, id)` |
 | `extras` | `extra_groups (tenant_id, id)` |
 | `menu_item_extra_group` | `menu_items (tenant_id, id)`, `extra_groups (tenant_id, id)` |
-| `qr_codes` | `locations (tenant_id, id)`; `menus (tenant_id, id)`, nullable, `MATCH SIMPLE` so it's skipped when null |
+| `location_tables` | `locations (tenant_id, id)` |
+| `qr_codes` | `locations (tenant_id, id)`; `menus (tenant_id, id)`, nullable, `MATCH SIMPLE` so it's skipped when null; `(tenant_id, location_id, location_table_id) → location_tables (tenant_id, location_id, id)`, nullable, `MATCH SIMPLE`, `ON DELETE CASCADE` — a table code can only belong to its table's branch |
 | `subscription_events` | `subscriptions (tenant_id, id)` |
 
 **Translation tables have no `tenant_id`.** Each row references exactly one parent through a plain FK with `ON DELETE CASCADE`. There is no second reference that could disagree with the parent's tenant, so isolation is inherited from the parent.
@@ -247,7 +249,7 @@ Composite foreign keys:
 | `SubscriptionStatus` | `trialing`, `active`, `past_due`, `grace`, `expired` |
 | `SubscriptionEventType` | `trial_started`, `activated`, `renewed`, `payment_failed`, `cancel_requested`, `cancel_reverted`, `grace_started`, `expired`, `plan_changed`, `reactivated` |
 | `BillingInterval` | `monthly`, `yearly` |
-| `PlanFeature` | `max_locations`, `max_menus`, `max_items`, `max_languages`, `max_qr_codes`, `max_members`, `premium_themes`, `custom_domain`, `remove_branding`, `qr_analytics` |
+| `PlanFeature` | `max_locations`, `max_menus`, `max_items`, `max_languages`, `max_qr_codes`, `max_tables`, `max_members`, `premium_themes`, `custom_domain`, `remove_branding`, `qr_analytics`, `waiter_call` |
 
 Display names for enums come from `lang/{locale}/…`.
 

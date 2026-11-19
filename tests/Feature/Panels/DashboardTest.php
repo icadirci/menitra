@@ -538,8 +538,8 @@ class DashboardTest extends TestCase
         $this->assertSame($before, $after);
 
         foreach ($after as $widget => $count) {
-            // PlanUsageWidget: one usage query per count feature (max_members added 2026-11-16).
-            $this->assertLessThanOrEqual(13, $count, "{$widget} ran {$count} queries");
+            // PlanUsageWidget: one usage query per count feature (max_members added 2026-11-16, max_tables 2026-11-18).
+            $this->assertLessThanOrEqual(14, $count, "{$widget} ran {$count} queries");
         }
     }
 }

@@ -14,6 +14,7 @@ use App\Filament\App\Resources\Locations\Pages\EditLocation;
 use App\Filament\App\Resources\Locations\Pages\ListLocations;
 use App\Filament\App\Resources\Locations\Pages\ViewLocation;
 use App\Filament\App\Resources\Locations\RelationManagers\SpecialHoursRelationManager;
+use App\Filament\App\Resources\Locations\RelationManagers\TablesRelationManager;
 use App\Filament\App\Support\PanelContext;
 use App\Filament\App\Support\ServiceCall;
 use App\Models\Location;
@@ -362,6 +363,7 @@ class LocationResource extends Resource
     {
         return [
             SpecialHoursRelationManager::class,
+            TablesRelationManager::class,
         ];
     }
 

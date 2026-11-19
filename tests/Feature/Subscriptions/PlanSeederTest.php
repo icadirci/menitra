@@ -67,6 +67,16 @@ class PlanSeederTest extends TestCase
         $this->assertSame(560_000, $price('multi-branch', BillingInterval::Yearly)->amount);
         $this->assertSame(160_000, $price('multi-branch', BillingInterval::Yearly)->extra_location_amount);
         $this->assertNull($price('pro', BillingInterval::Monthly)->extra_location_amount);
+
+        // Tables (table QR codes, waiter calls): none, 30, unlimited.
+        $this->assertSame(0, $limit($starter, PlanFeature::MaxTables));
+        $this->assertSame(30, $limit('pro', PlanFeature::MaxTables));
+        $this->assertNull($limit('multi-branch', PlanFeature::MaxTables));
+
+        // Waiter calls: Professional and Multi-Branch.
+        $this->assertSame(0, $limit($starter, PlanFeature::WaiterCall));
+        $this->assertSame(1, $limit('pro', PlanFeature::WaiterCall));
+        $this->assertSame(1, $limit('multi-branch', PlanFeature::WaiterCall));
     }
 
     public function test_re_running_never_duplicates_and_keeps_subscriptions(): void

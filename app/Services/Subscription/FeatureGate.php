@@ -9,6 +9,7 @@ use App\Enums\SubscriptionStatus;
 use App\Exceptions\CrossTenantWriteException;
 use App\Exceptions\PlanLimitExceededException;
 use App\Models\Location;
+use App\Models\LocationTable;
 use App\Models\Menu;
 use App\Models\MenuItem;
 use App\Models\QrCode;
@@ -103,7 +104,9 @@ class FeatureGate
             PlanFeature::MaxMenus => Menu::query()->count(),
             PlanFeature::MaxLanguages => $tenant->locales()->count(),
             PlanFeature::MaxItems => MenuItem::query()->count(),
-            PlanFeature::MaxQrCodes => QrCode::query()->count(),
+            // Table codes come with their table and count as tables only.
+            PlanFeature::MaxQrCodes => QrCode::query()->whereNull('location_table_id')->count(),
+            PlanFeature::MaxTables => LocationTable::query()->count(),
             PlanFeature::MaxMembers => $this->memberUsage($tenant),
             default => throw new LogicException("[{$feature->value}] is not a count feature."),
         };

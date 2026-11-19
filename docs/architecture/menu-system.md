@@ -78,7 +78,7 @@ Tenant (business)
 ## QR codes
 
 - **The URL is stable:** `restano.app/q/{code}`. `code` is 10 random Crockford base32 characters, globally unique and non-sequential.
-- A QR code targets a location, and optionally a specific menu (deep link). `table_label` is reserved for future table service.
+- A QR code targets a location, and optionally a specific menu (deep link). A **table code** also names one table of that branch (`location_table_id`, see [Tables](#tables)); otherwise it is a branch code.
 - **Redirect flow (`QrRedirectController` → `QrCodeResolver`):**
   1. Look up the code through the cache `qrmenu:qr:{code}`. This is a documented scope bypass, because the tenant isn't known yet.
   2. Unknown code → 404. Inactive code, or a tenant that's suspended or expired past grace → the unavailable page (without revealing which tenant).
@@ -88,9 +88,16 @@ Tenant (business)
 - Because the target is computed at scan time, changing the slug, subdomain or a future custom domain never breaks printed codes.
 - Registration creates one default QR code for the default location.
 - **Panel module (B8):** `QrCodeResource` in `/app` (authorization matrix in [overview.md](overview.md#admin-and-business-panels)). Writes go through `QrCodeService`: `max_qr_codes` via `FeatureGate::ensureCanCreate()` on create, the branch must belong to the tenant and not be deleted, a deep-linked `menu_id` must be attached to that branch (`location_menu`), and the `code` is never changed. Deleting is owner-only; deactivating is the reversible way to stop a printed code.
+- **Tables (2026-11-18, groundwork for waiter calls):** <a id="tables"></a>`location_tables` per branch, managed in the branch's **Tables** relation manager (`TablesRelationManager` on `LocationResource`). Writes go through `LocationTableService`: every table is created with its own QR code (same branch, label = table name) in one transaction; bulk creation "{prefix} {n}" (at most 100 at once); names unique per branch; `max_tables` checked for the whole batch under the tenant row lock. Table codes count against `max_tables` only, never `max_qr_codes`. Creating and renaming follow `LocationPolicy::update` (owner, manager of the branch); deleting a table deletes its code and is owner-only (`LocationPolicy::deleteTable`); the code is deleted through the model first so the cached `/q/{code}` target is forgotten. A table code never moves to another branch (`QrCodeService` + composite FK). Every role that views the branch can download all its table codes as one ZIP (plain PNG or on a `QrBackground`). `Location::defaultQrCode()` ignores table codes. A table code redirects like a branch code; the waiter call button and the table token come with the waiter call module.
 - **Images:** `QrCodeImage` (`chillerlan/php-qrcode`, ECC level M, quiet zone) renders SVG and PNG (~900 px) on demand. They encode only `MenuUrlGenerator::qr()` — the stable URL — so they never change and are not stored on the `media` disk. Download file names are `qr-{label-slug}-{code}.{svg|png}`.
 - **Printable backgrounds:** besides the plain SVG/PNG, every role that may download a code can download it placed on one of the platform's backgrounds (`QrBackground` enum, modal with a live preview, PNG at the background's resolution, `qr-{label-slug}-{code}-{background}.png`). The images are platform assets in `resources/images/qr-backgrounds/{key}.png` (versioned, not public, not on the `media` disk); `QrBackground::frame()` holds the white box of each image the code is drawn into (light modules transparent, whole pixels per module). The chosen key is validated against the enum. Adding a background = image file + enum case with its frame + `panels.app.qr_codes.backgrounds.{key}` in `lang/tr` and `lang/en`; the test decodes the code on every background.
 - A code is normalised before lookup (case-insensitive; `I`/`L` → `1`, `O` → `0`, `U` → `V`). `/q/*` is limited by `throttle:qr` (60/min per IP); `QrCodeScanned` is dispatched with `defer()` after the response.
+
+## Waiter calls
+
+Requested 2026-11-18, built step by step: (1) tables and table codes — see [Tables](#tables), done; (2) plan feature and switch — done; (3) table token, call endpoint and menu buttons; (4) calls screen in `/app`; (5) 90-day pruning.
+
+- **Plan and switch:** `PlanFeature::WaiterCall` (boolean; Profesyonel and Çoklu Şube) and the tenant-wide `tenants.waiter_calls_enabled`, shown on the "Theme & appearance" page (table service section, owner-only through `TenantPolicy::manageSettings`) but not part of `theme_settings`, so it survives theme changes. Written only by `WaiterCallService::setEnabled()` in the same transaction as the theme save: turning it on needs the feature (otherwise a validation error; the toggle is disabled), turning it off is always allowed. Calls are offered only while `WaiterCallService::isActive()` (switch on and feature in the live plan); losing the feature hides them and leaves the switch as it is (the page shows a warning). Saving the tenant bumps the content version.
 
 ## Rendering pipeline
 
@@ -183,7 +190,7 @@ Future modules (ordering, table service, waiter calls, reservations) add new tab
 
 - Items, variants and extras have stable `public_id`s.
 - Extra groups already define `min_select`, `max_select` and `is_required`.
-- `qr_codes.table_label` exists for table-bound QR codes.
+- Table codes (`location_tables` + `qr_codes.location_table_id`) identify the table a guest sits at.
 - Prices are integer kuruş.
 - The `/app` panel (incl. the dashboard) writes through services and policies. Observers handle cache invalidation automatically.
 

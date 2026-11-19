@@ -24,6 +24,7 @@ class QrCode extends Model
     protected $fillable = [
         'location_id',
         'menu_id',
+        'location_table_id',
         'label',
         'table_label',
         'is_active',
@@ -70,5 +71,18 @@ class QrCode extends Model
     public function menu(): BelongsTo
     {
         return $this->belongsTo(Menu::class);
+    }
+
+    /**
+     * Set for table codes (one per table, same branch); null for branch codes.
+     */
+    public function table(): BelongsTo
+    {
+        return $this->belongsTo(LocationTable::class, 'location_table_id');
+    }
+
+    public function isTableCode(): bool
+    {
+        return $this->location_table_id !== null;
     }
 }

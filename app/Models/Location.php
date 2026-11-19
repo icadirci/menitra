@@ -88,12 +88,21 @@ class Location extends Model
     }
 
     /**
-     * The branch's default QR code: its oldest active code (registration
-     * creates the first one with the default branch).
+     * The branch's default QR code: its oldest active branch code
+     * (registration creates the first one with the default branch). Table
+     * codes never count: they identify one table.
      */
     public function defaultQrCode(): HasOne
     {
-        return $this->hasOne(QrCode::class)->ofMany(['id' => 'min'], fn ($query) => $query->where('is_active', true));
+        return $this->hasOne(QrCode::class)->ofMany(
+            ['id' => 'min'],
+            fn ($query) => $query->where('is_active', true)->whereNull('location_table_id'),
+        );
+    }
+
+    public function tables(): HasMany
+    {
+        return $this->hasMany(LocationTable::class)->orderBy('sort_order')->orderBy('id');
     }
 
     public function openingHours(): HasMany

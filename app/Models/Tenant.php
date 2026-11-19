@@ -44,6 +44,7 @@ class Tenant extends Model implements HasName
         return [
             'status' => TenantStatus::class,
             'theme' => MenuTheme::class,
+            'waiter_calls_enabled' => 'boolean',
         ];
     }
 

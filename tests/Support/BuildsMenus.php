@@ -29,7 +29,7 @@ trait BuildsMenus
     {
         $tenant = Tenant::factory()->create(['slug' => $slug]);
         $plan = Plan::factory()->withLimits($limits + [
-            'max_locations' => 10, 'max_menus' => 10, 'max_items' => 100, 'max_languages' => 3, 'max_qr_codes' => 10, 'max_members' => 10,
+            'max_locations' => 10, 'max_menus' => 10, 'max_items' => 100, 'max_languages' => 3, 'max_qr_codes' => 10, 'max_tables' => 10, 'max_members' => 10,
         ])->create();
         app(SubscriptionService::class)->startTrial($tenant, $plan);
 

@@ -10,11 +10,13 @@ return [
         'max_items' => 'Ürün sayısı',
         'max_languages' => 'Dil sayısı',
         'max_qr_codes' => 'QR kod sayısı',
+        'max_tables' => 'Masa sayısı',
         'max_members' => 'Ekip üyesi sayısı',
         'premium_themes' => 'Premium temalar',
         'custom_domain' => 'Özel alan adı',
         'remove_branding' => 'Restano markasını gizleme',
         'qr_analytics' => 'QR tarama analitiği',
+        'waiter_call' => 'Garson çağırma',
     ],
 
     'allowance' => [
@@ -23,6 +25,7 @@ return [
         'max_items' => ':count ürün',
         'max_languages' => ':count dil',
         'max_qr_codes' => ':count QR kod',
+        'max_tables' => ':count masa',
         'max_members' => ':count ekip üyesi',
     ],
 
@@ -32,6 +35,7 @@ return [
         'max_items' => 'Sınırsız ürün',
         'max_languages' => 'Sınırsız dil',
         'max_qr_codes' => 'Sınırsız QR kod',
+        'max_tables' => 'Sınırsız masa',
         'max_members' => 'Sınırsız ekip üyesi',
     ],
 

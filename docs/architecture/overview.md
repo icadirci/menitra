@@ -31,7 +31,7 @@ A multi-tenant SaaS platform for cafes, restaurants, bakeries and other hospital
 | Filament panel infrastructure: `/admin`, `/app/{tenant-slug}`, login, initial dashboards, roles | Owner transfer, manager-initiated invitations |
 | Business management modules in `/app` ([Phase B](#business-panel-phase-b)) | Proxy / HTTPS termination (`trustProxies`, SSL, HSTS) — separate infrastructure work |
 | **Launch (2026-11-16, [launch plan](../launch-plan.md)):** team management in `/app` (invitations, roles, branch assignment, `max_members`); platform management in `/admin` (tenants, users, audit log, limited impersonation); MFA (mandatory in `/admin`); production infrastructure, mail, backups, monitoring | |
-| Public QR menu pages, stable QR redirects | Online ordering, payment from the menu, waiter calling, reservations |
+| Public QR menu pages, stable QR redirects; **table QR codes and waiter calls** (requested 2026-11-18, Profesyonel and Çoklu Şube; in progress — tables done, see [menu-system.md § Tables](menu-system.md#tables)) | Online ordering, payment from the menu, reservations |
 | Five menu themes | Custom domains, QR scan analytics |
 
 ## Technology stack

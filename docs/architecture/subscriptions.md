@@ -143,12 +143,14 @@ menu is online  ⇔  tenant.status = active  AND  access_until ≠ null  AND  no
 | `max_menus` | count | Number of menus |
 | `max_items` | count | Number of items across all menus |
 | `max_languages` | count | Enabled tenant locales |
-| `max_qr_codes` | count | Number of QR codes |
+| `max_qr_codes` | count | Number of branch QR codes (table codes don't count) |
+| `max_tables` | count | Number of tables across all branches; every table comes with its own QR code (added 2026-11-18: Başlangıç 0, Profesyonel 30, Çoklu Şube unlimited) |
 | `max_members` | count | Active team members (owner included) plus pending invitations; checked when inviting and when reactivating a member (launch plan Faz 7) |
 | `premium_themes` | boolean | Access to themes that require it |
 | `custom_domain` | boolean | Custom domains (later phase; `PlanFeature::isAvailable()` false: always stored as 0, never advertised) |
 | `remove_branding` | boolean | Hide the "Powered by Restano" footer |
 | `qr_analytics` | boolean | Scan analytics (later phase; `PlanFeature::isAvailable()` false: always stored as 0, never advertised) |
+| `waiter_call` | boolean | Guests at a table QR code can call a waiter or ask for the bill (added 2026-11-18: Profesyonel and Çoklu Şube; seeded and migrated as 1, but `isAvailable()` stays false — not advertised, not editable in `/admin`, and a plan saved through `PlanService` stores 0 — until the guest flow ships). The tenant switch `tenants.waiter_calls_enabled` is separate: calls are offered only while both are on (`WaiterCallService::isActive()`) |
 
 - In `plan_limits.limit_value`, `null` means unlimited. Boolean features use `0` or `1`. A missing row means the feature isn't included.
 - **Which plan applies:** the plan of the tenant's live subscription (`ended_at IS NULL`) while its status is `trialing`, `active`, `past_due` or `grace`. With no live subscription, or an `expired` one, every count feature allows nothing new and every boolean feature is off.
