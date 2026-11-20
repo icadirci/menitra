@@ -6,15 +6,12 @@ namespace App\Filament\App\Pages;
 
 use App\Enums\PaymentStatus;
 use App\Models\Payment;
+use App\Models\SiteSetting;
 use App\Models\User;
 use App\Tenancy\TenantContext;
 use Carbon\CarbonImmutable;
 use Filament\Actions\Action;
-use Filament\Infolists\Components\TextEntry;
 use Filament\Pages\Page;
-use Filament\Schemas\Components\Section;
-use Filament\Schemas\Components\Text;
-use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Livewire\Attributes\Locked;
 use Livewire\Attributes\Url;
@@ -30,6 +27,8 @@ class ViewReceipt extends Page
     protected static ?string $slug = 'subscription/receipt';
 
     protected static bool $shouldRegisterNavigation = false;
+
+    protected string $view = 'filament.app.pages.view-receipt';
 
     #[Url]
     #[Locked]
@@ -71,54 +70,65 @@ class ViewReceipt extends Page
         ];
     }
 
-    public function content(Schema $schema): Schema
+    /**
+     * Receipt values, formatted on the server; the view only prints them.
+     *
+     * @return array<string, mixed>
+     */
+    protected function getViewData(): array
     {
         $payment = $this->record();
-        $billing = $payment->billing_details;
+        $billing = $payment->billing_details ?? [];
         $date = fn (?CarbonImmutable $value): string => $value === null ? '—' : $value->setTimezone('Europe/Istanbul')->locale(app()->getLocale())->isoFormat('LL');
+        $planName = $payment->plan?->translate()?->name ?? $payment->plan?->code ?? '—';
 
-        return $schema->components([
-            Section::make(__('billing.receipt.sections.payment'))
-                ->columns(['default' => 1, 'md' => 2])
-                ->schema([
-                    TextEntry::make('number')->label(__('billing.receipt.number'))->state($payment->receipt_number),
-                    TextEntry::make('paid_at')->label(__('billing.receipt.paid_at'))->state($date($payment->paid_at)),
-                    TextEntry::make('plan')->label(__('billing.receipt.plan'))
-                        ->state(($payment->plan?->translate()?->name ?? $payment->plan?->code).' · '.$payment->interval->label()),
-                    TextEntry::make('period')->label(__('billing.receipt.period'))
-                        ->state($date($payment->period_starts_at).' – '.$date($payment->period_ends_at)),
-                    TextEntry::make('card')->label(__('billing.receipt.card'))
-                        ->state($payment->card_last_four !== null ? trim(($payment->card_association ?? '').' •••• '.$payment->card_last_four) : '—'),
-                    TextEntry::make('reference')->label(__('billing.receipt.reference'))->state($payment->provider_payment_id ?? '—'),
-                ]),
-            Section::make(__('billing.receipt.sections.amount'))
-                ->columns(['default' => 1, 'md' => 3])
-                ->schema(array_values(array_filter([
-                    $payment->isUpgrade()
-                        ? TextEntry::make('base')->label(__('billing.checkout.summary.upgrade_charge', ['days' => $payment->prorated_days]))->state($payment->baseMoney()->format())
-                        : TextEntry::make('base')->label(__('billing.checkout.summary.base'))->state($payment->baseMoney()->format()),
-                    $payment->isUpgrade() && $payment->creditMoney() !== null
-                        ? TextEntry::make('credit')->label(__('billing.checkout.summary.upgrade_credit'))->state('−'.$payment->creditMoney()->format())
-                        : null,
-                    $payment->extra_locations > 0
-                        ? TextEntry::make('extra')->label(__('billing.checkout.summary.extra'))
-                            ->state(__('billing.checkout.summary.extra_value', ['count' => $payment->extra_locations, 'amount' => $payment->extraLocationsMoney()->format()]))
-                        : null,
-                    TextEntry::make('total')->label(__('billing.receipt.total'))->state($payment->money()->format())
-                        ->helperText(__('billing.checkout.summary.vat_included'))->weight('bold'),
-                ]))),
-            Section::make(__('billing.receipt.sections.billing'))
-                ->columns(['default' => 1, 'md' => 2])
-                ->schema([
-                    TextEntry::make('billing_name')->label(__('billing.profile.fields.name'))->state($billing['name'] ?? '—'),
-                    TextEntry::make('billing_tax')->label(__('billing.receipt.tax_id'))
-                        ->state(trim(($billing['tax_office'] ?? '').' '.($billing['tax_id'] ?? ''))),
-                    TextEntry::make('billing_address')->label(__('billing.profile.fields.address'))
-                        ->state(collect([$billing['address'] ?? null, $billing['district'] ?? null, $billing['city'] ?? null, $billing['postal_code'] ?? null])->filter()->implode(', ')),
-                    TextEntry::make('billing_email')->label(__('billing.profile.fields.email'))->state($billing['email'] ?? '—'),
-                ]),
-            Section::make()->schema([Text::make(__('billing.receipt.not_invoice'))]),
-        ]);
+        $lines = [[
+            'label' => $payment->isUpgrade()
+                ? __('billing.checkout.summary.upgrade_charge', ['days' => $payment->prorated_days])
+                : $planName.' · '.$payment->interval->label(),
+            'detail' => $date($payment->period_starts_at).' – '.$date($payment->period_ends_at),
+            'amount' => $payment->baseMoney()->format(),
+        ]];
+
+        if ($payment->extra_locations > 0) {
+            $lines[] = [
+                'label' => __('billing.checkout.summary.extra'),
+                'detail' => __('billing.checkout.summary.extra_value', ['count' => $payment->extra_locations, 'amount' => $payment->extraLocationsMoney()->format()]),
+                'amount' => $payment->extraLocationsMoney()->format(),
+            ];
+        }
+
+        if ($payment->isUpgrade() && $payment->creditMoney() !== null) {
+            $lines[] = [
+                'label' => __('billing.checkout.summary.upgrade_credit'),
+                'detail' => null,
+                'amount' => '−'.$payment->creditMoney()->format(),
+            ];
+        }
+
+        $taxLine = trim(($billing['tax_office'] ?? '').' '.($billing['tax_id'] ?? ''));
+
+        return [
+            'issuer' => [
+                'name' => config('app.name'),
+                'email' => SiteSetting::existing()?->contact_email,
+            ],
+            'number' => $payment->receipt_number,
+            'status' => $payment->status->label(),
+            'paidAt' => $date($payment->paid_at),
+            'plan' => $planName.' · '.$payment->interval->label(),
+            'period' => $date($payment->period_starts_at).' – '.$date($payment->period_ends_at),
+            'card' => $payment->card_last_four !== null ? trim(($payment->card_association ?? '').' •••• '.$payment->card_last_four) : null,
+            'reference' => $payment->provider_payment_id,
+            'billing' => [
+                'name' => $billing['name'] ?? null,
+                'tax' => $taxLine !== '' ? $taxLine : null,
+                'address' => collect([$billing['address'] ?? null, $billing['district'] ?? null, $billing['city'] ?? null, $billing['postal_code'] ?? null])->filter()->implode(', ') ?: null,
+                'email' => $billing['email'] ?? null,
+            ],
+            'lines' => $lines,
+            'total' => $payment->money()->format(),
+        ];
     }
 
     private function record(): Payment

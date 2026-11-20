@@ -159,6 +159,9 @@ return [
     ],
 
     'receipt' => [
+        'heading' => 'Ödeme makbuzu',
+        'line_description' => 'Açıklama',
+        'line_amount' => 'Tutar',
         'title' => 'Makbuz :number',
         'print' => 'Yazdır',
         'number' => 'Makbuz no',

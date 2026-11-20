@@ -159,6 +159,9 @@ return [
     ],
 
     'receipt' => [
+        'heading' => 'Payment receipt',
+        'line_description' => 'Description',
+        'line_amount' => 'Amount',
         'title' => 'Receipt :number',
         'print' => 'Print',
         'number' => 'Receipt no.',
