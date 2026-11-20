@@ -59,7 +59,7 @@ class PaymentProcessor
             return $payment;
         }
 
-        $result = $this->gateway->retrieveCheckout($payment->provider_token);
+        $result = $this->gateway->retrieveCheckout($payment->provider_token, $payment->public_id);
 
         $applied = DB::transaction(function () use ($payment, $result): Payment {
             $locked = Payment::query()->whereKey($payment->getKey())->lockForUpdate()->firstOrFail();
@@ -165,7 +165,7 @@ class PaymentProcessor
             return [$this->subscriptions->resubscribe($tenant, $plan, $now, $endsAt, $price, $provider, $reference), PaymentKind::Resubscription, $now, $endsAt];
         }
 
-        if ($live->status === SubscriptionStatus::Active) {
+        if ($live->status === SubscriptionStatus::Active && ! $live->isComplimentary()) {
             $startsAt = $live->current_period_ends_at !== null && $live->current_period_ends_at->isAfter($now) ? $live->current_period_ends_at : $now;
             $endsAt = $startsAt->addMonthsNoOverflow($months);
             $samePlan = (int) $live->plan_id === (int) $plan->getKey();

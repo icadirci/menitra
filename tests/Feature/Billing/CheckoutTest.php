@@ -18,6 +18,7 @@ use App\Models\Tenant;
 use App\Models\TenantMembership;
 use App\Services\Billing\BillingCalculator;
 use App\Services\Billing\CheckoutService;
+use App\Services\Billing\PaymentProcessor;
 use App\Services\Subscription\SubscriptionService;
 use App\Tenancy\TenantContext;
 use Carbon\CarbonImmutable;
@@ -234,7 +235,8 @@ class CheckoutTest extends TestCase
             $this->startCheckout($this->tenant, $this->starter);
             $this->fail('No exception.');
         } catch (CheckoutNotAllowedException $exception) {
-            $this->assertSame(__('billing.errors.gateway_unavailable'), $exception->getMessage());
+            // iyzico answered with an error code: it refused the request, retrying later won't help.
+            $this->assertSame(__('billing.errors.gateway_rejected'), $exception->getMessage());
         }
 
         $this->inTenant($this->tenant, function (): void {
@@ -242,6 +244,62 @@ class CheckoutTest extends TestCase
             $this->assertSame(PaymentStatus::Failed, $payment->status);
             $this->assertNull($payment->provider_token);
             $this->assertSame('initialize:10051', $payment->failure_code);
+        });
+
+        $this->gateway->initializeErrorCode = null;
+
+        try {
+            $this->startCheckout($this->tenant, $this->starter);
+            $this->fail('No exception.');
+        } catch (CheckoutNotAllowedException $exception) {
+            $this->assertSame(__('billing.errors.gateway_unavailable'), $exception->getMessage());
+        }
+    }
+
+    public function test_a_complimentary_period_is_left_by_buying_a_plan_as_a_new_period(): void
+    {
+        $this->freezeSecond();
+        $this->billingProfile($this->tenant);
+        $demo = Plan::factory()->create(['code' => 'demo', 'is_public' => false]);
+        $pro = $this->pricedPlan('pro', 50000, 400000);
+
+        $this->inTenant($this->tenant, function () use ($demo): void {
+            Subscription::query()->sole()->forceFill(['ended_at' => now(), 'status' => 'expired'])->save();
+            app(SubscriptionService::class)->startComplimentary($this->tenant, $demo, CarbonImmutable::now()->addYears(70), 'showcase');
+        });
+
+        $this->inTenant($this->tenant, function () use ($pro): void {
+            $eligibility = app(CheckoutService::class)->eligibility();
+            $this->assertTrue($eligibility->allowed);
+            $this->assertFalse($eligibility->isActivePeriod());
+            $this->assertFalse(app(CheckoutService::class)->isUpgrade($eligibility, $pro));
+        });
+
+        // Full price for the chosen interval, not a prorated upgrade until the complimentary end.
+        $payment = $this->startCheckout($this->tenant, $pro, BillingInterval::Monthly);
+        $this->assertNotSame(PaymentKind::Upgrade, $payment->kind);
+        $this->assertSame(50000, $payment->amount);
+        // iyzico gets the billing contact (as on the receipt), not the account email.
+        $this->assertSame('fatura@example.com', $this->gateway->started[0]->buyerEmail);
+
+        $this->actingAs($this->ownerOf($this->tenant))
+            ->get('/app/yaman-kahvesi/subscription')
+            ->assertSee(__('billing.actions.choose_paid_plan'))
+            ->assertDontSee(__('billing.actions.renew'));
+
+        // Paid: the complimentary row becomes the paid plan with a period starting now.
+        $this->gateway->paid($payment->provider_token, $payment->public_id, 50000);
+        app(TenantContext::class)->clear();
+
+        $this->inTenant($this->tenant, function () use ($payment, $pro): void {
+            app(PaymentProcessor::class)->complete(Payment::query()->findOrFail($payment->getKey()));
+
+            $subscription = Subscription::query()->whereNull('ended_at')->sole();
+            $this->assertSame($pro->getKey(), $subscription->plan_id);
+            $this->assertFalse($subscription->isComplimentary());
+            $this->assertTrue($subscription->current_period_starts_at->equalTo(CarbonImmutable::now()));
+            $this->assertTrue($subscription->current_period_ends_at->equalTo(CarbonImmutable::now()->addMonthNoOverflow()));
+            $this->assertSame(PaymentStatus::Succeeded, Payment::query()->findOrFail($payment->getKey())->status);
         });
     }
 
@@ -347,6 +405,26 @@ class CheckoutTest extends TestCase
         $this->actingAs($this->ownerOf($this->tenant))
             ->get('/app/yaman-kahvesi/subscription')
             ->assertSee(__('billing.actions.upgrade'));
+    }
+
+    public function test_the_page_pays_an_upgrade_although_the_interval_field_is_hidden(): void
+    {
+        $this->freezeSecond();
+        $this->billingProfile($this->tenant);
+        $this->pricedPlan('pro', 50000, 400000);
+        $this->activateMonthly(60);
+        $this->travel(15)->days();
+        app(TenantContext::class)->clear();
+        $this->enter();
+
+        Livewire::test(Checkout::class)
+            ->call('selectPlan', 'pro')
+            ->set('data.terms', true)
+            ->call('pay')
+            ->assertRedirect('https://sandbox-cpp.iyzipay.com/?token=fake');
+
+        $this->assertCount(1, $this->gateway->started);
+        $this->assertSame(15000, $this->gateway->started[0]->amount->minor);
     }
 
     private function activateMonthly(int $days): void

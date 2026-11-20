@@ -251,6 +251,7 @@ return [
                 'status' => 'Status',
                 'access_until' => 'Menu stays online until',
                 'access_until_help' => 'Including the grace period if a payment is missed.',
+                'access_until_complimentary_help' => 'Free access granted by the platform. When you switch to a paid plan, the new period starts on the day you pay.',
                 'trial_ends_at' => 'Trial ends',
                 'current_period_ends_at' => 'Period ends',
                 'grace_ends_at' => 'Grace period ends',

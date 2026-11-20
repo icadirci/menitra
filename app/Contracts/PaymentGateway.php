@@ -31,10 +31,13 @@ interface PaymentGateway
     /**
      * The provider's verified result for a checkout token. Never trust
      * anything posted by the browser; this is the only source of truth.
+     * $reference is the payment's public id: iyzico's retrieve API echoes the
+     * request's conversationId (not the one sent at initialize), so it is
+     * passed along and comes back inside the signed response.
      *
      * @throws PaymentGatewayException
      */
-    public function retrieveCheckout(string $token): CheckoutResult;
+    public function retrieveCheckout(string $token, string $reference): CheckoutResult;
 
     /**
      * Verifies a webhook notification; null when its signature is invalid or

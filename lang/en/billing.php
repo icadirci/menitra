@@ -34,6 +34,7 @@ return [
         'plan_not_allowed' => 'This plan can\'t be paid for right now. You can change plans once the paid period ends.',
         'billing_profile_missing' => 'Enter your billing details before paying.',
         'too_many_attempts' => 'Too many payment attempts. Please try again later.',
+        'gateway_rejected' => 'The payment page couldn\'t be opened: iyzico didn\'t accept the details sent. Your card was not charged. Please check your billing details (email, phone, ID / tax number, address) and try again.',
         'gateway_unavailable' => 'The payment page couldn\'t be opened. Your card was not charged; please try again in a few minutes.',
         'no_price' => 'This plan has no price for the selected period.',
     ],
@@ -41,6 +42,7 @@ return [
     'actions' => [
         'pay' => 'Pay and continue',
         'renew' => 'Renew subscription',
+        'choose_paid_plan' => 'Switch to a paid plan',
         'upgrade' => 'Upgrade plan',
         'billing_details' => 'Billing details',
         'back_to_subscription' => 'Back to subscription',

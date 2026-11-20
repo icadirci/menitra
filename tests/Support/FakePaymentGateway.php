@@ -33,6 +33,9 @@ final class FakePaymentGateway implements PaymentGateway
 
     public bool $failInitialize = false;
 
+    /** The provider's error code when initialize fails; null = provider unreachable. */
+    public ?string $initializeErrorCode = '10051';
+
     public bool $failRetrieve = false;
 
     public int $retrieveCalls = 0;
@@ -45,7 +48,7 @@ final class FakePaymentGateway implements PaymentGateway
     public function initializeCheckout(CheckoutRequest $request): CheckoutSession
     {
         if ($this->failInitialize) {
-            throw new PaymentGatewayException('provider down', '10051');
+            throw new PaymentGatewayException('provider down', $this->initializeErrorCode);
         }
 
         $this->started[] = $request;
@@ -53,7 +56,7 @@ final class FakePaymentGateway implements PaymentGateway
         return new CheckoutSession('tok-'.Str::lower((string) Str::ulid()), 'https://sandbox-cpp.iyzipay.com/?token=fake');
     }
 
-    public function retrieveCheckout(string $token): CheckoutResult
+    public function retrieveCheckout(string $token, string $reference): CheckoutResult
     {
         $this->retrieveCalls++;
 

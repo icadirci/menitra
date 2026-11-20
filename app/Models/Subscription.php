@@ -52,6 +52,21 @@ class Subscription extends Model
     }
 
     /**
+     * A free period granted by the platform (SubscriptionService::startComplimentary()):
+     * active on a non-public plan with no price and no provider. Nothing was
+     * paid, so there is nothing to renew or prorate; paying starts a new paid
+     * period.
+     */
+    public function isComplimentary(): bool
+    {
+        return $this->ended_at === null
+            && $this->status === SubscriptionStatus::Active
+            && $this->plan_price_id === null
+            && $this->provider === null
+            && $this->plan?->is_public === false;
+    }
+
+    /**
      * Until when the public menu stays online (docs/architecture/subscriptions.md):
      * trial or period end plus the grace period, the grace end while in grace,
      * null once expired or ended.

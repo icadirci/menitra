@@ -47,7 +47,9 @@ class CheckoutService
         $subscription = Subscription::query()->with('plan')->whereNull('ended_at')->latest('id')->first();
         $now = CarbonImmutable::now();
 
+        // A complimentary period was not paid: any plan can be bought as a new period.
         if ($subscription === null
+            || $subscription->isComplimentary()
             || $subscription->status !== SubscriptionStatus::Active
             || $subscription->current_period_ends_at === null
             || ! $subscription->current_period_ends_at->isAfter($now)) {
@@ -212,7 +214,9 @@ class CheckoutService
             Log::warning('Payment checkout could not be started.', ['payment' => $payment->public_id, 'error' => $exception->getMessage()]);
             report($exception);
 
-            throw CheckoutNotAllowedException::because('gateway_unavailable');
+            // A provider error code means iyzico answered and refused the request (e.g. a
+            // billing field it doesn't accept); without one it couldn't be reached.
+            throw CheckoutNotAllowedException::because($exception->providerCode !== null ? 'gateway_rejected' : 'gateway_unavailable');
         }
 
         $payment->forceFill(['provider_token' => $session->token])->save();
@@ -239,7 +243,8 @@ class CheckoutService
             lines: $lines,
             buyerId: 'user-'.$user->getKey(),
             buyerName: $user->name,
-            buyerEmail: $user->email,
+            // The billing contact, as on the receipt; the account email only when none is set.
+            buyerEmail: is_string($payment->billing_details['email'] ?? null) && $payment->billing_details['email'] !== '' ? $payment->billing_details['email'] : $user->email,
             billing: $payment->billing_details,
             buyerIp: $ip,
             callbackUrl: route('billing.iyzico.callback'),

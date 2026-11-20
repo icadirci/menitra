@@ -34,6 +34,7 @@ return [
         'plan_not_allowed' => 'Bu paket için şu anda ödeme yapılamıyor. Paket değişikliği ücretli dönem bitince yapılabilir.',
         'billing_profile_missing' => 'Ödemeden önce fatura bilgilerinizi girin.',
         'too_many_attempts' => 'Çok fazla ödeme denemesi yapıldı. Lütfen bir süre sonra tekrar deneyin.',
+        'gateway_rejected' => 'Ödeme sayfası açılamadı: iyzico gönderilen bilgileri kabul etmedi. Kartınızdan çekim yapılmadı. Fatura bilgilerinizi (e-posta, telefon, T.C. kimlik / vergi no, adres) kontrol edip tekrar deneyin.',
         'gateway_unavailable' => 'Ödeme sayfası şu anda açılamadı. Kartınızdan çekim yapılmadı; lütfen birkaç dakika sonra tekrar deneyin.',
         'no_price' => 'Bu paket için seçilen dönemde fiyat tanımlı değil.',
     ],
@@ -41,6 +42,7 @@ return [
     'actions' => [
         'pay' => 'Öde ve devam et',
         'renew' => 'Aboneliği yenile',
+        'choose_paid_plan' => 'Ücretli pakete geç',
         'upgrade' => 'Paketi yükselt',
         'billing_details' => 'Fatura bilgileri',
         'back_to_subscription' => 'Aboneliğe dön',

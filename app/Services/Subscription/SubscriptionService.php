@@ -173,8 +173,9 @@ class SubscriptionService
     }
 
     /**
-     * First successful payment: trialing, grace or past due → active with the
-     * paid period. Repeating it with the same period end is a no-op.
+     * First successful payment: trialing, grace, past due or a complimentary
+     * period → active with the paid period. Repeating it with the same period
+     * end is a no-op.
      */
     public function activate(
         Subscription $subscription,
@@ -191,7 +192,7 @@ class SubscriptionService
                 return;
             }
 
-            if (! in_array($locked->status, [SubscriptionStatus::Trialing, SubscriptionStatus::Grace, SubscriptionStatus::PastDue], true)) {
+            if (! $this->isUnpaid($locked)) {
                 throw InvalidSubscriptionTransitionException::from($locked->status);
             }
 
@@ -260,8 +261,8 @@ class SubscriptionService
     }
 
     /**
-     * Switches the plan while no paid period is running (trialing, grace or
-     * past due), so there is nothing to prorate. Used by the payment flow just
+     * Switches the plan while no paid period is running (trialing, grace,
+     * past due or a complimentary period), so there is nothing to prorate. Used by the payment flow just
      * before activate() when the owner pays for a different plan. The same
      * plan again is a no-op.
      */
@@ -272,7 +273,7 @@ class SubscriptionService
                 return;
             }
 
-            if (! in_array($locked->status, [SubscriptionStatus::Trialing, SubscriptionStatus::Grace, SubscriptionStatus::PastDue], true)) {
+            if (! $this->isUnpaid($locked)) {
                 throw InvalidSubscriptionTransitionException::from($locked->status);
             }
 
@@ -462,6 +463,17 @@ class SubscriptionService
         $subscription->setRawAttributes($locked->getAttributes(), true);
 
         return $subscription;
+    }
+
+    /**
+     * No paid period is running: trialing, grace, past due, or active without
+     * a price and provider (a complimentary period, also right after
+     * changePlan() moved it to the plan being paid for).
+     */
+    private function isUnpaid(Subscription $locked): bool
+    {
+        return in_array($locked->status, [SubscriptionStatus::Trialing, SubscriptionStatus::Grace, SubscriptionStatus::PastDue], true)
+            || ($locked->status === SubscriptionStatus::Active && $locked->plan_price_id === null && $locked->provider === null);
     }
 
     private function ensureOpenPeriod(Subscription $locked, CarbonImmutable $now): void

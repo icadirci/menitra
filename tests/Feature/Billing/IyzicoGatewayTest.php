@@ -63,7 +63,7 @@ class IyzicoGatewayTest extends TestCase
     {
         $this->expectException(PaymentGatewayException::class);
 
-        (new IyzicoGateway('', '', 'https://sandbox-api.iyzipay.com'))->retrieveCheckout('token');
+        (new IyzicoGateway('', '', 'https://sandbox-api.iyzipay.com'))->retrieveCheckout('token', 'reference');
     }
 
     /**

@@ -198,7 +198,10 @@ class Checkout extends Page
 
         $data = $this->form->getState();
         $plan = $this->planByCode($data['plan'] ?? null);
-        $interval = BillingInterval::tryFrom((string) ($data['interval'] ?? ''));
+        // An upgrade hides the interval field (hidden fields aren't in the state); it keeps the period's interval.
+        $interval = $plan !== null && $this->isUpgrade($plan->code)
+            ? $this->eligibility()->fixedInterval
+            : BillingInterval::tryFrom((string) ($data['interval'] ?? ''));
         $user = auth()->user();
 
         if ($plan === null || $interval === null || ! $user instanceof User) {

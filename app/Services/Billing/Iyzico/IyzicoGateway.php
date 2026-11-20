@@ -89,7 +89,8 @@ final class IyzicoGateway implements PaymentGateway
 
         if ($response->getStatus() !== 'success') {
             throw new PaymentGatewayException(
-                'iyzico checkout initialize failed: '.($response->getErrorCode() ?? 'no response'),
+                'iyzico checkout initialize failed: '.($response->getErrorCode() ?? 'no response')
+                    .($response->getErrorMessage() !== null ? ' ('.$this->message($response->getErrorMessage()).')' : ''),
                 $response->getErrorCode(),
             );
         }
@@ -110,12 +111,13 @@ final class IyzicoGateway implements PaymentGateway
         return new CheckoutSession($token, $url);
     }
 
-    public function retrieveCheckout(string $token): CheckoutResult
+    public function retrieveCheckout(string $token, string $reference): CheckoutResult
     {
         $this->ensureConfigured();
 
         $request = new RetrieveCheckoutFormRequest;
         $request->setLocale(Locale::TR);
+        $request->setConversationId($reference);
         $request->setToken($token);
 
         $response = CheckoutForm::retrieve($request, $this->options());

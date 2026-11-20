@@ -251,6 +251,7 @@ return [
                 'status' => 'Durum',
                 'access_until' => 'Menü yayında kalır',
                 'access_until_help' => 'Ödeme süresi dolarsa ek süre dahil bu tarihe kadar.',
+                'access_until_complimentary_help' => 'Platform tarafından tanımlanan ücretsiz erişim. Ücretli bir pakete geçtiğinizde yeni dönem ödeme gününden başlar.',
                 'trial_ends_at' => 'Deneme süresi bitişi',
                 'current_period_ends_at' => 'Dönem bitişi',
                 'grace_ends_at' => 'Ek süre bitişi',

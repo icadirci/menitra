@@ -95,7 +95,11 @@ class ViewSubscription extends Page implements HasTable
                 ->url(Checkout::getUrl())
                 ->visible($eligibility->canUpgrade && ! $eligibility->allowed),
             Action::make('pay')
-                ->label($eligibility->subscription?->status === SubscriptionStatus::Active ? __('billing.actions.renew') : __('billing.actions.pay'))
+                ->label(match (true) {
+                    $eligibility->subscription?->isComplimentary() === true => __('billing.actions.choose_paid_plan'),
+                    $eligibility->subscription?->status === SubscriptionStatus::Active => __('billing.actions.renew'),
+                    default => __('billing.actions.pay'),
+                })
                 ->icon(Heroicon::OutlinedCreditCard)
                 ->url(Checkout::getUrl())
                 ->color($eligibility->canUpgrade && ! $eligibility->allowed ? 'gray' : 'primary')
@@ -180,7 +184,9 @@ class ViewSubscription extends Page implements HasTable
                     TextEntry::make('access_until')
                         ->label(__('panels.app.subscription.fields.access_until'))
                         ->state($this->date($subscription->accessUntil()))
-                        ->helperText(__('panels.app.subscription.fields.access_until_help')),
+                        ->helperText($subscription->isComplimentary()
+                            ? __('panels.app.subscription.fields.access_until_complimentary_help')
+                            : __('panels.app.subscription.fields.access_until_help')),
                     ...$this->dateEntries($subscription),
                 ]),
             Section::make(__('panels.app.subscription.sections.limits'))
@@ -228,7 +234,8 @@ class ViewSubscription extends Page implements HasTable
     {
         $dates = [
             'trial_ends_at' => $subscription->trial_ends_at,
-            'current_period_ends_at' => $subscription->current_period_ends_at,
+            // A complimentary period's end is already shown as "menu stays online until".
+            'current_period_ends_at' => $subscription->isComplimentary() ? null : $subscription->current_period_ends_at,
             'grace_ends_at' => $subscription->grace_ends_at,
             'ended_at' => $subscription->ended_at,
         ];
