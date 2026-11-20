@@ -287,7 +287,8 @@ class ShowcaseSeeder extends Seeder
     }
 
     /**
-     * Sample content of the design files (docs/design/source/Menu{Noon,Ardoise,Kiln,Petal}).
+     * Sample content of the design files (docs/design/source/Menu{Noon,Ardoise,Kiln,Petal},
+     * Premium{Kori,Lodos,Lumen}).
      *
      * @return array<string, array<string, mixed>>
      */
@@ -409,6 +410,114 @@ class ShowcaseSeeder extends Seeder
                         ['texts' => ['tr' => ['Makaron kutusu (6 adet)', 'Mevsimin tatları'], 'en' => ['Macaron box of 6', 'Flavours of the season']], 'price' => 36000, 'featured' => true, 'diet' => ['gluten_free'], 'allergens' => ['nuts', 'eggs', 'milk']],
                         ['texts' => ['tr' => ['Çilekli cupcake', 'Taze çilek, krem peynir'], 'en' => ['Strawberry cupcake', 'Fresh strawberries, cream cheese']], 'price' => 11500, 'diet' => ['vegetarian'], 'allergens' => ['gluten', 'eggs', 'milk']],
                         ['texts' => ['tr' => ['Bademli kruvasan', '10:30\'da fırından çıkar'], 'en' => ['Almond croissant', 'Out of the oven at 10:30']], 'price' => 12000, 'diet' => ['vegetarian'], 'allergens' => ['gluten', 'nuts', 'milk', 'eggs']],
+                    ]],
+                ],
+            ],
+            'kori-omakase' => [
+                'theme' => MenuTheme::Zen,
+                'brand' => [
+                    'tr' => ['name' => 'Kōri', 'tagline' => 'Omakase', 'description' => 'On iki kişilik tek bir tezgâh. Şef, sabahın getirdiğini servis eder: haftada iki kez Toyosu\'dan gelen balık, gerisi Marmara\'dan.'],
+                    'en' => ['name' => 'Kōri', 'tagline' => 'Omakase', 'description' => 'Twelve seats, one counter. The chef serves whatever the morning allows — fish flown in from Toyosu twice a week, the rest from the Marmara.'],
+                ],
+                'branch' => ['tr' => 'Nişantaşı', 'en' => 'Nişantaşı'],
+                'location' => ['address_line' => 'Abdi İpekçi Cd. No:41', 'district' => 'Şişli', 'city' => 'İstanbul', 'phone' => '+90 212 555 07 41'],
+                'hours' => ['default' => ['18:30', '23:30'], 1 => null], // closed on Mondays
+                'menu' => ['tr' => 'Omakase', 'en' => 'Omakase'],
+                'extras' => null,
+                'categories' => [
+                    ['names' => ['tr' => 'Zensai', 'en' => 'Zensai'], 'items' => [
+                        ['texts' => ['tr' => ['Sakizuke', 'Marmara palamudu tataki, ponzu, shiso'], 'en' => ['Sakizuke', 'Marmara bonito tataki, ponzu, shiso']], 'price' => 42000, 'allergens' => ['fish', 'soybeans']],
+                        ['texts' => ['tr' => ['Chawanmushi', 'İpeksi yumurta kreması, kar yengeci, yuzu'], 'en' => ['Chawanmushi', 'Silken egg custard, snow crab, yuzu']], 'price' => 46000, 'allergens' => ['eggs', 'crustaceans']],
+                        ['texts' => ['tr' => ['Günün sashimisi', 'Sabah pazarından üç kesim, taze wasabi'], 'en' => ['Sashimi of the day', 'Three cuts from the morning market, fresh wasabi']], 'price' => 68000, 'featured' => true, 'diet' => ['gluten_free'], 'allergens' => ['fish']],
+                    ]],
+                    ['names' => ['tr' => 'Nigiri', 'en' => 'Nigiri'], 'items' => [
+                        ['texts' => ['tr' => ['Kinmedai', 'Altın göz mercan, hafif alevde'], 'en' => ['Kinmedai', 'Golden-eye snapper, lightly flame-seared']], 'price' => 45000, 'allergens' => ['fish']],
+                        ['texts' => ['tr' => ['Akami zuke', 'Yağsız orkinos, yıllanmış soya sosunda'], 'en' => ['Akami zuke', 'Lean bluefin, marinated in aged soy']], 'price' => 48000, 'allergens' => ['fish', 'soybeans', 'gluten']],
+                        ['texts' => ['tr' => ['Otoro', 'Yağlı orkinos karnı, 7 gün dinlendirilmiş, Okinawa tuzu'], 'en' => ['Otoro', 'Fatty bluefin belly, aged 7 days, Okinawan salt']], 'price' => 90000, 'featured' => true, 'popular' => true, 'allergens' => ['fish', 'soybeans']],
+                        ['texts' => ['tr' => ['Hotate', 'Hokkaido deniz tarağı, sudachi, deniz tuzu'], 'en' => ['Hotate', 'Hokkaido scallop, sudachi, sea salt']], 'price' => 52000, 'allergens' => ['molluscs']],
+                        ['texts' => ['tr' => ['Uni gunkan', 'Pirinç üstünde deniz kestanesi, çıtır nori'], 'en' => ['Uni gunkan', 'Sea urchin over rice, crisp nori']], 'price' => 78000, 'allergens' => ['molluscs'], 'sold_out' => true],
+                    ]],
+                    ['names' => ['tr' => 'Shime', 'en' => 'Shime'], 'items' => [
+                        ['texts' => ['tr' => ['Negitoro temaki', 'Toro ve taze soğanlı el rulosu, kavrulmuş susam'], 'en' => ['Negitoro temaki', 'Hand roll of toro and scallion, toasted sesame']], 'price' => 54000, 'allergens' => ['fish', 'sesame']],
+                        ['texts' => ['tr' => ['Akadashi', 'Kırmızı miso çorbası, mitsuba, tofu'], 'en' => ['Akadashi', 'Red miso soup, mitsuba, tofu']], 'price' => 28000, 'diet' => ['vegan'], 'allergens' => ['soybeans', 'gluten']],
+                    ]],
+                    ['names' => ['tr' => 'Kanmi', 'en' => 'Kanmi'], 'items' => [
+                        ['texts' => ['tr' => ['Matcha ve monaka', 'Uji matcha, azuki dolgulu gofret, wasanbon şekeri'], 'en' => ['Matcha & monaka', 'Whisked Uji matcha, azuki wafer, wasanbon sugar']], 'price' => 32000, 'diet' => ['vegetarian'], 'allergens' => ['gluten']],
+                    ]],
+                ],
+            ],
+            'lodos-balik' => [
+                'theme' => MenuTheme::Coastal,
+                'brand' => [
+                    'tr' => ['name' => 'Lodos', 'tagline' => 'Balık & meze', 'description' => 'Boğaz\'ın kıyısında, sabah tezgâhtan gelen balık ve annemizin tarifleriyle meze. Lodos esince en güzel masa terastadır.'],
+                    'en' => ['name' => 'Lodos', 'tagline' => 'Fish & meze', 'description' => 'Right on the Bosphorus: fish straight from the morning market and meze from our mother\'s recipes. When the lodos blows, the terrace is the best seat in town.'],
+                ],
+                'branch' => ['tr' => 'Arnavutköy', 'en' => 'Arnavutköy'],
+                'location' => ['address_line' => 'Francalacı Sk. No:7', 'district' => 'Beşiktaş', 'city' => 'İstanbul', 'phone' => '+90 212 555 08 07', 'whatsapp' => '+90 555 555 08 07'],
+                'hours' => ['default' => ['12:00', '23:59']],
+                'menu' => ['tr' => 'Menü', 'en' => 'Menu'],
+                'extras' => [ExtraSelectionType::Single, ['tr' => 'Pişirme', 'en' => 'Cooking'], [
+                    [['tr' => 'Izgara', 'en' => 'Grilled'], 0],
+                    [['tr' => 'Buğulama', 'en' => 'Steamed'], 0],
+                    [['tr' => 'Tava', 'en' => 'Pan-fried'], 0],
+                ]],
+                'categories' => [
+                    ['names' => ['tr' => 'Soğuk mezeler', 'en' => 'Cold meze'], 'items' => [
+                        ['texts' => ['tr' => ['Haydari', 'Süzme yoğurt, nane, sarımsak'], 'en' => ['Haydari', 'Strained yoghurt, mint, garlic']], 'price' => 22000, 'diet' => ['vegetarian', 'gluten_free'], 'allergens' => ['milk']],
+                        ['texts' => ['tr' => ['Acılı ezme', 'Domates, biber, nar ekşisi'], 'en' => ['Spicy ezme', 'Tomato, pepper, pomegranate molasses']], 'price' => 22000, 'diet' => ['vegan', 'spicy']],
+                        ['texts' => ['tr' => ['Fava', 'Bakla püresi, dereotu, zeytinyağı'], 'en' => ['Fava', 'Broad bean purée, dill, olive oil']], 'price' => 24000, 'diet' => ['vegan', 'gluten_free']],
+                        ['texts' => ['tr' => ['Deniz börülcesi', 'Sarımsaklı, limonlu'], 'en' => ['Samphire', 'Garlic, lemon']], 'price' => 26000, 'diet' => ['vegan', 'gluten_free']],
+                        ['texts' => ['tr' => ['Lodos meze tabağı (2–4 kişilik)', 'Günün 6 soğuk mezesi, sıcak pide ile'], 'en' => ['Lodos meze platter (for 2–4)', '6 cold meze of the day, with warm pide']], 'price' => 115000, 'featured' => true, 'popular' => true, 'diet' => ['vegetarian'], 'allergens' => ['milk', 'gluten']],
+                    ]],
+                    ['names' => ['tr' => 'Günün balıkları', 'en' => 'Today\'s catch'], 'items' => [
+                        ['texts' => ['tr' => ['Lüfer (kg)', 'Boğaz, oltayla · mevsiminde'], 'en' => ['Bluefish (per kg)', 'Bosphorus, line-caught · in season']], 'price' => 340000, 'featured' => true, 'diet' => ['gluten_free'], 'allergens' => ['fish'], 'extras' => true],
+                        ['texts' => ['tr' => ['Levrek (kg)', 'Ege, oltayla · şefin önerisi'], 'en' => ['Sea bass (per kg)', 'Aegean, line-caught · chef\'s pick']], 'price' => 240000, 'featured' => true, 'diet' => ['gluten_free'], 'allergens' => ['fish'], 'extras' => true],
+                        ['texts' => ['tr' => ['Çupra (kg)', 'Ege'], 'en' => ['Sea bream (per kg)', 'Aegean']], 'price' => 220000, 'diet' => ['gluten_free'], 'allergens' => ['fish'], 'extras' => true],
+                        ['texts' => ['tr' => ['Barbun (kg)', 'Marmara'], 'en' => ['Red mullet (per kg)', 'Marmara']], 'price' => 280000, 'diet' => ['gluten_free'], 'allergens' => ['fish'], 'sold_out' => true],
+                    ]],
+                    ['names' => ['tr' => 'Sıcak mezeler', 'en' => 'Hot meze'], 'items' => [
+                        ['texts' => ['tr' => ['Ahtapot ızgara', 'Közde, fava yatağında'], 'en' => ['Grilled octopus', 'Charcoal-grilled, on fava']], 'price' => 78000, 'popular' => true, 'diet' => ['gluten_free'], 'allergens' => ['molluscs']],
+                        ['texts' => ['tr' => ['Kalamar tava', 'Tarator sos ile'], 'en' => ['Fried calamari', 'With walnut tarator']], 'price' => 52000, 'allergens' => ['molluscs', 'gluten', 'nuts']],
+                        ['texts' => ['tr' => ['Karides güveç', 'Kaşarlı, toprak kapta'], 'en' => ['Shrimp casserole', 'Baked with kaşar cheese']], 'price' => 64000, 'allergens' => ['crustaceans', 'milk']],
+                    ]],
+                    ['names' => ['tr' => 'Rakı & şarap', 'en' => 'Rakı & wine'], 'items' => [
+                        ['texts' => ['tr' => ['Rakı, tek', 'Buz ve su ile servis'], 'en' => ['Rakı, single', 'Served with ice and water']], 'price' => 38000, 'diet' => ['vegan']],
+                        ['texts' => ['tr' => ['Rakı, 35 cl', 'İki kişilik'], 'en' => ['Rakı, 35 cl bottle', 'For two']], 'price' => 195000, 'diet' => ['vegan']],
+                        ['texts' => ['tr' => ['Kadeh beyaz şarap', 'Ege, Narince üzümü'], 'en' => ['White wine, glass', 'Aegean, Narince grape']], 'price' => 42000, 'allergens' => ['sulphites']],
+                    ]],
+                ],
+            ],
+            'lumen-rooftop' => [
+                'theme' => MenuTheme::Lounge,
+                'brand' => [
+                    'tr' => ['name' => 'Lumen', 'tagline' => 'Teras bar', 'description' => 'Anadolu malzemeleri etrafında kurulan kokteyller — safran, sakız, sumak, incir — ve manzarada tüm Haliç.'],
+                    'en' => ['name' => 'Lumen', 'tagline' => 'Rooftop bar', 'description' => 'Cocktails built around Anatolian ingredients — saffron, mastic, sumac, fig — with the whole of the Golden Horn as the view.'],
+                ],
+                'branch' => ['tr' => 'Karaköy', 'en' => 'Karaköy'],
+                'location' => ['address_line' => 'Kemankeş Cd. No:12, Kat 9', 'district' => 'Beyoğlu', 'city' => 'İstanbul', 'phone' => '+90 212 555 09 12'],
+                'hours' => ['default' => ['17:00', '23:59']],
+                'menu' => ['tr' => 'İçecekler', 'en' => 'Drinks'],
+                'extras' => null,
+                'categories' => [
+                    ['names' => ['tr' => 'İmza kokteyller', 'en' => 'Signatures'], 'items' => [
+                        ['texts' => ['tr' => ['Safranlı Negroni', 'Safranlı cin, Campari, beyaz vermut, portakal yağı'], 'en' => ['Saffron Negroni', 'Saffron gin, Campari, white vermouth, orange oil']], 'price' => 72000, 'featured' => true, 'popular' => true],
+                        ['texts' => ['tr' => ['Boğaz Spritz', 'Nar, Aperol, köpüklü şarap, soda'], 'en' => ['Bosphorus Spritz', 'Pomegranate, Aperol, sparkling wine, soda']], 'price' => 65000, 'allergens' => ['sulphites']],
+                        ['texts' => ['tr' => ['Füme İncirli Old Fashioned', 'Burbon, Aydın inciri şurubu, ceviz bitter, meşe dumanı'], 'en' => ['Smoked Fig Old Fashioned', 'Bourbon, Aydın fig syrup, walnut bitters, oak smoke']], 'price' => 78000, 'allergens' => ['nuts']],
+                        ['texts' => ['tr' => ['Galata Sour', 'Sakızlı rakı, limon, bal, yumurta akı'], 'en' => ['Galata Sour', 'Mastic-infused rakı, lemon, honey, egg white']], 'price' => 69000, 'allergens' => ['eggs']],
+                        ['texts' => ['tr' => ['Gül & Sumak Gimlet', 'Cin, Isparta gülü kordiyali, sumaklı tuz'], 'en' => ['Rose & Sumac Gimlet', 'Gin, Isparta rose cordial, sumac salt rim']], 'price' => 70000, 'sold_out' => true],
+                    ]],
+                    ['names' => ['tr' => 'Klasikler', 'en' => 'Classics'], 'items' => [
+                        ['texts' => ['tr' => ['Mezcal Paloma', 'Mezcal, pembe greyfurt, misket limonu, soda'], 'en' => ['Mezcal Paloma', 'Mezcal, pink grapefruit, lime, soda']], 'price' => 64000],
+                        ['texts' => ['tr' => ['Espresso Martini', 'Votka, soğuk demleme kahve, kahve likörü'], 'en' => ['Espresso Martini', 'Vodka, cold brew, coffee liqueur']], 'price' => 65000],
+                        ['texts' => ['tr' => ['Margarita', 'Blanco tekila, misket limonu, agave, tuz'], 'en' => ['Margarita', 'Blanco tequila, lime, agave, salt']], 'price' => 62000],
+                    ]],
+                    ['names' => ['tr' => 'Alkolsüz', 'en' => 'Zero-proof'], 'items' => [
+                        ['texts' => ['tr' => ['Bahçe Toniği', 'Salatalık, dereotu, mürver çiçeği, tonik'], 'en' => ['Garden Tonic', 'Cucumber, dill, elderflower, tonic']], 'price' => 42000, 'diet' => ['vegan', 'sugar_free']],
+                        ['texts' => ['tr' => ['Dut Şurubu', 'Kara dut sirkesi, nane, soda'], 'en' => ['Berry Shrub', 'Black mulberry vinegar, mint, soda']], 'price' => 42000, 'diet' => ['vegan']],
+                    ]],
+                    ['names' => ['tr' => 'Atıştırmalıklar', 'en' => 'Bites'], 'items' => [
+                        ['texts' => ['tr' => ['Levrek ceviche', 'Misket limonu, sumak, turşu arpacık'], 'en' => ['Sea bass ceviche', 'Lime, sumac, pickled shallot']], 'price' => 54000, 'diet' => ['gluten_free'], 'allergens' => ['fish']],
+                        ['texts' => ['tr' => ['Trüflü patates', 'Eski kaşar, siyah trüf yağı'], 'en' => ['Truffle fries', 'Aged kaşar, black truffle oil']], 'price' => 38000, 'diet' => ['vegetarian'], 'allergens' => ['milk']],
                     ]],
                 ],
             ],

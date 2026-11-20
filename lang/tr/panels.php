@@ -286,6 +286,9 @@ return [
                 'bistro' => ['name' => 'Bistro', 'description' => 'Koyu, şık ve serif başlıklı'],
                 'cafe' => ['name' => 'Kafe', 'description' => 'Sıcak tonlar ve yuvarlak ürün kartları'],
                 'grid' => ['name' => 'Galeri', 'description' => 'Fotoğraf öncelikli ızgara düzeni, pastel renkler'],
+                'zen' => ['name' => 'Zen', 'description' => 'Sıcak kâğıt tonları, kırmızı mühür ve numaralı servisler; omakase, suşi ve tadım menüleri için'],
+                'coastal' => ['name' => 'Kıyı', 'description' => 'Deniz mavisi, dalga kenarlı çini kapak ve günün önerileri için koyu pano; balık ve meze restoranları için'],
+                'lounge' => ['name' => 'Lounge', 'description' => 'Gece mavisi ve altın, güneş ışınlı başlık ve uzun içecek görselleri; bar, teras ve kokteyl menüleri için'],
             ],
             'colors' => [
                 'primary' => 'Ana renk',
@@ -310,6 +313,8 @@ return [
                 'card_ratio' => 'Kart biçimi',
                 'category_layout' => 'Kategori görünümü',
                 'cart' => 'Sepet (misafir sipariş listesi)',
+                'course_numbers' => 'Numaralı servisler (01, 02 …)',
+                'allergen_filter' => 'Alerjen filtresi (“Kaçındıklarım”)',
             ],
             'layout_help' => [
                 'cart' => 'Misafirler ürünleri sepete ekleyip sipariş verirken garsona gösterebilir; “Siparişimi verdim” ile sepet boşalır. Liste yalnızca misafirin telefonunda tutulur, işletmeye sipariş iletilmez.',

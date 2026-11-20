@@ -159,7 +159,7 @@ return [
             'title' => 'A menu that looks like your place, not like software.',
             'body' => 'Start from a theme that suits your venue, then make it yours with your logo, cover photo, colours and fonts.',
             'points' => [
-                'Five themes for cafés, bakeries and restaurants',
+                'Eight themes for cafés, bakeries, restaurants and bars',
                 'Your brand colours and font pairings chosen for each theme',
                 'Use a different theme at any of your branches',
             ],
@@ -426,7 +426,7 @@ return [
 
     'showcase' => [
         'eyebrow' => 'Menu themes',
-        'title' => 'Five looks. One menu behind them.',
+        'title' => 'Eight looks. One menu behind them.',
         'lead' => 'Every theme shows the same menu data — prices, sold-out items, allergens and languages — with its own identity. Open a live demo and try it on your phone.',
         'list_label' => 'Menu themes',
         'premium' => 'Premium',
@@ -443,6 +443,9 @@ return [
             'bistro' => ['name' => 'Bistro', 'description' => 'Dark and elegant, with serif headings and a signature dish up front.'],
             'cafe' => ['name' => 'Café', 'description' => 'Warm tones, rounded product cards and today’s picks in a swipeable row.'],
             'grid' => ['name' => 'Gallery', 'description' => 'Photo-first two-column grid in soft pastels — made for bakeries and desserts.'],
+            'zen' => ['name' => 'Zen', 'description' => 'Warm paper, a red seal and numbered courses, with an “I avoid” allergen filter — for omakase and tasting menus.'],
+            'coastal' => ['name' => 'Coastal', 'description' => 'Sea blues, a tiled cover with a wave edge and a dark board for the day’s picks — for fish and meze restaurants.'],
+            'lounge' => ['name' => 'Lounge', 'description' => 'Night blue and gold under a sunburst, with tall drink pictures — for bars, rooftops and cocktail menus.'],
         ],
     ],
 

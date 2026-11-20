@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<title>Lodos — Levrek</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gloock&amp;family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 390px; min-height: 1100px; background: #F5F8FB; color: #10253F; font-family: 'Plus Jakarta Sans', system-ui, sans-serif; font-size: 14px; line-height: 1.55; -webkit-font-smoothing: antialiased">
+<div style="position: relative; background: #1D5FA0">
+<div style="position: absolute; top: 14px; left: 14px; right: 14px; z-index: 1; display: flex; justify-content: space-between">
+<a href="PremiumLodos.dc.html" aria-label="Menüye dön" style="width: 44px; height: 44px; border-radius: 999px; background: #FFFFFF; display: inline-flex; align-items: center; justify-content: center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#17406D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"></path></svg></a>
+<span style="align-self: center; padding: 5px 12px; border-radius: 999px; background: #F2C14E; font-size: 12px; font-weight: 800">Şefin önerisi</span>
+</div>
+<dc-import name="Dish" kind="fish" bg="#1D5FA0" ratio="1 / 1" pad="8%" hint-size="390px,390px"></dc-import>
+<svg aria-hidden="true" width="390" height="30" viewBox="0 0 390 30" style="position: absolute; left: 0; bottom: -1px; display: block"><path d="M0 16c24-12 41-12 65 0s41 12 65 0 41-12 65 0 41 12 65 0 41-12 65 0 41 12 65 0V30H0z" fill="#F5F8FB"></path></svg>
+</div>
+<div style="padding: 8px 20px 40px; display: flex; flex-direction: column; gap: 20px">
+<div style="display: flex; flex-direction: column; gap: 6px">
+<span style="font-size: 12px; color: #50627A">Günün balıkları · Ege, oltayla</span>
+<div style="display: flex; justify-content: space-between; align-items: baseline; gap: 12px"><h1 style="margin: 0; font-family: Gloock, Georgia, serif; font-weight: 400; font-size: 40px; line-height: 1; color: #17406D">Levrek</h1><span style="font-weight: 800; font-size: 16px; color: #1D5FA0">₺2.400 <span style="font-weight: 500; font-size: 12px; color: #50627A">/ kg</span></span></div>
+<span lang="en" style="font-size: 13px; color: #50627A; font-style: italic">Line-caught Aegean sea bass</span>
+<p style="margin: 4px 0 0; color: #33475F">Bu sabah Ayvalık açıklarından geldi. Közde, sadece tuz, zeytinyağı ve limonla; yanında roka ve kırmızı soğan salatası.</p>
+</div>
+
+<section style="display: flex; flex-direction: column; gap: 10px">
+<h2 style="margin: 0; font-size: 13px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: #50627A">Balığın büyüklüğü</h2>
+<div role="radiogroup" aria-label="Balığın büyüklüğü" style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px">
+<sc-for list="{{sizes}}" as="s" hint-placeholder-count="3">
+<button type="button" role="radio" aria-checked="{{s.on}}" style="{{s.style}}" onClick="{{s.pick}}"><span style="font-weight: 800; font-size: 15px">{{s.label}}</span><span style="font-size: 12px; opacity: .8">{{s.people}}</span></button>
+</sc-for>
+</div>
+</section>
+
+<section style="display: flex; flex-direction: column; gap: 10px">
+<h2 style="margin: 0; font-size: 13px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: #50627A">Pişirme</h2>
+<div role="radiogroup" aria-label="Pişirme" style="display: flex; flex-direction: column; gap: 8px">
+<sc-for list="{{cooks}}" as="c" hint-placeholder-count="3">
+<button type="button" role="radio" aria-checked="{{c.on}}" style="{{c.style}}" onClick="{{c.pick}}"><span aria-hidden="true" style="{{c.dot}}"></span><span style="display: flex; flex-direction: column; text-align: left"><span style="font-weight: 700">{{c.label}}</span><span style="font-size: 12.5px; color: #50627A">{{c.note}}</span></span></button>
+</sc-for>
+</div>
+</section>
+
+<div style="padding: 16px 18px; border-radius: 20px; background: #17406D; color: #FFFFFF; display: flex; justify-content: space-between; align-items: center; gap: 12px">
+<span style="display: flex; flex-direction: column"><span style="font-size: 12px; color: #B9CCE2">Tahmini fiyat · {{summary}}</span><span style="font-family: Gloock, Georgia, serif; font-size: 30px; line-height: 1.1">{{price}}</span></span>
+<span style="font-size: 12px; color: #CFDCEB; max-width: 130px; text-align: right">Kesin fiyat masada tartılınca belli olur</span>
+</div>
+
+<div style="display: flex; gap: 8px; flex-wrap: wrap"><span style="padding: 3px 10px; border-radius: 8px; background: #E5F2EA; color: #1E6A45; font-size: 12px; font-weight: 800">GF · Glutensiz</span><span style="padding: 3px 10px; border-radius: 8px; background: #FFFFFF; border: 1px solid #D5E0EC; font-size: 12px; font-weight: 600">İçerik: balık</span></div>
+
+<a href="PremiumLodos.dc.html" style="display: flex; align-items: center; gap: 14px; padding: 10px; border-radius: 18px; background: #FFFFFF; border: 1px solid #E1E9F2; text-decoration: none; color: #10253F">
+<div style="width: 60px; flex: none; border-radius: 14px; overflow: hidden"><dc-import name="Dish" kind="raki" bg="#1D5FA0" ratio="1 / 1" pad="4%" hint-size="60px,60px"></dc-import></div>
+<span style="flex: 1; display: flex; flex-direction: column"><span style="font-size: 11px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: #1D5FA0">Yanına yakışır</span><span style="font-weight: 700">Rakı, tek · buz ve su ile</span></span>
+<span style="font-weight: 800; color: #1D5FA0">₺380</span>
+</a>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1100}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var self = this;
+    var s = this.state || {};
+    var size = s.size || 600;
+    var cook = s.cook || 'izgara';
+    var perKg = 2400;
+    function fmt(n) { return '₺' + Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.'); }
+    var sizes = [{ g: 400, p: '1 kişilik' }, { g: 600, p: '1–2 kişilik' }, { g: 800, p: '2 kişilik' }].map(function (o) {
+      var on = o.g === size;
+      return { label: o.g + ' g', people: o.p, on: on ? 'true' : 'false', pick: function () { self.setState({ size: o.g }); }, style: 'display: flex; flex-direction: column; align-items: center; gap: 2px; min-height: 62px; justify-content: center; border-radius: 16px; cursor: pointer; font-family: Plus Jakarta Sans, sans-serif; ' + (on ? 'background: #1D5FA0; color: #FFFFFF; border: 1px solid #1D5FA0' : 'background: #FFFFFF; color: #10253F; border: 1px solid #D5E0EC') };
+    });
+    var cookList = [{ id: 'izgara', l: 'Izgara', n: 'Közde, tuz ve zeytinyağı ile' }, { id: 'bugulama', l: 'Buğulama', n: 'Domates, biber ve mantarla, kendi suyunda' }, { id: 'tava', l: 'Tava', n: 'Mısır ununda, roka yatağında' }];
+    var cooks = cookList.map(function (o) {
+      var on = o.id === cook;
+      return { label: o.l, note: o.n, on: on ? 'true' : 'false', pick: function () { self.setState({ cook: o.id }); }, style: 'display: flex; align-items: center; gap: 12px; min-height: 56px; padding: 10px 14px; border-radius: 16px; cursor: pointer; font: 500 14px Plus Jakarta Sans, sans-serif; color: #10253F; ' + (on ? 'background: #E6EEF6; border: 1.5px solid #1D5FA0' : 'background: #FFFFFF; border: 1px solid #D5E0EC'), dot: 'flex: none; width: 20px; height: 20px; border-radius: 999px; box-sizing: border-box; ' + (on ? 'border: 6px solid #1D5FA0' : 'border: 2px solid #A8B8CC') };
+    });
+    var cookLabel = cookList.filter(function (o) { return o.id === cook; })[0].l;
+    return {
+      sizes: sizes,
+      cooks: cooks,
+      price: fmt(perKg * size / 1000),
+      summary: size + ' g · ' + cookLabel.toLocaleLowerCase('tr-TR')
+    };
+  }
+}
+</script>
+</body>
+</html>

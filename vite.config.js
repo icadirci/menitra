@@ -3,7 +3,7 @@ import laravel from 'laravel-vite-plugin';
 import tailwindcss from '@tailwindcss/vite';
 
 // Keep in sync with App\Enums\MenuTheme (enforced by tests/Feature/Architecture/FrontendBundlesTest.php).
-const menuThemes = ['classic', 'minimal', 'bistro', 'cafe', 'grid'];
+const menuThemes = ['classic', 'minimal', 'bistro', 'cafe', 'grid', 'zen', 'coastal', 'lounge'];
 
 export default defineConfig({
     plugins: [

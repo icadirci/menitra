@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Kōri Omakase — Menu</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;600;800&amp;family=Zen+Kaku+Gothic+New:wght@400;500;700&amp;display=swap">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="position: relative; width: 390px; min-height: 2900px; overflow: hidden; background: #F2EEE6; color: #1B1A17; font-family: 'Zen Kaku Gothic New', system-ui, sans-serif; font-size: 14px; line-height: 1.6; -webkit-font-smoothing: antialiased">
+<span aria-hidden="true" style="position: absolute; top: 40px; right: -36px; font-family: 'Shippori Mincho', serif; font-size: 260px; line-height: 1; color: #1B1A17; opacity: .05">氷</span>
+
+<!-- Top bar -->
+<div style="position: relative; display: flex; justify-content: space-between; align-items: center; padding: 16px 20px">
+<span aria-hidden="true" style="width: 44px; height: 44px; border-radius: 6px; background: #C23B22; color: #F2EEE6; display: inline-flex; align-items: center; justify-content: center; font-family: 'Shippori Mincho', serif; font-size: 24px; font-weight: 800">氷</span>
+<div role="group" aria-label="Language" style="display: flex; border: 1px solid #CFC7B8; border-radius: 999px; padding: 3px">
+<button type="button" aria-pressed="true" style="height: 36px; min-width: 44px; padding: 0 10px; border-radius: 999px; border: 0; background: #1B1A17; color: #F2EEE6; font: 700 12px 'Zen Kaku Gothic New', sans-serif; letter-spacing: 0.08em; cursor: pointer">EN</button>
+<button type="button" aria-pressed="false" lang="tr" style="height: 36px; min-width: 44px; padding: 0 10px; border-radius: 999px; border: 0; background: transparent; color: #6E675C; font: 700 12px 'Zen Kaku Gothic New', sans-serif; letter-spacing: 0.08em; cursor: pointer">TR</button>
+<button type="button" aria-pressed="false" lang="ja" style="height: 36px; min-width: 44px; padding: 0 10px; border-radius: 999px; border: 0; background: transparent; color: #6E675C; font: 700 12px 'Zen Kaku Gothic New', sans-serif; cursor: pointer">日本</button>
+</div>
+</div>
+
+<!-- Title -->
+<header style="position: relative; padding: 18px 24px 22px; display: flex; flex-direction: column; gap: 6px">
+<span style="font-size: 11px; font-weight: 700; letter-spacing: 0.32em; text-transform: uppercase; color: #C23B22">Omakase · Nişantaşı</span>
+<h1 style="margin: 0; font-family: 'Shippori Mincho', serif; font-weight: 800; font-size: 60px; line-height: 1; letter-spacing: -0.01em">Kōri</h1>
+<span style="font-family: 'Shippori Mincho', serif; font-size: 15px; color: #6E675C">十二席 — twelve seats, one counter</span>
+</header>
+
+<!-- Cover -->
+<div style="position: relative; margin: 0 20px; border-radius: 4px; overflow: hidden">
+<dc-import name="Dish" kind="nigiri" bg="#25272A" ratio="16 / 10" pad="4%" hint-size="350px,219px"></dc-import>
+<span style="position: absolute; left: 12px; bottom: 12px; padding: 4px 10px; background: rgba(242,238,230,.94); font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase">Tonight · Otoro, aged 7 days</span>
+</div>
+
+<!-- Intro + info -->
+<div style="position: relative; padding: 22px 24px 0; display: flex; flex-direction: column; gap: 16px">
+<p style="margin: 0; font-family: 'Shippori Mincho', serif; font-size: 17px; line-height: 1.6; text-wrap: pretty">Chef Kenji Arai serves whatever the morning allows — fish flown in from Toyosu twice a week, the rest from the Marmara. Sit back; the counter decides.</p>
+<dl style="margin: 0; display: grid; grid-template-columns: 92px 1fr; gap: 8px 12px; font-size: 13px">
+<dt style="color: #6E675C; letter-spacing: 0.1em; text-transform: uppercase; font-size: 11px; padding-top: 2px">Seatings</dt><dd style="margin: 0">18:30 &amp; 21:00 · Tuesday–Sunday</dd>
+<dt style="color: #6E675C; letter-spacing: 0.1em; text-transform: uppercase; font-size: 11px; padding-top: 2px">Address</dt><dd style="margin: 0">Abdi İpekçi Cd. 41, Nişantaşı, İstanbul</dd>
+<dt style="color: #6E675C; letter-spacing: 0.1em; text-transform: uppercase; font-size: 11px; padding-top: 2px">Tonight</dt><dd style="margin: 0; display: flex; align-items: center; gap: 6px"><span style="width: 7px; height: 7px; border-radius: 999px; background: #2E7D4F"></span>2 counter seats left at 21:00</dd>
+</dl>
+<div style="display: flex; gap: 8px">
+<a href="tel:+902120000000" style="flex: 1; height: 46px; border-radius: 4px; background: #1B1A17; color: #F2EEE6; display: inline-flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; text-decoration: none; letter-spacing: 0.04em">Reserve a seat</a>
+<a href="https://instagram.com" aria-label="Instagram" style="width: 46px; height: 46px; border-radius: 4px; border: 1px solid #CFC7B8; display: inline-flex; align-items: center; justify-content: center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1B1A17" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 3h10a4 4 0 0 1 4 4v10a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V7a4 4 0 0 1 4-4zM12 8.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7zM17.5 6.5h.01"></path></svg></a>
+<a href="https://maps.google.com" aria-label="Directions" style="width: 46px; height: 46px; border-radius: 4px; border: 1px solid #CFC7B8; display: inline-flex; align-items: center; justify-content: center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1B1A17" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21zM12 7a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5z"></path></svg></a>
+</div>
+</div>
+
+<!-- Search + mode -->
+<div style="position: relative; padding: 24px 20px 0; display: flex; flex-direction: column; gap: 12px">
+<label style="display: flex; align-items: center; gap: 10px; height: 46px; border-bottom: 1px solid #CFC7B8"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6E675C" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14zM20 20l-4-4"></path></svg><span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Search</span><input type="search" placeholder="Search fish, sake, courses" style="flex: 1; min-width: 0; border: 0; background: transparent; font: 400 15px 'Zen Kaku Gothic New', sans-serif; color: #1B1A17; outline: none"></label>
+<div role="tablist" aria-label="Menu" style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); border: 1px solid #1B1A17; border-radius: 4px; overflow: hidden">
+<button type="button" role="tab" aria-selected="{{omaOn}}" style="{{omaStyle}}" onClick="{{showOma}}">Omakase</button>
+<button type="button" role="tab" aria-selected="{{alaOn}}" style="{{alaStyle}}" onClick="{{showAla}}">À la carte</button>
+</div>
+</div>
+
+<!-- OMAKASE -->
+<sc-if value="{{isOma}}" hint-placeholder-val="{{ true }}">
+<section style="position: relative; padding: 22px 20px 0; display: flex; flex-direction: column; gap: 16px">
+<div style="padding: 18px; border-radius: 4px; background: #1B1A17; color: #F2EEE6; display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; justify-content: space-between; align-items: baseline; gap: 12px"><span style="font-family: 'Shippori Mincho', serif; font-size: 22px; font-weight: 600">Chef's omakase</span><span style="font-family: 'Shippori Mincho', serif; font-size: 22px">{{total}}</span></div>
+<span style="font-size: 13px; color: #BDB5A6">11 courses · about 2 hours · per guest</span>
+<button type="button" role="switch" aria-checked="{{pairOn}}" onClick="{{togglePair}}" style="display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 52px; padding: 8px 12px; border-radius: 4px; border: 1px solid #3A3832; background: #24231F; color: #F2EEE6; cursor: pointer; text-align: left">
+<span style="display: flex; flex-direction: column"><span style="font: 700 14px 'Zen Kaku Gothic New', sans-serif">Sake pairing</span><span style="font: 400 12px 'Zen Kaku Gothic New', sans-serif; color: #BDB5A6">6 pours chosen by our sommelier · +₺2.900</span></span>
+<span aria-hidden="true" style="{{trackStyle}}"><span style="{{knobStyle}}"></span></span>
+</button>
+</div>
+<div style="display: flex; flex-direction: column; gap: 8px">
+<span style="font-size: 11px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: #6E675C">I avoid</span>
+<div style="display: flex; gap: 8px; flex-wrap: wrap">
+<sc-for list="{{allergens}}" as="a" hint-placeholder-count="3">
+<button type="button" aria-pressed="{{a.on}}" style="{{a.style}}" onClick="{{a.toggle}}">{{a.label}}</button>
+</sc-for>
+</div>
+<sc-if value="{{hasWarn}}" hint-placeholder-val="{{ false }}"><span style="font-size: 12.5px; color: #A3301B">{{warnSummary}}</span></sc-if>
+</div>
+</section>
+
+<sc-for list="{{stages}}" as="st" hint-placeholder-count="4">
+<section style="position: relative; padding: 26px 20px 0">
+<div style="display: flex; align-items: baseline; gap: 10px; margin-bottom: 4px"><h2 style="margin: 0; font-family: 'Shippori Mincho', serif; font-size: 24px; font-weight: 600">{{st.title}}</h2><span style="font-family: 'Shippori Mincho', serif; font-size: 15px; color: #C23B22">{{st.jp}}</span><span style="margin-left: auto; font-size: 12px; color: #6E675C">{{st.note}}</span></div>
+<ol style="margin: 0; padding: 0; list-style: none">
+<sc-for list="{{st.courses}}" as="c" hint-placeholder-count="3">
+<li>
+<a href="PremiumDetailKori.dc.html" style="{{c.rowStyle}}">
+<span style="width: 34px; flex: none; font-family: 'Shippori Mincho', serif; font-size: 20px; color: #A89F90; line-height: 1.2">{{c.num}}</span>
+<div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px">
+<div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap"><span style="font-family: 'Shippori Mincho', serif; font-size: 18px; font-weight: 600; line-height: 1.25">{{c.name}}</span><sc-if value="{{c.badge}}" hint-placeholder-val="{{ false }}"><span style="padding: 1px 7px; border: 1px solid #C23B22; color: #C23B22; font-size: 10.5px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase">{{c.badge}}</span></sc-if></div>
+<span style="font-size: 13px; color: #6E675C">{{c.desc}}</span>
+<sc-if value="{{c.showSake}}" hint-placeholder-val="{{ false }}"><span style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: #8A2E1B"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3h8l-1 6c2 1.5 3 4 3 7a5 5 0 0 1-5 5h-2a5 5 0 0 1-5-5c0-3 1-5.5 3-7z"></path></svg>{{c.sake}}</span></sc-if>
+<sc-if value="{{c.warn}}" hint-placeholder-val="{{ false }}"><span style="display: inline-flex; align-items: center; gap: 6px; padding: 3px 8px; align-self: flex-start; background: #F6E1DA; color: #8A2E1B; font-size: 12px; font-weight: 700">{{c.warn}}</span></sc-if>
+<sc-if value="{{c.limited}}" hint-placeholder-val="{{ false }}"><span style="font-size: 12px; color: #6E675C; font-style: italic">{{c.limited}}</span></sc-if>
+</div>
+<sc-if value="{{c.dish}}" hint-placeholder-val="{{ false }}"><div style="width: 64px; flex: none; border-radius: 4px; overflow: hidden"><dc-import name="Dish" kind="{{c.dish}}" bg="#25272A" ratio="1 / 1" pad="4%" hint-size="64px,64px"></dc-import></div></sc-if>
+</a>
+</li>
+</sc-for>
+</ol>
+</section>
+</sc-for>
+</sc-if>
+
+<!-- A LA CARTE -->
+<sc-if value="{{isAla}}" hint-placeholder-val="{{ false }}">
+<section style="position: relative; padding: 22px 20px 0; display: flex; flex-direction: column; gap: 12px">
+<p style="margin: 0; font-size: 13px; color: #6E675C">Served at the low tables from 18:00. Nigiri priced per piece.</p>
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px">
+<sc-for list="{{ala}}" as="i" hint-placeholder-count="6">
+<a href="PremiumDetailKori.dc.html" style="display: flex; flex-direction: column; gap: 8px; text-decoration: none; color: #1B1A17">
+<div style="border-radius: 4px; overflow: hidden"><dc-import name="Dish" kind="{{i.dish}}" bg="#25272A" ratio="1 / 1" pad="6%" hint-size="169px,169px"></dc-import></div>
+<span style="font-family: 'Shippori Mincho', serif; font-size: 16px; font-weight: 600; line-height: 1.25">{{i.name}}</span>
+<span style="font-size: 13px; color: #6E675C">{{i.price}}</span>
+</a>
+</sc-for>
+</div>
+</section>
+</sc-if>
+
+<footer style="position: relative; margin-top: 36px; padding: 24px 24px 44px; border-top: 1px solid #DCD5C8; display: flex; flex-direction: column; gap: 8px; font-size: 12.5px; color: #6E675C">
+<p style="margin: 0">Omakase is served at the counter only. Please arrive ten minutes before your seating and tell us about allergies when you book. 10% service is added.</p>
+<span style="letter-spacing: 0.2em; text-transform: uppercase; font-size: 10.5px">Menu by masa</span>
+</footer>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":2900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var self = this;
+    var s = this.state || {};
+    var mode = s.mode || 'oma';
+    var pair = !!s.pair;
+    var avoid = s.avoid || {};
+    var seg = 'height: 46px; border: 0; cursor: pointer; font: 700 14px Zen Kaku Gothic New, sans-serif; letter-spacing: 0.06em; ';
+    var names = { shellfish: 'Shellfish', gluten: 'Gluten / soy', sesame: 'Sesame' };
+    var allergens = Object.keys(names).map(function (key) {
+      var on = !!avoid[key];
+      return { label: names[key], on: on ? 'true' : 'false', toggle: function () { var n = Object.assign({}, avoid); n[key] = !on; self.setState({ avoid: n }); }, style: 'height: 40px; padding: 0 14px; border-radius: 999px; cursor: pointer; font: 500 13px Zen Kaku Gothic New, sans-serif; ' + (on ? 'background: #C23B22; color: #F2EEE6; border: 1px solid #C23B22' : 'background: transparent; color: #1B1A17; border: 1px solid #CFC7B8') };
+    });
+    var warnCount = 0;
+    var n = 0;
+    function c(o) {
+      n += 1;
+      o.num = (n < 10 ? '0' : '') + n;
+      o.badge = o.badge || ''; o.dish = o.dish || ''; o.limited = o.limited || ''; o.sake = o.sake || '';
+      o.showSake = pair && !!o.sake;
+      var hits = (o.al || []).filter(function (a) { return avoid[a]; });
+      o.warn = hits.length ? 'Contains ' + hits.map(function (h) { return names[h].toLowerCase(); }).join(', ') + ' — chef will adapt' : '';
+      if (hits.length) { warnCount += 1; }
+      o.rowStyle = 'display: flex; gap: 12px; align-items: flex-start; padding: 16px 0; border-bottom: 1px solid #DCD5C8; text-decoration: none; color: #1B1A17' + (hits.length ? '; background: #F7ECE6; margin: 0 -10px; padding-left: 10px; padding-right: 10px' : '');
+      return o;
+    }
+    var stages = [
+      { title: 'Zensai', jp: '前菜', note: 'To begin', courses: [
+        c({ name: 'Sakizuke', desc: 'Marmara bonito tataki, ponzu, shiso.', sake: 'Dassai 45 · Junmai Daiginjo' }),
+        c({ name: 'Chawanmushi', desc: 'Silken egg custard, snow crab, yuzu.', al: ['shellfish'] }),
+        c({ name: 'Sashimi of the day', desc: 'Three cuts from the morning market, fresh wasabi.', sake: 'Kubota Senju · Ginjo' })
+      ] },
+      { title: 'Nigiri', jp: '握り', note: 'One piece at a time', courses: [
+        c({ name: 'Kinmedai', desc: 'Golden-eye snapper, lightly flame-seared.' }),
+        c({ name: 'Akami zuke', desc: 'Lean bluefin, marinated in aged soy.', al: ['gluten'], sake: 'Hakkaisan · Tokubetsu Honjozo' }),
+        c({ name: 'Otoro', desc: 'Fatty bluefin belly, aged 7 days, Okinawan salt.', badge: 'Signature', dish: 'nigiri' }),
+        c({ name: 'Hotate', desc: 'Hokkaido scallop, sudachi, sea salt.', al: ['shellfish'] }),
+        c({ name: 'Uni gunkan', desc: 'Sea urchin over rice, crisp nori.', al: ['shellfish'], limited: 'Served when the catch allows', sake: 'Juyondai · Honmaru' })
+      ] },
+      { title: 'Shime', jp: '締め', note: 'To close', courses: [
+        c({ name: 'Negitoro temaki', desc: 'Hand roll of toro and scallion, toasted sesame.', al: ['sesame'], dish: 'maki' }),
+        c({ name: 'Akadashi', desc: 'Red miso soup, mitsuba, tofu.', al: ['gluten'], sake: 'Kokuryu · Junmai Ginjo' })
+      ] },
+      { title: 'Kanmi', jp: '甘味', note: 'Sweet', courses: [
+        c({ name: 'Matcha & monaka', desc: 'Whisked Uji matcha, azuki wafer, wasanbon sugar.', al: ['gluten'], dish: 'matcha', sake: 'Umeshu · house-steeped' })
+      ] }
+    ];
+    return {
+      isOma: mode === 'oma', isAla: mode === 'ala',
+      omaOn: mode === 'oma' ? 'true' : 'false', alaOn: mode === 'ala' ? 'true' : 'false',
+      omaStyle: seg + (mode === 'oma' ? 'background: #1B1A17; color: #F2EEE6' : 'background: transparent; color: #1B1A17'),
+      alaStyle: seg + (mode === 'ala' ? 'background: #1B1A17; color: #F2EEE6' : 'background: transparent; color: #1B1A17'),
+      showOma: function () { self.setState({ mode: 'oma' }); },
+      showAla: function () { self.setState({ mode: 'ala' }); },
+      pairOn: pair ? 'true' : 'false',
+      togglePair: function () { self.setState({ pair: !pair }); },
+      total: pair ? '₺9.400' : '₺6.500',
+      trackStyle: 'flex: none; width: 46px; height: 28px; border-radius: 999px; padding: 3px; box-sizing: border-box; display: flex; ' + (pair ? 'background: #C23B22; justify-content: flex-end' : 'background: #4A4740; justify-content: flex-start'),
+      knobStyle: 'width: 22px; height: 22px; border-radius: 999px; background: #F2EEE6',
+      allergens: allergens,
+      stages: stages,
+      hasWarn: warnCount > 0,
+      warnSummary: warnCount + (warnCount === 1 ? ' course' : ' courses') + ' marked below. Tell your chef — every one can be swapped.',
+      ala: [
+        { name: 'Otoro nigiri', price: '₺900 · per piece', dish: 'nigiri' },
+        { name: 'Sake nigiri', price: '₺450 · per piece', dish: 'nigiri' },
+        { name: 'Salmon & avocado maki', price: '₺680 · 6 pieces', dish: 'maki' },
+        { name: 'Spicy tuna maki', price: '₺720 · 6 pieces', dish: 'maki' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

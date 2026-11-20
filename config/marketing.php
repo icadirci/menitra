@@ -21,6 +21,9 @@ return [
         'bistro' => 'maison-ardoise',
         'cafe' => 'kiln-coffee',
         'grid' => 'petal-bakehouse',
+        'zen' => 'kori-omakase',
+        'coastal' => 'lodos-balik',
+        'lounge' => 'lumen-rooftop',
     ],
 
     /*

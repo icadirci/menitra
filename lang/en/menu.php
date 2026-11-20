@@ -111,6 +111,9 @@ return [
     'empty_menu' => 'This menu has no items yet.',
     'no_menus' => 'No menu is published at this location right now.',
     'powered_by' => 'Made with Restano',
+    'avoid_title' => 'I avoid',
+    'avoid_hint' => 'Marked items contain what you avoid. Please ask our staff about alternatives.',
+    'contains' => 'Contains: :list',
     'prices_note' => 'Prices include VAT. Please ask our staff about allergens.',
 
     'days' => [

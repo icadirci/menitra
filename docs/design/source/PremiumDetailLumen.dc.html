@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Lumen — Saffron Negroni</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Italiana&amp;family=Outfit:wght@300;400;500;600;700&amp;display=swap">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 390px; min-height: 1100px; background: #0E1626; color: #F1E9D8; font-family: Outfit, system-ui, sans-serif; font-size: 14px; line-height: 1.55; -webkit-font-smoothing: antialiased">
+<div style="position: relative; background: #152036; overflow: hidden">
+<svg aria-hidden="true" width="390" height="400" viewBox="0 0 390 400" style="position: absolute; inset: 0"><g stroke="#C8A15A" stroke-opacity=".18"><path d="M195 400L0 120M195 400L40 0M195 400L120 0M195 400L195 0M195 400L270 0M195 400L350 0M195 400L390 120"></path></g></svg>
+<div style="position: relative; display: flex; justify-content: space-between; padding: 14px 16px">
+<a href="PremiumLumen.dc.html" aria-label="Back to drinks" style="width: 44px; height: 44px; border: 1px solid #3A4A6A; display: inline-flex; align-items: center; justify-content: center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#F1E9D8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"></path></svg></a>
+<span style="align-self: center; font-size: 11px; letter-spacing: 0.3em; text-transform: uppercase; color: #C8A15A">Signature · 01</span>
+<span style="width: 44px"></span>
+</div>
+<div style="position: relative; width: 250px; margin: 0 auto"><dc-import name="Dish" kind="{{dish}}" bg="transparent" ratio="3 / 4" pad="2%" hint-size="250px,333px"></dc-import></div>
+</div>
+<div style="padding: 24px 22px 40px; display: flex; flex-direction: column; gap: 22px">
+<div style="text-align: center; display: flex; flex-direction: column; gap: 8px; align-items: center">
+<h1 style="margin: 0; font-family: Italiana, serif; font-weight: 400; font-size: 40px; line-height: 1.05; letter-spacing: 0.04em">{{name}}</h1>
+<span style="font-family: Italiana, serif; font-size: 26px; color: #C8A15A">{{price}}</span>
+<p style="margin: 0; font-weight: 300; font-size: 15px; color: #DCD3C1">{{desc}}</p>
+</div>
+<button type="button" role="switch" aria-checked="{{zeroOn}}" onClick="{{toggle}}" style="display: flex; justify-content: space-between; align-items: center; gap: 12px; min-height: 56px; padding: 10px 14px; border: 1px solid #3A4A6A; background: #152036; color: #F1E9D8; cursor: pointer; text-align: left">
+<span style="display: flex; flex-direction: column"><span style="font: 600 14px Outfit, sans-serif">Make it zero-proof</span><span style="font: 400 12px Outfit, sans-serif; color: #9BA6BC">Same bitter-orange profile, no alcohol</span></span>
+<span aria-hidden="true" style="{{track}}"><span style="width: 20px; height: 20px; border-radius: 999px; background: #F1E9D8"></span></span>
+</button>
+<section style="display: flex; flex-direction: column; gap: 10px">
+<h2 style="margin: 0; font-size: 11px; font-weight: 600; letter-spacing: 0.26em; text-transform: uppercase; color: #9BA6BC">Flavour profile</h2>
+<sc-for list="{{profile}}" as="p" hint-placeholder-count="5">
+<div style="display: grid; grid-template-columns: 74px 1fr 28px; gap: 12px; align-items: center"><span style="font-size: 13px">{{p.label}}</span><span role="img" aria-label="{{p.aria}}" style="height: 6px; background: #26344F; position: relative"><span style="{{p.bar}}"></span></span><span style="font-size: 12px; color: #9BA6BC; text-align: right">{{p.val}}</span></div>
+</sc-for>
+</section>
+<section style="display: flex; flex-direction: column; gap: 6px">
+<h2 style="margin: 0 0 4px; font-size: 11px; font-weight: 600; letter-spacing: 0.26em; text-transform: uppercase; color: #9BA6BC">In the glass</h2>
+<sc-for list="{{spec}}" as="r" hint-placeholder-count="4">
+<div style="display: flex; justify-content: space-between; gap: 12px; padding: 9px 0; border-bottom: 1px solid #1C2840"><span>{{r.a}}</span><span style="color: #C9C2B3">{{r.b}}</span></div>
+</sc-for>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 10px">
+<div style="padding: 10px; border: 1px solid #26344F; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 10.5px; letter-spacing: 0.16em; text-transform: uppercase; color: #9BA6BC">Glass</span><span style="font-size: 13px">Rocks</span></div>
+<div style="padding: 10px; border: 1px solid #26344F; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 10.5px; letter-spacing: 0.16em; text-transform: uppercase; color: #9BA6BC">Ice</span><span style="font-size: 13px">Clear sphere</span></div>
+<div style="padding: 10px; border: 1px solid #26344F; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 10.5px; letter-spacing: 0.16em; text-transform: uppercase; color: #9BA6BC">ABV</span><span style="font-size: 13px">{{abv}}</span></div>
+</div>
+</section>
+<a href="PremiumLumen.dc.html" style="display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 14px 16px; border: 1px solid #C8A15A; text-decoration: none; color: #F1E9D8"><span style="display: flex; flex-direction: column"><span style="font-size: 10.5px; letter-spacing: 0.24em; text-transform: uppercase; color: #C8A15A">Goes well with</span><span style="font-weight: 600">Sea bass ceviche · ₺540</span></span><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#C8A15A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></a>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1100}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var self = this;
+    var zero = !!(this.state && this.state.zero);
+    var prof = zero ? [['Bitter', 4], ['Citrus', 2], ['Herbal', 3], ['Sweet', 2], ['Strength', 0]] : [['Bitter', 4], ['Citrus', 1], ['Herbal', 3], ['Sweet', 2], ['Strength', 4]];
+    return {
+      zeroOn: zero ? 'true' : 'false',
+      toggle: function () { self.setState({ zero: !zero }); },
+      track: 'flex: none; width: 46px; height: 26px; border-radius: 999px; padding: 3px; box-sizing: border-box; display: flex; ' + (zero ? 'background: #5FC2B4; justify-content: flex-end' : 'background: #3A4A6A; justify-content: flex-start'),
+      dish: zero ? 'highball' : 'rocks',
+      name: zero ? 'Saffron Spritz, zero' : 'Saffron Negroni',
+      price: zero ? '₺420' : '₺720',
+      desc: zero ? 'Saffron-orange cordial, alcohol-free bitter aperitivo, tonic and a long orange peel.' : 'Our house gin, infused for 48 hours with Safranbolu saffron, stirred with Campari and white vermouth. Finished with orange oil.',
+      abv: zero ? '0%' : '≈ 24%',
+      profile: prof.map(function (p) {
+        return { label: p[0], val: p[1] + '/5', aria: p[0] + ' ' + p[1] + ' of 5', bar: 'position: absolute; left: 0; top: 0; bottom: 0; width: ' + (p[1] * 20) + '%; background: ' + (p[0] === 'Strength' ? '#5FC2B4' : '#C8A15A') };
+      }),
+      spec: zero ? [
+        { a: 'Saffron & orange cordial', b: '30 ml' }, { a: 'Alcohol-free aperitivo', b: '40 ml' }, { a: 'Tonic water', b: '100 ml' }, { a: 'Orange peel', b: 'garnish' }
+      ] : [
+        { a: 'Saffron-infused gin', b: '30 ml' }, { a: 'Campari', b: '25 ml' }, { a: 'White vermouth', b: '25 ml' }, { a: 'Orange oil', b: 'expressed' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

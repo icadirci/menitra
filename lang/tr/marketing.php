@@ -159,7 +159,7 @@ return [
             'title' => 'Yazılıma değil, mekânınıza benzeyen bir menü.',
             'body' => 'Mekânınıza uyan bir temayla başlayın; logonuz, kapak fotoğrafınız, renkleriniz ve yazı tiplerinizle onu kendinize göre düzenleyin.',
             'points' => [
-                'Kafe, fırın ve restoranlar için beş tema',
+                'Kafe, fırın, restoran ve barlar için sekiz tema',
                 'Marka renkleriniz ve her tema için seçilmiş yazı tipi çiftleri',
                 'İsterseniz şubelerinizde farklı tema kullanın',
             ],
@@ -426,7 +426,7 @@ return [
 
     'showcase' => [
         'eyebrow' => 'Menü temaları',
-        'title' => 'Beş görünüm. Arkasında tek menü.',
+        'title' => 'Sekiz görünüm. Arkasında tek menü.',
         'lead' => 'Her tema aynı menü verisini — fiyatları, tükenen ürünleri, alerjenleri ve dilleri — kendi kimliğiyle gösterir. Canlı demoyu açın, telefonunuzda deneyin.',
         'list_label' => 'Menü temaları',
         'premium' => 'Premium',
@@ -443,6 +443,9 @@ return [
             'bistro' => ['name' => 'Bistro', 'description' => 'Koyu ve şık; serif başlıklar ve en önde imza tabak.'],
             'cafe' => ['name' => 'Kafe', 'description' => 'Sıcak tonlar, yuvarlak ürün kartları ve kaydırılabilir günün önerileri.'],
             'grid' => ['name' => 'Galeri', 'description' => 'Pastel tonlarda, fotoğraf öncelikli iki sütunlu ızgara — fırın ve tatlıcılar için.'],
+            'zen' => ['name' => 'Zen', 'description' => 'Sıcak kâğıt tonları, kırmızı mühür, numaralı servisler ve “Kaçındıklarım” alerjen filtresi — omakase ve tadım menüleri için.'],
+            'coastal' => ['name' => 'Kıyı', 'description' => 'Deniz mavisi, dalga kenarlı çini kapak ve günün önerileri için koyu pano — balık ve meze restoranları için.'],
+            'lounge' => ['name' => 'Lounge', 'description' => 'Güneş ışınları altında gece mavisi ve altın, uzun içecek görselleri — bar, teras ve kokteyl menüleri için.'],
         ],
     ],
 

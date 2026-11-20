@@ -6,6 +6,7 @@ namespace Tests\Feature\Marketing;
 
 use App\Enums\BillingInterval;
 use App\Enums\FaqPlacement;
+use App\Enums\MenuTheme;
 use App\Models\Faq;
 use App\Models\Plan;
 use App\Support\Money;
@@ -220,7 +221,7 @@ class PricingPageTest extends TestCase
             ->assertSee('1 şube')
             ->assertSee('3 menü')
             ->assertSee('Sınırsız ürün')
-            ->assertSee('Tüm menü temaları (5)')
+            ->assertSee('Tüm menü temaları ('.count(MenuTheme::cases()).')')
             ->assertDontSee(__('plans.features.remove_branding', [], 'tr'));
 
         $this->get('/en/pricing')

@@ -21,6 +21,9 @@ enum MenuTheme: string
     case Bistro = 'bistro';
     case Cafe = 'cafe';
     case Grid = 'grid';
+    case Zen = 'zen';
+    case Coastal = 'coastal';
+    case Lounge = 'lounge';
 
     public function view(): string
     {
@@ -97,6 +100,36 @@ enum MenuTheme: string
                 'font_pair' => MenuFontPair::YoungSerifFigtree->value,
                 'layout' => ['show_featured' => true, 'card_ratio' => 'square', 'category_layout' => 'list', 'cart' => false],
             ],
+            // Design reference: PremiumKori / PremiumDetailKori (Shippori Mincho /
+            // Zen Kaku Gothic New in the design; Georgia + system sans here).
+            self::Zen => [
+                'colors' => [
+                    'primary' => '#1B1A17', 'accent' => '#B8361F', 'bg' => '#F2EEE6', 'surface' => '#FBF8F2',
+                    'text' => '#1B1A17', 'muted' => '#635C51', 'ornament' => '#CFC7B8',
+                ],
+                'font_pair' => MenuFontPair::System->value,
+                'layout' => ['show_images' => true, 'show_featured' => true, 'course_numbers' => true, 'allergen_filter' => true, 'category_layout' => 'list', 'cart' => false],
+            ],
+            // Design reference: PremiumLodos / PremiumDetailLodos (Gloock / Plus
+            // Jakarta Sans in the design; Young Serif / Figtree here).
+            self::Coastal => [
+                'colors' => [
+                    'primary' => '#17406D', 'accent' => '#1D5FA0', 'bg' => '#F5F8FB', 'surface' => '#FFFFFF',
+                    'text' => '#10253F', 'muted' => '#50627A', 'ornament' => '#F2C14E',
+                ],
+                'font_pair' => MenuFontPair::YoungSerifFigtree->value,
+                'layout' => ['show_images' => true, 'show_featured' => true, 'category_layout' => 'list', 'cart' => false],
+            ],
+            // Design reference: PremiumLumen / PremiumDetailLumen (Italiana / Outfit
+            // in the design; Georgia + system sans here).
+            self::Lounge => [
+                'colors' => [
+                    'primary' => '#C8A15A', 'accent' => '#C8A15A', 'bg' => '#0E1626', 'surface' => '#152036',
+                    'text' => '#F1E9D8', 'muted' => '#9BA6BC', 'ornament' => '#3A4A6A',
+                ],
+                'font_pair' => MenuFontPair::System->value,
+                'layout' => ['show_images' => true, 'show_featured' => true, 'category_layout' => 'list', 'cart' => false],
+            ],
         };
     }
 
@@ -113,6 +146,9 @@ enum MenuTheme: string
             self::Bistro => [MenuFontPair::System, MenuFontPair::YoungSerifFigtree, MenuFontPair::BricolageInter],
             self::Cafe => [MenuFontPair::Figtree, MenuFontPair::BricolageInter, MenuFontPair::YoungSerifFigtree, MenuFontPair::System],
             self::Grid => [MenuFontPair::YoungSerifFigtree, MenuFontPair::Figtree, MenuFontPair::BricolageInter, MenuFontPair::System],
+            self::Zen => [MenuFontPair::System, MenuFontPair::YoungSerifFigtree, MenuFontPair::Inter],
+            self::Coastal => [MenuFontPair::YoungSerifFigtree, MenuFontPair::Figtree, MenuFontPair::BricolageInter, MenuFontPair::System],
+            self::Lounge => [MenuFontPair::System, MenuFontPair::Figtree, MenuFontPair::YoungSerifFigtree, MenuFontPair::BricolageInter],
         };
     }
 
@@ -238,7 +274,8 @@ enum MenuTheme: string
 
     /**
      * Built = both views exist. A theme without views can't be selected and
-     * renders as `classic` (all five are built since Phase 7).
+     * renders as `classic` (all eight are built: the first five since Phase 7,
+     * `zen`, `coastal` and `lounge` since 2026-11-19).
      */
     public function isBuilt(): bool
     {
@@ -252,7 +289,8 @@ enum MenuTheme: string
 
     /**
      * Plan feature a theme needs. `classic` and `minimal` are the basic themes
-     * every plan includes; the others need `premium_themes`.
+     * every plan includes; the others (incl. `zen`, `coastal`, `lounge`) need
+     * `premium_themes` (Profesyonel and Çoklu Şube).
      */
     public function requiredFeature(): ?PlanFeature
     {

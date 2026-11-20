@@ -1,6 +1,6 @@
 # Menu Themes
 
-> Status: **Approved — v0.5** (2026-11-15, Phase 7 — autorun: `minimal`, `bistro`, `cafe`, `grid` built; font pairs `inter` and `figtree`; shared detail components). v0.4 (2026-11-15, B9: `theme_settings` with colours, font pair and layout options, contrast check, "Theme & appearance" page, owner-only branch override, themes without views listed as "coming soon"). v0.3 (2026-11-16: `classic` built in Phase 6; a theme without views falls back to `classic` until Phase 7). Themes are presentation layers only. All themes consume the same data contract and share all backend logic.
+> Status: **Approved — v0.6** (2026-11-19: three premium themes `zen`, `coastal`, `lounge` from the "Premium Menüler" designs, only for plans with `premium_themes` — Profesyonel and Çoklu Şube). v0.5 (2026-11-15, Phase 7 — autorun: `minimal`, `bistro`, `cafe`, `grid` built; font pairs `inter` and `figtree`; shared detail components). v0.4 (2026-11-15, B9: `theme_settings` with colours, font pair and layout options, contrast check, "Theme & appearance" page, owner-only branch override, themes without views listed as "coming soon"). v0.3 (2026-11-16: `classic` built in Phase 6; a theme without views falls back to `classic` until Phase 7). Themes are presentation layers only. All themes consume the same data contract and share all backend logic.
 
 ## Contents
 
@@ -30,7 +30,7 @@
 - Effective theme = `location.theme ?? tenant.theme`.
 - All menus at one location use the same theme, so breakfast and dinner never look different.
 - Per-theme customisation lives in `theme_settings` (unique per tenant and theme). Switching back to a theme restores the settings it had. A location override uses the tenant's settings of that theme; there are no per-location settings. A missing row means the theme's defaults; registration writes the `classic` row with defaults.
-- Basic themes: `classic` and `minimal` are included in every plan; `bistro`, `cafe` and `grid` need `premium_themes` (`MenuTheme::requiredFeature()`).
+- Basic themes: `classic` and `minimal` are included in every plan; `bistro`, `cafe`, `grid`, `zen`, `coastal` and `lounge` need `premium_themes` (`MenuTheme::requiredFeature()`), i.e. Profesyonel and Çoklu Şube (Başlangıç has `premium_themes = 0`).
 - Plan gating: if the effective theme requires a feature the current plan lacks (`premium_themes`), `ThemeRenderer` falls back to `classic`. **Settings are not deleted.**
 
 ### Managing themes (business panel, B9)
@@ -42,7 +42,7 @@ All writes go through `App\Services\Themes\ThemeService`; the panel only calls i
 | Choose the tenant theme and edit the selected theme's settings | **Theme & appearance** page (`ManageTheme`, `/app/{tenant}/theme`) | Owners (`TenantPolicy::manageSettings`, in `canAccess()` and again in `save()` / reset) | Theme must be built; a premium theme needs `premium_themes` when it is **newly** chosen; settings pass `MenuTheme::validator()` |
 | Branch override | Location form, "Appearance" section | Owners (`LocationPolicy::setTheme`); managers and branch staff see the field read-only, it is not dehydrated for them and a submitted value from them is a 403 | Same theme rules as above (`ThemeService::setLocationTheme`) |
 
-- **Built themes only.** `MenuTheme::isBuilt()` is true when both views exist. A theme without views is listed as **"coming soon"** (disabled option) and the server refuses it. Since Phase 7 (2026-11-15) all five themes are built and selectable; the rule stays for future themes (tests simulate an unbuilt theme with a view finder that hides its views).
+- **Built themes only.** `MenuTheme::isBuilt()` is true when both views exist. A theme without views is listed as **"coming soon"** (disabled option) and the server refuses it. Since Phase 7 (2026-11-15) all themes are built and selectable (eight since 2026-11-19); the rule stays for future themes (tests simulate an unbuilt theme with a view finder that hides its views).
 - **Plan gating follows `FeatureGate`:** choosing a premium theme is a creation-like action (`ensureCanCreate(premium_themes)`, shown as the "not included" notification). Keeping or editing the theme already in use is never blocked, and nothing is deleted when the plan changes; the page shows a warning while the selected theme is rendered as `classic`.
 - Switching the theme in the form loads that theme's saved settings (or defaults). "Reset to defaults" only refills the form; nothing changes until saved.
 
@@ -57,12 +57,17 @@ Themes are code (Blade and CSS), so they're registered in code rather than in a 
 | `bistro` | Dark and elegant: framed cover, centred serif title, italic descriptions, round thumbnails, dotted price leaders, "signature" cards for featured items | `MenuArdoise`, `DetailArdoise` (Cormorant Garamond / Jost) | `system` (Georgia + system sans) · + `young_serif_figtree`, `bricolage_inter` | `show_images`, `show_featured` |
 | `cafe` | Warm palette, floating venue card over the cover, rounded product cards (text left, picture right), horizontal featured cards, rounded detail sheet | `MenuKiln`, `DetailKiln` (Manrope) | `figtree` · + `bricolage_inter`, `young_serif_figtree`, `system` | `show_images`, `show_featured` |
 | `grid` | Photo-first two-column grid, soft pastel palette, rounded cover with overlapping logo, detail as a floating card | `MenuPetal`, `DetailPetal` (Fraunces / Nunito Sans) | `young_serif_figtree` · + `figtree`, `bricolage_inter`, `system` | `show_featured`, `card_ratio` (`square` \| `portrait`) |
+| `zen` | Warm paper, red seal mark, large serif title with a faint watermark letter, segmented menu switch, dark "featured" card, numbered course rows (CSS counters), optional "I avoid" allergen chips that mark items containing them (client-side only, nothing stored or sent) | `PremiumKori`, `PremiumDetailKori` (Shippori Mincho / Zen Kaku Gothic New) | `system` · + `young_serif_figtree`, `inter` | `show_images`, `show_featured`, `course_numbers`, `allergen_filter` |
+| `coastal` | Sea blues: tiled accent cover with a wave edge, floating info card, dark board for featured items, categories without pictures as a two-column card grid, with pictures as a list | `PremiumLodos`, `PremiumDetailLodos` (Gloock / Plus Jakarta Sans) | `young_serif_figtree` · + `figtree`, `bricolage_inter`, `system` | `show_images`, `show_featured` |
+| `lounge` | Night blue and gold: sunburst header, diamond mark, centred letter-spaced title, gold-framed open-state banner, "pick" cards for featured items, diamond section rules, tall (3:4) pictures | `PremiumLumen`, `PremiumDetailLumen` (Italiana / Outfit) | `system` · + `figtree`, `young_serif_figtree`, `bricolage_inter` | `show_images`, `show_featured` |
 
 **Decision (autorun, 2026-11-15) — fonts:** the design's fonts for the four new themes (DM Sans/Mono, Cormorant Garamond/Jost, Manrope, Fraunces/Nunito Sans) are not in `resources/fonts/`, and adding font files was not part of the unattended run. The themes therefore use only the already self-hosted families (Young Serif, Figtree, Bricolage Grotesque, Inter) plus system stacks; `MenuFontPair` gained `inter` (Inter/Inter) and `figtree` (Figtree/Figtree). `minimal` prints prices in the system monospace stack. Adding the design fonts later is a stylesheet + enum change only (new `MenuFontPair` cases, `@font-face` in the theme file).
 
 **Decision (autorun) — colours:** each theme's defaults follow its design palette and pass `MenuTheme::validator()` incl. the contrast check (`ThemeManagementTest` checks every case). Text is only ever placed on `bg`, `surface`, `primary` or `accent` (or a light mix of `text` into `surface`), so every text pair is covered by `contrastPairs()`; `ornament` is used only for decoration (covers, dots, borders, placeholders).
 
-The venue names in the design files (Kiln Coffee, Maison Ardoise, noon., Petal Bakehouse, Kahve Konağı) are sample content only; they become demo data, never theme keys or template strings (decided 2026-11-15).
+**Decision (2026-11-19) — premium themes:** the fonts of the three premium designs (Shippori Mincho, Zen Kaku Gothic New, Gloock, Plus Jakarta Sans, Italiana, Outfit) are not self-hosted either, so the same rule applies (existing families + system stacks, no new font files). Design features that need data the snapshot doesn't have (sake pairing, flavour tags, drink strength, per-kg catch board, reservations) are not built; the themes map them to existing data (featured items, category descriptions, allergens, dietary labels). `MenuData::allergens()` (distinct allergens of the menu, derived from the snapshot) feeds zen's filter.
+
+The venue names in the design files (Kiln Coffee, Maison Ardoise, noon., Petal Bakehouse, Kahve Konağı, Kōri, Lodos, Lumen) are sample content only; they become demo data, never theme keys or template strings (decided 2026-11-15).
 
 Each case provides:
 
@@ -171,7 +176,7 @@ To override a component, a theme places a variant in `themes/{key}/components/` 
 ## Enforcing independence
 
 1. **Architecture test** (`tests/Architecture/ThemeIndependenceTest`): scans `resources/views/themes/**` and fails on `App\Models`, `App\Services`, `DB::`, `Cache::`, `auth(`, `request(`, `@php` blocks and `{!!`.
-2. **Contract test**: renders every `MenuTheme::cases()` theme, both the menu and the location view, from the same fake `MenuSnapshot`, with a query listener attached. It asserts that **all five are built**, **zero database queries** and a successful render — also with every layout option flipped. A stylesheet test checks that each theme file is scoped, uses `@reference`, and declares `@font-face` for every font pair it offers.
+2. **Contract test**: renders every `MenuTheme::cases()` theme, both the menu and the location view, from the same fake `MenuSnapshot`, with a query listener attached. It asserts that **every theme is built**, **zero database queries** and a successful render — also with every layout option flipped. A stylesheet test checks that each theme file is scoped, uses `@reference`, and declares `@font-face` for every font pair it offers.
 3. **Content test**: every theme renders all snapshot features (variants, extras, allergens, sold-out, featured, popular, hours, language switcher) or explicitly delegates to a shared component that does.
 
 ## Adding a theme

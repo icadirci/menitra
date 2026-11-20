@@ -286,6 +286,9 @@ return [
                 'bistro' => ['name' => 'Bistro', 'description' => 'Dark and elegant with serif headings'],
                 'cafe' => ['name' => 'Café', 'description' => 'Warm tones and rounded product cards'],
                 'grid' => ['name' => 'Gallery', 'description' => 'Photo-first grid layout, pastel colours'],
+                'zen' => ['name' => 'Zen', 'description' => 'Warm paper tones, a red seal and numbered courses; for omakase, sushi and tasting menus'],
+                'coastal' => ['name' => 'Coastal', 'description' => 'Sea blues, a tiled cover with a wave edge and a dark board for the day’s picks; for fish and meze restaurants'],
+                'lounge' => ['name' => 'Lounge', 'description' => 'Night blue and gold, a sunburst header and tall drink pictures; for bars, rooftops and cocktail menus'],
             ],
             'colors' => [
                 'primary' => 'Primary',
@@ -310,6 +313,8 @@ return [
                 'card_ratio' => 'Card shape',
                 'category_layout' => 'Category display',
                 'cart' => 'Cart (guest order list)',
+                'course_numbers' => 'Numbered courses (01, 02 …)',
+                'allergen_filter' => 'Allergen filter (“I avoid”)',
             ],
             'layout_help' => [
                 'cart' => 'Guests can collect items in a list and show it to the staff when ordering; “I’ve ordered” clears it. The list stays on the guest’s phone; no order is sent to the business.',

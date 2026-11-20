@@ -6,6 +6,7 @@ namespace Tests\Feature\Panels;
 
 use App\Enums\MenuFontPair;
 use App\Enums\MenuTheme;
+use App\Enums\PlanFeature;
 use App\Exceptions\CrossTenantWriteException;
 use App\Exceptions\PlanLimitExceededException;
 use App\Filament\App\Pages\ManageTheme;
@@ -22,6 +23,7 @@ use App\Services\Subscription\FeatureGate;
 use App\Services\Themes\ThemeService;
 use App\Support\Menu\ThemeSettings;
 use App\Tenancy\TenantContext;
+use Database\Seeders\PlanSeeder;
 use Filament\Facades\Filament;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
@@ -369,6 +371,32 @@ class ThemeManagementTest extends TestCase
             ->assertHasErrors(['data.theme']);
 
         $this->assertSame(MenuTheme::Classic, $this->tenant->fresh()->theme);
+    }
+
+    public function test_zen_coastal_and_lounge_are_for_professional_and_multi_branch_plans_only(): void
+    {
+        $this->seed(PlanSeeder::class);
+        $this->enter($this->member());
+        $subscription = Subscription::withoutTenantScope()->where('tenant_id', $this->tenant->id)->sole();
+
+        foreach ([MenuTheme::Zen, MenuTheme::Coastal, MenuTheme::Lounge] as $theme) {
+            $this->assertSame(PlanFeature::PremiumThemes, $theme->requiredFeature(), $theme->value);
+
+            foreach ([config('subscriptions.default_plan') => false, 'pro' => true, 'multi-branch' => true] as $code => $allowed) {
+                $subscription->forceFill(['plan_id' => Plan::query()->where('code', $code)->value('id')])->save();
+                app(FeatureGate::class)->flush();
+                app(ThemeService::class)->save($this->tenant, MenuTheme::Classic, MenuTheme::Classic->defaults());
+
+                try {
+                    app(ThemeService::class)->save($this->tenant, $theme, $theme->defaults());
+                    $this->assertTrue($allowed, "{$code} must not offer [{$theme->value}].");
+                    $this->assertSame($theme, $this->tenant->fresh()->theme);
+                } catch (PlanLimitExceededException) {
+                    $this->assertFalse($allowed, "{$code} must offer [{$theme->value}].");
+                    $this->assertSame(MenuTheme::Classic, $this->tenant->fresh()->theme);
+                }
+            }
+        }
     }
 
     public function test_losing_premium_falls_back_to_classic_and_keeps_settings(): void

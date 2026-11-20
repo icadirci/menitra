@@ -407,7 +407,7 @@ Each phase ends with tests run, a summary of changed files, and a review pause. 
 
 ## Design reference
 
-The approved visual design (2026-11-15) is kept as source files in `docs/design/source/` (`*.dc.html` artboards from the design canvas: marketing pages, auth pages, five menu identities with product detail views, and `DesignSystem.dc.html`). They are reference material, not code: views are rebuilt in Blade + Tailwind and never load these files.
+The approved visual design (2026-11-15) is kept as source files in `docs/design/source/` (`*.dc.html` artboards from the design canvas: marketing pages, auth pages, five menu identities with product detail views, the three premium menus `Premium{Kori,Lodos,Lumen}` added 2026-11-19, and `DesignSystem.dc.html`). They are reference material, not code: views are rebuilt in Blade + Tailwind and never load these files.
 
 - **Brand:** the product name stays **Restano**; the design's "Masa" name is not used. Its visual language (Forest `#1F4D3B`, Saffron `#E7A33E`, Paper/Ink neutrals, Bricolage Grotesque + Inter, radii 6/12/14/20/28) is implemented as tokens in `resources/css/app.css` and components in `resources/views/components/ui/`.
 - **Fonts** are self-hosted from `resources/fonts/` (OFL, latin + latin-ext); no third-party font CDN on public pages. Menu theme fonts follow the same rule when the themes are built.

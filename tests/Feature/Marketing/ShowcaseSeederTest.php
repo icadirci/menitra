@@ -61,7 +61,7 @@ class ShowcaseSeederTest extends TestCase
 
         $tenants = Tenant::query()->whereIn('slug', $this->slugs())->get();
 
-        $this->assertCount(5, $tenants);
+        $this->assertCount(count(config('marketing.showcase')), $tenants);
         $this->assertSame(0, TenantMembership::query()->count());
         $this->assertSame(0, User::query()->count());
 
@@ -75,7 +75,7 @@ class ShowcaseSeederTest extends TestCase
         $this->seed(ShowcaseSeeder::class);
 
         $subscriptions = $this->subscriptions();
-        $this->assertCount(5, $subscriptions);
+        $this->assertCount(count(config('marketing.showcase')), $subscriptions);
 
         foreach ($subscriptions as $subscription) {
             $this->assertSame(SubscriptionStatus::Active, $subscription->status);
@@ -115,7 +115,7 @@ class ShowcaseSeederTest extends TestCase
         foreach ($this->subscriptions() as $subscription) {
             $this->assertSame(SubscriptionStatus::Active, $subscription->status);
         }
-        $this->assertSame(5, SubscriptionEvent::withoutTenantScope()->count());
+        $this->assertSame(count(config('marketing.showcase')), SubscriptionEvent::withoutTenantScope()->count());
 
         foreach ($this->slugs() as $slug) {
             $this->get("/m/{$slug}")->assertOk();

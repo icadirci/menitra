@@ -172,6 +172,26 @@ class ThemeIndependenceTest extends TestCase
         $this->assertStringContainsString('href="http://konak.localhost/moda/menu?lang=tr"', $html);
     }
 
+    public function test_zen_offers_the_allergen_filter_only_when_enabled(): void
+    {
+        $snapshot = $this->snapshot();
+        $live = LiveMenuState::for($snapshot->location, CarbonImmutable::parse('2026-11-16 10:00', 'Europe/Istanbul'));
+        $defaults = MenuTheme::Zen->defaults();
+
+        // Distinct allergens of the whole menu, from the snapshot only.
+        $this->assertSame(['milk'], array_map(fn (LabelData $label): string => $label->key, $snapshot->menu->allergens()));
+
+        $on = view(MenuTheme::Zen->view(), ['menu' => $snapshot, 'live' => $live, 'theme' => ThemeSettings::defaults(MenuTheme::Zen)])->render();
+        $this->assertStringContainsString(__('menu.avoid_title'), $on);
+        $this->assertStringContainsString('data-allergens="milk"', $on);
+        $this->assertStringContainsString(__('menu.contains', ['list' => 'Süt']), $on);
+        $this->assertStringContainsString('z-page--numbered', $on);
+
+        $off = view(MenuTheme::Zen->view(), ['menu' => $snapshot, 'live' => $live, 'theme' => ThemeSettings::fromStored(MenuTheme::Zen, ['layout' => ['allergen_filter' => false, 'course_numbers' => false] + $defaults['layout']] + $defaults)])->render();
+        $this->assertStringNotContainsString(__('menu.avoid_title'), $off);
+        $this->assertStringNotContainsString('z-page--numbered', $off);
+    }
+
     public function test_cart_payload_carries_only_ids_names_and_prices(): void
     {
         $item = $this->snapshot()->menu->categories[0]->items[0];

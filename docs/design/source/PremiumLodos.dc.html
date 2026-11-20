@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<title>Lodos Balık &amp; Meze — Menü</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gloock&amp;family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div lang="{{lang}}" style="width: 390px; min-height: 2900px; background: #F5F8FB; color: #10253F; font-family: 'Plus Jakarta Sans', system-ui, sans-serif; font-size: 14px; line-height: 1.55; -webkit-font-smoothing: antialiased">
+
+<!-- Cover -->
+<div style="position: relative; background: #1D5FA0; overflow: hidden">
+<svg aria-hidden="true" width="390" height="330" viewBox="0 0 390 330" style="position: absolute; inset: 0"><defs><pattern id="lodos-tile" width="26" height="26" patternUnits="userSpaceOnUse"><rect width="26" height="26" fill="#1D5FA0"></rect><path d="M0 13h26M13 0v26" stroke="#2A6CAE" stroke-width="1"></path><circle cx="13" cy="13" r="3" fill="none" stroke="#2A6CAE"></circle></pattern></defs><rect width="390" height="330" fill="url(#lodos-tile)"></rect></svg>
+<div style="position: relative; display: flex; justify-content: space-between; align-items: center; padding: 16px 16px 0">
+<span aria-hidden="true" style="width: 46px; height: 46px; border-radius: 999px; background: #FFFFFF; display: inline-flex; align-items: center; justify-content: center"><svg width="28" height="28" viewBox="0 0 28 28" fill="none" stroke="#1D5FA0" stroke-width="2" stroke-linecap="round"><path d="M3 11c3-3 5-3 8 0s5 3 8 0 5-3 6-1M3 17c3-3 5-3 8 0s5 3 8 0 5-3 6-1"></path></svg></span>
+<div role="group" aria-label="{{L.langLabel}}" style="display: flex; padding: 3px; border-radius: 999px; background: rgba(255,255,255,.18)">
+<button type="button" lang="tr" aria-pressed="{{trOn}}" style="{{trStyle}}" onClick="{{setTr}}">TR</button>
+<button type="button" lang="en" aria-pressed="{{enOn}}" style="{{enStyle}}" onClick="{{setEn}}">EN</button>
+</div>
+</div>
+<div style="position: relative; display: flex; justify-content: center; align-items: flex-end; padding: 8px 0 0; height: 240px">
+<div style="width: 250px"><dc-import name="Dish" kind="fish" bg="transparent" ratio="1 / 1" pad="0%" hint-size="250px,250px"></dc-import></div>
+<div style="width: 110px; margin-left: -40px; margin-bottom: 18px"><dc-import name="Dish" kind="raki" bg="transparent" ratio="3 / 4" pad="0%" hint-size="110px,147px"></dc-import></div>
+</div>
+<svg aria-hidden="true" width="390" height="40" viewBox="0 0 390 40" style="position: relative; display: block; margin-top: -10px"><path d="M0 22c24-14 41-14 65 0s41 14 65 0 41-14 65 0 41 14 65 0 41-14 65 0 41 14 65 0V40H0z" fill="#F5F8FB"></path></svg>
+</div>
+
+<!-- Title -->
+<header style="padding: 4px 22px 0; display: flex; flex-direction: column; gap: 8px">
+<span style="font-size: 11px; font-weight: 800; letter-spacing: 0.24em; text-transform: uppercase; color: #1D5FA0">{{L.kicker}}</span>
+<h1 style="margin: 0; font-family: Gloock, Georgia, serif; font-weight: 400; font-size: 56px; line-height: 1; color: #17406D">Lodos</h1>
+<p style="margin: 0; color: #50627A; text-wrap: pretty">{{L.intro}}</p>
+</header>
+
+<!-- Info -->
+<div style="margin: 18px 16px 0; padding: 16px; border-radius: 20px; background: #FFFFFF; box-shadow: 0 10px 30px -20px rgba(16,37,63,.4); display: flex; flex-direction: column; gap: 10px; font-size: 13px">
+<div style="display: flex; justify-content: space-between; gap: 10px"><span style="display: inline-flex; align-items: center; gap: 8px"><span style="width: 8px; height: 8px; border-radius: 999px; background: #1F8A5B"></span><strong style="font-weight: 700">{{L.openNow}}</strong></span><span style="color: #50627A">{{L.hours}}</span></div>
+<div style="display: flex; gap: 8px; color: #50627A"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1D5FA0" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none; margin-top: 2px"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21zM12 7a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5z"></path></svg><span>Francalacı Sk. 7, Arnavutköy · {{L.terrace}}</span></div>
+<div style="display: flex; gap: 8px; padding-top: 4px">
+<a href="tel:+902120000000" style="flex: 1; height: 46px; border-radius: 14px; background: #1D5FA0; color: #FFFFFF; display: inline-flex; align-items: center; justify-content: center; font-weight: 700; text-decoration: none">{{L.reserve}}</a>
+<a href="https://instagram.com" aria-label="Instagram" style="width: 46px; height: 46px; border-radius: 14px; background: #E6EEF6; display: inline-flex; align-items: center; justify-content: center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#17406D" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 3h10a4 4 0 0 1 4 4v10a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V7a4 4 0 0 1 4-4zM12 8.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7zM17.5 6.5h.01"></path></svg></a>
+<a href="https://maps.google.com" aria-label="{{L.directions}}" style="width: 46px; height: 46px; border-radius: 14px; background: #E6EEF6; display: inline-flex; align-items: center; justify-content: center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#17406D" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3zM9 3v15M15 6v15"></path></svg></a>
+</div>
+</div>
+
+<!-- Search + cats -->
+<div style="padding: 18px 16px 0; display: flex; flex-direction: column; gap: 12px">
+<label style="display: flex; align-items: center; gap: 10px; height: 50px; padding: 0 16px; border-radius: 14px; background: #FFFFFF; border: 1px solid #D5E0EC"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#50627A" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14zM20 20l-4-4"></path></svg><span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">{{L.search}}</span><input type="search" placeholder="{{L.search}}" style="flex: 1; min-width: 0; border: 0; background: transparent; font: 500 15px 'Plus Jakarta Sans', sans-serif; color: #10253F; outline: none"></label>
+<div role="tablist" aria-label="{{L.catsLabel}}" style="display: flex; gap: 8px; overflow-x: auto; margin: 0 -16px; padding: 0 16px 4px">
+<sc-for list="{{cats}}" as="c" hint-placeholder-count="5">
+<button type="button" role="tab" aria-selected="{{c.on}}" style="{{c.style}}" onClick="{{c.pick}}">{{c.label}}</button>
+</sc-for>
+</div>
+</div>
+
+<!-- Today's catch -->
+<section style="margin: 20px 16px 0; border-radius: 22px; background: #17406D; color: #FFFFFF; overflow: hidden">
+<div style="padding: 18px 18px 10px; display: flex; justify-content: space-between; align-items: flex-start; gap: 12px">
+<div><h2 style="margin: 0; font-family: Gloock, Georgia, serif; font-weight: 400; font-size: 26px; line-height: 1.1">{{L.catchTitle}}</h2><span style="font-size: 12.5px; color: #B9CCE2">{{L.catchSub}}</span></div>
+<span style="flex: none; padding: 4px 10px; border-radius: 999px; background: #F2C14E; color: #10253F; font-size: 11px; font-weight: 800">{{L.updated}}</span>
+</div>
+<ul style="margin: 0; padding: 0 18px 8px; list-style: none">
+<sc-for list="{{fish}}" as="f" hint-placeholder-count="5">
+<li>
+<a href="PremiumDetailLodos.dc.html" style="{{f.rowStyle}}">
+<div style="flex: 1; min-width: 0"><div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap"><span style="font-weight: 700; font-size: 15.5px">{{f.name}}</span><sc-if value="{{f.badge}}" hint-placeholder-val="{{ false }}"><span style="{{f.badgeStyle}}">{{f.badge}}</span></sc-if></div><span style="font-size: 12.5px; color: #B9CCE2">{{f.origin}}</span></div>
+<div style="text-align: right; flex: none"><div style="font-weight: 800; font-size: 15px">{{f.price}}</div><div style="font-size: 11.5px; color: #B9CCE2">{{L.perKg}}</div></div>
+</a>
+</li>
+</sc-for>
+</ul>
+<p style="margin: 0; padding: 12px 18px 16px; background: #133659; font-size: 12.5px; color: #CFDCEB">{{L.catchNote}}</p>
+</section>
+
+<!-- Featured meze platter -->
+<section style="padding: 22px 16px 0">
+<a href="PremiumDetailLodos.dc.html" style="display: flex; align-items: center; gap: 14px; padding: 10px; border-radius: 22px; background: #FFFFFF; text-decoration: none; color: #10253F; box-shadow: 0 10px 30px -20px rgba(16,37,63,.4)">
+<div style="width: 120px; flex: none; border-radius: 16px; overflow: hidden"><dc-import name="Dish" kind="meze" bg="#E6EEF6" ratio="1 / 1" pad="4%" hint-size="120px,120px"></dc-import></div>
+<div style="display: flex; flex-direction: column; gap: 4px"><span style="align-self: flex-start; padding: 2px 9px; border-radius: 999px; background: #F2C14E; font-size: 11px; font-weight: 800">{{L.forTable}}</span><span style="font-family: Gloock, Georgia, serif; font-size: 21px; line-height: 1.15; color: #17406D">{{L.platter}}</span><span style="font-size: 12.5px; color: #50627A">{{L.platterDesc}}</span><span style="font-weight: 800; color: #1D5FA0">₺1.150</span></div>
+</a>
+</section>
+
+<!-- Sections -->
+<sc-for list="{{sections}}" as="s" hint-placeholder-count="3">
+<section style="padding: 24px 16px 0">
+<div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px"><svg width="22" height="12" viewBox="0 0 22 12" fill="none" stroke="#1D5FA0" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M1 6c3-4 5-4 7 0s4 4 6 0 4-4 7 0"></path></svg><h2 style="margin: 0; font-family: Gloock, Georgia, serif; font-weight: 400; font-size: 24px; color: #17406D">{{s.title}}</h2></div>
+<sc-if value="{{s.grid}}" hint-placeholder-val="{{ true }}">
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px">
+<sc-for list="{{s.items}}" as="it" hint-placeholder-count="4">
+<a href="PremiumDetailLodos.dc.html" style="display: flex; flex-direction: column; gap: 6px; padding: 12px; border-radius: 18px; background: #FFFFFF; text-decoration: none; color: #10253F; border: 1px solid #E1E9F2">
+<span style="font-weight: 700; font-size: 15px">{{it.name}}</span>
+<span style="font-size: 12.5px; color: #50627A; line-height: 1.4">{{it.desc}}</span>
+<div style="display: flex; justify-content: space-between; align-items: center; margin-top: auto; padding-top: 4px"><span style="font-weight: 800; color: #1D5FA0">{{it.price}}</span><span style="display: flex; gap: 4px"><sc-for list="{{it.diet}}" as="d" hint-placeholder-count="1"><span style="padding: 1px 6px; border-radius: 6px; background: #E5F2EA; color: #1E6A45; font-size: 10.5px; font-weight: 800">{{d}}</span></sc-for></span></div>
+</a>
+</sc-for>
+</div>
+</sc-if>
+<sc-if value="{{s.list}}" hint-placeholder-val="{{ false }}">
+<sc-for list="{{s.items}}" as="it" hint-placeholder-count="3">
+<a href="PremiumDetailLodos.dc.html" style="{{it.rowStyle}}">
+<div style="width: 72px; flex: none; border-radius: 16px; overflow: hidden"><dc-import name="Dish" kind="{{it.dish}}" bg="{{it.bg}}" ratio="1 / 1" pad="4%" hint-size="72px,72px"></dc-import></div>
+<div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px">
+<div style="display: flex; justify-content: space-between; align-items: baseline; gap: 8px"><span style="font-weight: 700; font-size: 15px">{{it.name}}</span><span style="font-weight: 800; color: #1D5FA0; white-space: nowrap">{{it.price}}</span></div>
+<span style="font-size: 12.5px; color: #50627A">{{it.desc}}</span>
+<div style="display: flex; gap: 6px; flex-wrap: wrap"><sc-if value="{{it.badge}}" hint-placeholder-val="{{ false }}"><span style="padding: 1px 8px; border-radius: 999px; background: #FBE3DC; color: #9A3A22; font-size: 11px; font-weight: 800">{{it.badge}}</span></sc-if><sc-for list="{{it.diet}}" as="d" hint-placeholder-count="1"><span style="padding: 1px 6px; border-radius: 6px; background: #E5F2EA; color: #1E6A45; font-size: 10.5px; font-weight: 800">{{d}}</span></sc-for></div>
+</div>
+</a>
+</sc-for>
+</sc-if>
+</section>
+</sc-for>
+
+<footer style="margin-top: 30px; padding: 22px 22px 44px; background: #E6EEF6; display: flex; flex-direction: column; gap: 8px; font-size: 12.5px; color: #50627A">
+<span><strong style="color: #1E6A45">V</strong> {{L.veg}} · <strong style="color: #1E6A45">VG</strong> {{L.vegan}} · <strong style="color: #1E6A45">GF</strong> {{L.gf}}</span>
+<p style="margin: 0">{{L.footer}}</p>
+<span>{{L.by}}</span>
+</footer>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":2900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var self = this;
+    var s = this.state || {};
+    var lang = s.lang || 'tr';
+    var tr = lang === 'tr';
+    function t(a, b) { return tr ? a : b; }
+    var seg = 'height: 36px; min-width: 46px; padding: 0 12px; border-radius: 999px; border: 0; cursor: pointer; font: 800 12px Plus Jakarta Sans, sans-serif; letter-spacing: 0.06em; ';
+    var catKeys = [t('Günün balıkları', "Today's catch"), t('Soğuk meze', 'Cold meze'), t('Sıcak meze', 'Hot meze'), t('Rakı & şarap', 'Rakı & wine'), t('Tatlı', 'Dessert')];
+    var catIdx = s.cat || 0;
+    var cats = catKeys.map(function (l, i) {
+      var on = i === catIdx;
+      return { label: l, on: on ? 'true' : 'false', pick: function () { self.setState({ cat: i }); }, style: 'flex: none; height: 42px; padding: 0 16px; border-radius: 999px; cursor: pointer; font: 700 14px Plus Jakarta Sans, sans-serif; ' + (on ? 'background: #17406D; color: #FFFFFF; border: 1px solid #17406D' : 'background: #FFFFFF; color: #17406D; border: 1px solid #D5E0EC') };
+    });
+    function fish(o) {
+      o.badge = o.badge || '';
+      var tone = { season: 'background: #F2C14E; color: #10253F', low: 'background: #FBE3DC; color: #9A3A22', out: 'background: #3B5A80; color: #DCE6F2' }[o.tone || 'season'];
+      o.badgeStyle = 'padding: 1px 8px; border-radius: 999px; font-size: 10.5px; font-weight: 800; ' + tone;
+      o.rowStyle = 'display: flex; align-items: center; gap: 12px; padding: 12px 0; border-top: 1px solid #25507F; text-decoration: none; color: #FFFFFF' + (o.tone === 'out' ? '; opacity: .55' : '');
+      return o;
+    }
+    function row(o) {
+      o.badge = o.badge || ''; o.diet = o.diet || [];
+      o.rowStyle = 'display: flex; gap: 14px; align-items: center; padding: 12px 0; border-bottom: 1px solid #E1E9F2; text-decoration: none; color: #10253F';
+      return o;
+    }
+    return {
+      lang: lang,
+      trOn: tr ? 'true' : 'false', enOn: tr ? 'false' : 'true',
+      trStyle: seg + (tr ? 'background: #FFFFFF; color: #1D5FA0' : 'background: transparent; color: #FFFFFF'),
+      enStyle: seg + (tr ? 'background: transparent; color: #FFFFFF' : 'background: #FFFFFF; color: #1D5FA0'),
+      setTr: function () { self.setState({ lang: 'tr' }); },
+      setEn: function () { self.setState({ lang: 'en' }); },
+      L: {
+        langLabel: t('Dil', 'Language'),
+        kicker: t('Balık & meze · Arnavutköy', 'Fish & meze · Arnavutköy'),
+        intro: t('Boğaz’ın kıyısında, sabah tezgâhtan gelen balık ve annemizin tarifleriyle meze. Lodos esince en güzel masa terastadır.', 'Right on the Bosphorus: fish straight from the morning market and meze from our mother’s recipes. When the lodos blows, the terrace is the best seat in town.'),
+        openNow: t('Şu an açık', 'Open now'),
+        hours: t('Her gün 12:00–00:00', 'Daily 12:00–00:00'),
+        terrace: t('Boğaz manzaralı teras', 'Bosphorus-view terrace'),
+        reserve: t('Masa ayırt', 'Book a table'),
+        directions: t('Yol tarifi', 'Directions'),
+        search: t('Balık, meze, rakı ara…', 'Search fish, meze, rakı…'),
+        catsLabel: t('Kategoriler', 'Categories'),
+        catchTitle: t('Günün balıkları', "Today's catch"),
+        catchSub: t('Sabah Kumkapı ve Rumeli Feneri’nden geldi', 'In this morning from Kumkapı and Rumeli Feneri'),
+        updated: t('09:40’ta güncellendi', 'Updated 09:40'),
+        perKg: t('kilosu', 'per kg'),
+        catchNote: t('Balığınızı tezgâhtan seçin; garsonumuz tartıp fiyatını söylesin. Izgara, buğulama ya da tava.', 'Pick your fish at the counter and we’ll weigh it at the table. Grilled, steamed or pan-fried.'),
+        forTable: t('2–4 kişilik', 'For 2–4'),
+        platter: t('Lodos meze tabağı', 'Lodos meze platter'),
+        platterDesc: t('Günün 6 soğuk mezesi, sıcak pide ile', '6 cold meze of the day, with warm pide'),
+        veg: t('vejetaryen', 'vegetarian'), vegan: t('vegan', 'vegan'), gf: t('glutensiz', 'gluten-free'),
+        footer: t('Balık fiyatları kilogram üzerindendir ve günlük değişir. Fiyatlara KDV dahildir; alerjenler için garsonumuza danışın.', 'Fish is priced per kilo and changes daily. Prices include VAT; ask your server about allergens.'),
+        by: t('Menü: masa', 'Menu by masa')
+      },
+      cats: cats,
+      fish: [
+        fish({ name: t('Lüfer', 'Bluefish (lüfer)'), origin: t('Boğaz · oltayla', 'Bosphorus · line-caught'), price: '₺3.400', badge: t('Mevsiminde', 'In season') }),
+        fish({ name: t('Levrek', 'Sea bass'), origin: t('Ege · oltayla', 'Aegean · line-caught'), price: '₺2.400', badge: t('Şefin önerisi', "Chef's pick") }),
+        fish({ name: t('Çupra', 'Sea bream'), origin: t('Ege', 'Aegean'), price: '₺2.200' }),
+        fish({ name: t('Kalkan', 'Turbot'), origin: t('Karadeniz', 'Black Sea'), price: '₺4.200', badge: t('Son 2 adet', 'Last 2 left'), tone: 'low' }),
+        fish({ name: t('Barbun', 'Red mullet'), origin: t('Marmara', 'Marmara'), price: '₺2.800', badge: t('Bugün tükendi', 'Sold out today'), tone: 'out' })
+      ],
+      sections: [
+        { title: t('Soğuk mezeler', 'Cold meze'), grid: true, list: false, items: [
+          row({ name: 'Haydari', desc: t('Süzme yoğurt, nane, sarımsak', 'Strained yoghurt, mint, garlic'), price: '₺220', diet: ['V', 'GF'] }),
+          row({ name: t('Acılı ezme', 'Spicy ezme'), desc: t('Domates, biber, nar ekşisi', 'Tomato, pepper, pomegranate molasses'), price: '₺220', diet: ['VG'] }),
+          row({ name: 'Fava', desc: t('Bakla püresi, dereotu, zeytinyağı', 'Broad bean purée, dill, olive oil'), price: '₺240', diet: ['VG', 'GF'] }),
+          row({ name: t('Deniz börülcesi', 'Samphire'), desc: t('Sarımsaklı, limonlu', 'Garlic, lemon'), price: '₺260', diet: ['VG', 'GF'] })
+        ] },
+        { title: t('Sıcak mezeler', 'Hot meze'), grid: false, list: true, items: [
+          row({ name: t('Ahtapot ızgara', 'Grilled octopus'), desc: t('Közde, fava yatağında', 'Charcoal-grilled, on fava'), price: '₺780', dish: 'plate', bg: '#E6EEF6', badge: t('Popüler', 'Popular'), diet: ['GF'] }),
+          row({ name: t('Kalamar tava', 'Fried calamari'), desc: t('Tarator sos ile', 'With walnut tarator'), price: '₺520', dish: 'pasta', bg: '#E6EEF6' }),
+          row({ name: t('Karides güveç', 'Shrimp casserole'), desc: t('Kaşarlı, toprak kapta', 'Baked with kaşar cheese'), price: '₺640', dish: 'soup', bg: '#E6EEF6' })
+        ] },
+        { title: t('Rakı & şarap', 'Rakı & wine'), grid: false, list: true, items: [
+          row({ name: t('Rakı, tek', 'Rakı, single'), desc: t('Buz ve su ile servis', 'Served with ice and water'), price: '₺380', dish: 'raki', bg: '#E6EEF6' }),
+          row({ name: t('Rakı, 35 cl', 'Rakı, 35 cl bottle'), desc: t('İki kişilik', 'For two'), price: '₺1.950', dish: 'raki', bg: '#E6EEF6', badge: t('Masaya', 'For the table') }),
+          row({ name: t('Kadeh beyaz şarap', 'White wine, glass'), desc: t('Ege, Narince üzümü', 'Aegean, Narince grape'), price: '₺420', dish: 'wine', bg: '#1D5FA0' })
+        ] }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

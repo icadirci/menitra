@@ -112,6 +112,9 @@ return [
     'empty_menu' => 'Bu menüde henüz ürün yok.',
     'no_menus' => 'Bu şubede şu an yayında bir menü yok.',
     'powered_by' => 'Restano ile hazırlandı',
+    'avoid_title' => 'Kaçındıklarım',
+    'avoid_hint' => 'İşaretli ürünler kaçındığınız bir alerjeni içeriyor. Alternatifler için lütfen personelimize danışın.',
+    'contains' => 'İçerir: :list',
     'prices_note' => 'Fiyatlara KDV dahildir. Alerjen bilgisi için lütfen personelimize danışın.',
 
     'days' => [
