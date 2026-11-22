@@ -10,7 +10,7 @@ declare(strict_types=1);
 return [
     'code' => 'Hata :code',
     'home' => 'Ana sayfaya dön',
-    'platform_home' => 'Restano’yu keşfedin',
+    'platform_home' => 'Menitra’yı keşfedin',
 
     '403' => [
         'title' => 'Bu sayfaya erişiminiz yok',
@@ -34,7 +34,7 @@ return [
     ],
     '503' => [
         'title' => 'Kısa bir bakım yapıyoruz',
-        'body' => 'Restano şu anda bakımda. Birkaç dakika içinde tekrar hizmetinizde olacağız.',
+        'body' => 'Menitra şu anda bakımda. Birkaç dakika içinde tekrar hizmetinizde olacağız.',
     ],
     'client' => [
         'title' => 'İstek işlenemedi',

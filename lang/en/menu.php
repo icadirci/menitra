@@ -110,7 +110,7 @@ return [
     'choose_location' => 'Choose a location',
     'empty_menu' => 'This menu has no items yet.',
     'no_menus' => 'No menu is published at this location right now.',
-    'powered_by' => 'Made with Restano',
+    'powered_by' => 'Made with Menitra',
     'avoid_title' => 'I avoid',
     'avoid_hint' => 'Marked items contain what you avoid. Please ask our staff about alternatives.',
     'contains' => 'Contains: :list',
@@ -137,7 +137,7 @@ return [
         'title' => 'This menu is currently unavailable',
         'body' => 'This menu is temporarily offline. Please try again later or ask the business.',
         'business' => 'The menu of :name is currently offline.',
-        'home' => 'Discover Restano',
+        'home' => 'Discover Menitra',
     ],
 
 ];

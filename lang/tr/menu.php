@@ -111,7 +111,7 @@ return [
     'choose_location' => 'Bir şube seçin',
     'empty_menu' => 'Bu menüde henüz ürün yok.',
     'no_menus' => 'Bu şubede şu an yayında bir menü yok.',
-    'powered_by' => 'Restano ile hazırlandı',
+    'powered_by' => 'Menitra ile hazırlandı',
     'avoid_title' => 'Kaçındıklarım',
     'avoid_hint' => 'İşaretli ürünler kaçındığınız bir alerjeni içeriyor. Alternatifler için lütfen personelimize danışın.',
     'contains' => 'İçerir: :list',
@@ -138,7 +138,7 @@ return [
         'title' => 'Menü şu anda kullanılamıyor',
         'body' => 'Bu menü geçici olarak yayında değil. Lütfen daha sonra tekrar deneyin veya işletmeye danışın.',
         'business' => ':name menüsü şu anda yayında değil.',
-        'home' => 'Restano’yu keşfedin',
+        'home' => 'Menitra’yı keşfedin',
     ],
 
 ];

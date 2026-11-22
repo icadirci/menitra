@@ -148,7 +148,7 @@ menu is online  ⇔  tenant.status = active  AND  access_until ≠ null  AND  no
 | `max_members` | count | Active team members (owner included) plus pending invitations; checked when inviting and when reactivating a member (launch plan Faz 7) |
 | `premium_themes` | boolean | Access to themes that require it |
 | `custom_domain` | boolean | Custom domains (later phase; `PlanFeature::isAvailable()` false: always stored as 0, never advertised) |
-| `remove_branding` | boolean | Hide the "Powered by Restano" footer |
+| `remove_branding` | boolean | Hide the "Powered by Menitra" footer |
 | `qr_analytics` | boolean | Scan analytics (later phase; `PlanFeature::isAvailable()` false: always stored as 0, never advertised) |
 | `waiter_call` | boolean | Guests at a table QR code can call a waiter or ask for the bill (added 2026-11-18: Profesyonel and Çoklu Şube; seeded and migrated as 1, but `isAvailable()` stays false — not advertised, not editable in `/admin`, and a plan saved through `PlanService` stores 0 — until the guest flow ships). The tenant switch `tenants.waiter_calls_enabled` is separate: calls are offered only while both are on (`WaiterCallService::isActive()`) |
 
@@ -220,7 +220,7 @@ iyzico hosted payment page (3-D Secure, single payment, no installments)
 ### Production checklist (iyzico)
 
 1. Approved iyzico merchant account; production keys in `.env` (`IYZICO_API_KEY`, `IYZICO_SECRET_KEY`, `IYZICO_BASE_URL=https://api.iyzipay.com`); sandbox keys from sandbox-merchant.iyzipay.com for staging.
-2. HTTPS central domain; in the merchant panel (Settings → Merchant Notifications) the webhook URL `https://restano.app/billing/iyzico/webhook`, and ask iyzico (entegrasyon@iyzico.com) to enable **X-IYZ-SIGNATURE-V3**, otherwise every webhook is refused and payments are settled by the callback and the reconciliation only.
+2. HTTPS central domain; in the merchant panel (Settings → Merchant Notifications) the webhook URL `https://menitra.com/billing/iyzico/webhook`, and ask iyzico (entegrasyon@iyzico.com) to enable **X-IYZ-SIGNATURE-V3**, otherwise every webhook is refused and payments are settled by the callback and the reconciliation only.
 3. The queue worker and scheduler must run (`ProcessPayment`, reconciliation, reminders, mails).
 4. Behind a proxy/load balancer configure `trustProxies`, so the buyer IP sent to iyzico is the customer's.
 5. Legal: distance-sales pre-information and contract texts reviewed (the checkout links the terms page); KVKK: add iyzico to the processor list (Faz 10).

@@ -10,9 +10,9 @@ return [
         'features_title' => 'Features — QR menus, multi-language menus and themes',
         'features_description' => 'Permanent QR codes, fast phone-first menus, Turkish, English and Arabic content, themes that fit your place; allergens, add-ons and sold-out status.',
         'pricing_title' => 'Pricing — QR menu plans',
-        'pricing_description' => 'Compare Restano plans, monthly and yearly prices and plan limits. Start with a free trial, no credit card needed.',
-        'contact_title' => 'Contact — talk to the Restano team',
-        'contact_description' => 'Questions about plans, setting up your menu or billing? Write to the Restano team and we’ll reply within one business day.',
+        'pricing_description' => 'Compare Menitra plans, monthly and yearly prices and plan limits. Start with a free trial, no credit card needed.',
+        'contact_title' => 'Contact — talk to the Menitra team',
+        'contact_description' => 'Questions about plans, setting up your menu or billing? Write to the Menitra team and we’ll reply within one business day.',
         'themes_title' => 'Menu themes — live demo menus',
         'themes_description' => 'Five menu themes for cafés, restaurants and bakeries. Open a live demo menu for each and pick the one that fits your place.',
     ],
@@ -40,7 +40,7 @@ return [
     'hero' => [
         'badge' => 'Digital menus for cafés & restaurants',
         'title' => 'Your menu, beautifully served at every table.',
-        'lead' => 'Restano turns your menu into a fast, photo-rich page guests open with a single scan. Change a price, add a seasonal special or mark something sold out — it’s live before the next order.',
+        'lead' => 'Menitra turns your menu into a fast, photo-rich page guests open with a single scan. Change a price, add a seasonal special or mark something sold out — it’s live before the next order.',
         'cta_primary' => 'Get started',
         'cta_secondary' => 'View pricing',
         'trust' => [
@@ -67,13 +67,13 @@ return [
     ],
 
     'benefits' => [
-        'eyebrow' => 'Why Restano',
+        'eyebrow' => 'Why Menitra',
         'title' => 'Built for the way service actually works.',
         'items' => [
             ['title' => 'Change it in seconds', 'body' => 'New price, new special, sold-out croissants. Update once and every table sees it instantly.'],
             ['title' => 'Guests choose with confidence', 'body' => 'Photos, descriptions and allergen labels answer questions before they reach your staff.'],
             ['title' => 'Every guest, their language', 'body' => 'Offer your menu in Turkish, English and Arabic. Guests switch with a single tap.'],
-            ['title' => 'Unmistakably yours', 'body' => 'Your logo and colours up front. Restano stays quietly in the background.'],
+            ['title' => 'Unmistakably yours', 'body' => 'Your logo and colours up front. Menitra stays quietly in the background.'],
         ],
         'live' => [
             'label' => 'Live menu · sample',
@@ -201,7 +201,7 @@ return [
         ],
 
         'cta' => [
-            'title' => 'See your own menu in Restano today.',
+            'title' => 'See your own menu in Menitra today.',
             'lead' => ':days days free. No credit card needed.',
             'primary' => 'Get started free',
             'secondary' => 'View pricing',
@@ -309,8 +309,8 @@ return [
         'contact' => 'Contact',
         'help' => 'Help & FAQ',
         'social_label' => 'Social media',
-        'social_link' => 'Restano on :network',
-        'copyright' => '© :year Restano. Made for people who feed people.',
+        'social_link' => 'Menitra on :network',
+        'copyright' => '© :year Menitra. Made for people who feed people.',
         'privacy' => 'Privacy',
         'terms' => 'Terms of use',
         'themes' => 'Menu themes',

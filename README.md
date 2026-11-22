@@ -1,4 +1,4 @@
-# Restano
+# Menitra
 
 Multi-tenant SaaS for cafes, restaurants and bakeries to publish digital menus reached through QR codes (Laravel 12, PostgreSQL, Redis, Filament 5, Blade + Tailwind + Alpine).
 
@@ -45,7 +45,7 @@ TLS, HSTS and proxy headers aren't set up yet (separate proxy / HTTPS work). Unt
 
 ### First deploy
 
-Requirements on the server: Docker Engine with the Compose plugin, git, and DNS for `restano.app` and `*.restano.app` pointing at the server.
+Requirements on the server: Docker Engine with the Compose plugin, git, and DNS for `menitra.com` and `*.menitra.com` pointing at the server.
 
 ```bash
 git clone <repository-url> /srv/restano && cd /srv/restano
@@ -126,7 +126,7 @@ Problems are mailed to `OPS_ALERT_EMAIL`, or to the platform contact e-mail in `
 dc exec -u www-data -e HOME=/tmp php-fpm php artisan ops:health-check
 ```
 
-**Uptime (outside the server).** Point an external monitor (UptimeRobot, Better Stack, …) at `https://restano.app/up` every 1–5 minutes. It answers 200 when the app boots; if the whole server or Docker is down, nothing on the server can send an alert, so this is the only layer that catches it. Add a second check on a public menu URL to cover the database and Redis.
+**Uptime (outside the server).** Point an external monitor (UptimeRobot, Better Stack, …) at `https://menitra.com/up` every 1–5 minutes. It answers 200 when the app boots; if the whole server or Docker is down, nothing on the server can send an alert, so this is the only layer that catches it. Add a second check on a public menu URL to cover the database and Redis.
 
 ### Legal and KVKK requests
 

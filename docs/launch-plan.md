@@ -68,10 +68,10 @@ Bulgular: `resources/views/errors/` yok; `LOG_STACK=single`; `.env.example` içi
 
 - **Hata sayfaları:** `resources/views/errors/{403,404,419,429,500,503}.blade.php`, tr/en (`lang/*/errors.php`).
   - Merkezi domain'de marketing tasarımı (`components/ui`, `app.css`).
-  - Menü host'larında (`{slug}.restano.app`, `/m/*`) işletme bilgisi göstermeyen sade platform sayfası; Livewire, app.js veya oturum yok.
+  - Menü host'larında (`{slug}.menitra.com`, `/m/*`) işletme bilgisi göstermeyen sade platform sayfası; Livewire, app.js veya oturum yok.
   - `menu.unavailable` (503, `bootstrap/app.php`) mevcut haliyle kalır, bozulmadığını test et.
 - **Log:** `.env.example` → `LOG_STACK=daily`; `config/logging.php` daily kanalı `days=14`.
-- **`.env.production.example`:** `APP_NAME=Restano`, `APP_ENV=production`, `APP_DEBUG=false`, `CENTRAL_DOMAIN=restano.app`, `SESSION_SECURE_COOKIE=true`, `REDIS_PASSWORD`, `LOG_LEVEL=warning`, `MARKETING_LEGAL_REVIEW_PENDING=true`, `MAIL_*` yer tutucuları. Gerçek sır yazma.
+- **`.env.production.example`:** `APP_NAME=Menitra`, `APP_ENV=production`, `APP_DEBUG=false`, `CENTRAL_DOMAIN=menitra.com`, `SESSION_SECURE_COOKIE=true`, `REDIS_PASSWORD`, `LOG_LEVEL=warning`, `MARKETING_LEGAL_REVIEW_PENDING=true`, `MAIL_*` yer tutucuları. Gerçek sır yazma.
 - **robots:** canlı dışındaki ortamlarda `Disallow: /`. Statik dosya yerine bir route ile çözülebilir; `sitemap.xml` satırı canlıda kalsın.
 - Testler: her hata kodu iki host tipinde render oluyor; menü host'unda oturum çerezi set edilmiyor.
 
@@ -91,7 +91,7 @@ Bulgular: geliştirme Compose'unda Postgres `37004` portundan dışarı açık; 
 
 - **`docker-compose.prod.yml`:** Postgres ve Redis portları dışarı açılmaz; Redis `requirepass` ile; `restart: unless-stopped`; healthcheck'ler; `queue` ve `scheduler` servisleri `www-data` ile (gelişmedekiyle aynı mantık); volume adları korunur. `down -v` asla kullanılmaz.
 - **Canlı PHP image'ı** (ayrı bir Dockerfile veya multi-stage): opcache açık (`validate_timestamps=0`), `composer install --no-dev --optimize-autoloader`, derlenmiş asset'ler (`public/build`) image'ın içinde, canlı `php-ini` (`display_errors=Off`, `expose_php=Off`, yükleme limitleri).
-- **nginx (canlı):** `server_name restano.app *.restano.app`; `client_max_body_size` en büyük `MediaType::maxKilobytes()` değerine göre küçük bir pay bırakılarak; gzip; `build/` ve `fonts/` için `Cache-Control: public, max-age=31536000, immutable`; `storage/` altında PHP çalıştırma yasak; `server_tokens off`. SSL ve proxy başlıkları **kapsam dışı** (proxy/HTTPS işi), sadece yerini yorumla belirt.
+- **nginx (canlı):** `server_name menitra.com *.menitra.com`; `client_max_body_size` en büyük `MediaType::maxKilobytes()` değerine göre küçük bir pay bırakılarak; gzip; `build/` ve `fonts/` için `Cache-Control: public, max-age=31536000, immutable`; `storage/` altında PHP çalıştırma yasak; `server_tokens off`. SSL ve proxy başlıkları **kapsam dışı** (proxy/HTTPS işi), sadece yerini yorumla belirt.
 - **`scripts/deploy.sh`:** `php artisan down` → `git pull` → `composer install --no-dev` → node container'ında `npm ci && npm run build` → `migrate --force` → `optimize` + `filament:optimize` + `view:cache` → `queue:restart` (ve queue container'ını yeniden başlat) → `up`. Hata olursa durur (`set -euo pipefail`).
 - **`README.md`:** Laravel'in varsayılan metnini, projenin kurulum (geliştirme) ve deploy (canlı) runbook'u ile değiştir. CLAUDE.md §9'daki komutlara referans ver, tekrarlama.
 - Bitiş ölçütü: canlı Compose yerelde ayağa kalkıyor, `/up` 200 dönüyor, kuyruk ve scheduler çalışıyor, test süiti yeşil.
@@ -107,7 +107,7 @@ Bulgular: geliştirme Compose'unda Postgres `37004` portundan dışarı açık; 
 
 ## Faz 3: E-posta (S)
 
-- `.env.production.example`: SMTP (`MAIL_MAILER=smtp`, host/port/kullanıcı/şifre yer tutucu, `MAIL_SCHEME` boş veya `smtps`; bkz. Faz 1 notu), `MAIL_FROM_ADDRESS=no-reply@restano.app`, `MAIL_FROM_NAME=Restano`.
+- `.env.production.example`: SMTP (`MAIL_MAILER=smtp`, host/port/kullanıcı/şifre yer tutucu, `MAIL_SCHEME` boş veya `smtps`; bkz. Faz 1 notu), `MAIL_FROM_ADDRESS=no-reply@menitra.com`, `MAIL_FROM_NAME=Menitra`.
 - Tüm maillerin (doğrulama, şifre sıfırlama, `WelcomeMail`, `ContactMessageMail`, ileride davet maili) kuyruktan gittiğini doğrula. Fortify bildirimleri kuyrukta değilse `ShouldQueue` ekle.
 - Doğrulama ve şifre sıfırlama maillerinin tr/en metinleri ve markası kontrol edilir.
 - **Kullanıcıya verilecek kontrol listesi:** sağlayıcı seçimi, SPF / DKIM / DMARC kayıtları, gönderen alan adının doğrulanması, test gönderimi (mail-tester).
@@ -117,18 +117,18 @@ Bulgular: geliştirme Compose'unda Postgres `37004` portundan dışarı açık; 
 - `WelcomeMail` ve `ContactMessageMail` zaten kuyruktaydı. Doğrulama ve şifre sıfırlama bildirimleri senkron gidiyordu; artık `App\Notifications\Auth\{VerifyEmailNotification,ResetPasswordNotification}` (`ShouldQueue`, `tries=3`) kullanılıyor, `User::sendEmailVerificationNotification()` / `sendPasswordResetNotification()` override'ları ile. Fortify ve route'lar değişmedi.
 - Dil: kuyruğa atılırken isteğin dili (`app()->getLocale()`) bildirime yazılır; worker'ın kendi istek dili yok. Auth sayfaları bugün sadece `tr` (`APP_LOCALE`), yani bu mailler pratikte Türkçe gidiyor; `en` render'ı test ediliyor.
 - Marka: Laravel'in varsayılan markdown şablonu yerine `WelcomeMail` ile aynı görünüm (`mail/auth-action` + `-text`), metinler `lang/{tr,en}/auth.php` → `mail`. Kullanıcı adı escape'li.
-- Linkler worker'da `APP_URL`'den üretilir: canlıda `APP_URL=https://restano.app` olmalı, yoksa imzalı doğrulama linki ve sıfırlama linki yanlış şema/host ile çıkar (proxy/HTTPS işiyle birlikte kontrol et).
+- Linkler worker'da `APP_URL`'den üretilir: canlıda `APP_URL=https://menitra.com` olmalı, yoksa imzalı doğrulama linki ve sıfırlama linki yanlış şema/host ile çıkar (proxy/HTTPS işiyle birlikte kontrol et).
 - `AccountMailTest`: `app/Mail` ve `app/Notifications` altındaki her sınıfın `ShouldQueue` olduğunu kontrol eder. Faz 7'deki davet maili de buna takılır.
-- `.env.production.example`: `MAIL_FROM_NAME="Restano"` (açık değer), `MAIL_SCHEME` açıklaması. Yerel `.env`'e dokunulmadı (gönderen hâlâ `Laravel <hello@example.com>`).
+- `.env.production.example`: `MAIL_FROM_NAME="Menitra"` (açık değer), `MAIL_SCHEME` açıklaması. Yerel `.env`'e dokunulmadı (gönderen hâlâ `Laravel <hello@example.com>`).
 - Yerel doğrulama: gerçek kuyruk → Mailpit, iki mail doğru dil ve konu ile ulaştı.
 - **Faz 10 için:** seçilen mail sağlayıcısı KVKK tedarikçi listesine (ve yurt dışındaysa yurt dışı aktarım bölümüne) eklenmeli.
 
 **Kullanıcı kontrol listesi (mail):**
 1. SMTP sağlayıcısı seç (ör. Amazon SES, Postmark, Brevo, Mailgun, Resend; AB/TR veri merkezi seçeneği KVKK açısından artı).
-2. Sağlayıcıda `restano.app` gönderen alan adını doğrula.
-3. DNS: **SPF** (`v=spf1 include:<sağlayıcı> -all`; tek SPF kaydı olmalı), **DKIM** (sağlayıcının verdiği CNAME/TXT), **DMARC** (`_dmarc.restano.app` → başta `v=DMARC1; p=none; rua=mailto:<adres>`, birkaç hafta sonra `quarantine`). Sağlayıcı istiyorsa özel Return-Path / MAIL FROM alt alan adı.
+2. Sağlayıcıda `menitra.com` gönderen alan adını doğrula.
+3. DNS: **SPF** (`v=spf1 include:<sağlayıcı> -all`; tek SPF kaydı olmalı), **DKIM** (sağlayıcının verdiği CNAME/TXT), **DMARC** (`_dmarc.menitra.com` → başta `v=DMARC1; p=none; rua=mailto:<adres>`, birkaç hafta sonra `quarantine`). Sağlayıcı istiyorsa özel Return-Path / MAIL FROM alt alan adı.
 4. Sunucudaki `.env`'e `MAIL_HOST`, `MAIL_PORT` (587 → `MAIL_SCHEME` boş; 465 → `smtps`), `MAIL_USERNAME`, `MAIL_PASSWORD` yaz; `php artisan config:cache` (deploy zaten yapar) ve `docker compose -f docker-compose.prod.yml restart queue`.
-5. Test: kayıt ol veya şifre sıfırla; mail-tester.com'a bir mail gönderip 9/10+ puan al; Gmail ve Outlook'ta spam'e düşmediğini ve linklerin `https://restano.app` ile başladığını kontrol et.
+5. Test: kayıt ol veya şifre sıfırla; mail-tester.com'a bir mail gönderip 9/10+ puan al; Gmail ve Outlook'ta spam'e düşmediğini ve linklerin `https://menitra.com` ile başladığını kontrol et.
 6. `no-reply@` yerine yanıtların gideceği bir adres istenirse site ayarlarındaki platform e-postası kullanılabilir (şu an Reply-To yok).
 
 ## Faz 4: Yedekleme (M)
@@ -160,7 +160,7 @@ Bulgular: geliştirme Compose'unda Postgres `37004` portundan dışarı açık; 
 **Kullanıcının adımları:**
 1. Sentry hesabı ve Laravel projesi (mümkünse AB veri bölgesi); DSN'i sunucudaki `.env`'e `SENTRY_LARAVEL_DSN` olarak yaz, `scripts/deploy.sh` çalıştır. Sentry'de yeni issue için e-posta alarm kuralı kur.
 2. `.env`'e `OPS_ALERT_EMAIL` (yoksa site ayarlarındaki platform e-postası kullanılır).
-3. Dışarıdan uptime izleyicisi: `https://restano.app/up` (1–5 dk) ve bir public menü URL'si.
+3. Dışarıdan uptime izleyicisi: `https://menitra.com/up` (1–5 dk) ve bir public menü URL'si.
 
 ## Faz 6: Temalar vitrini için canlı seed (S)
 

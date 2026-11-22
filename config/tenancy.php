@@ -15,7 +15,7 @@ return [
     |
     */
 
-    'central_domain' => env('CENTRAL_DOMAIN', 'restano.app'),
+    'central_domain' => env('CENTRAL_DOMAIN', 'menitra.com'),
 
     /*
     |--------------------------------------------------------------------------

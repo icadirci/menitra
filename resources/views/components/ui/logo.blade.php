@@ -3,16 +3,21 @@
     'wordmark' => true,
 ])
 
-{{-- Brand mark: a QR-like grid with a saffron dot. The wordmark is the brand name. --}}
-<span {{ $attributes->class('inline-flex items-center gap-2.5') }}>
-    <svg width="{{ $size }}" height="{{ $size }}" viewBox="0 0 32 32" aria-hidden="true" focusable="false" class="shrink-0">
-        <rect width="32" height="32" rx="9" fill="#1F4D3B" />
-        <rect x="7" y="7" width="7" height="7" rx="2" fill="#F6F5F1" />
-        <rect x="18" y="7" width="7" height="7" rx="2" fill="#F6F5F1" />
-        <rect x="7" y="18" width="7" height="7" rx="2" fill="#F6F5F1" />
-        <circle cx="21.5" cy="21.5" r="3.6" fill="#E7A33E" />
-    </svg>
+{{--
+    Menitra logo (direction "B · Modül", docs/design/brand.md): a 5 × 5 grid of QR
+    modules forming an "M", with a saffron module in the centre (the plate on the
+    table). The wordmark is the logo artwork, always lower case, with the same
+    saffron module as the dot of the i; it is decorative, the accessible name is
+    the translated brand name.
+--}}
+<span {{ $attributes->class('inline-flex items-center') }} style="gap: {{ round($size * 0.3) }}px">
+    <x-ui.logo-mark :size="$size" />
     @if ($wordmark)
-        <span class="font-display font-bold tracking-[-0.04em]" style="font-size: {{ round($size * 0.74) }}px">{{ __('auth.brand') }}</span>
+        <span
+            class="font-display leading-none font-bold tracking-[-0.05em] whitespace-nowrap"
+            style="font-size: {{ $size }}px"
+            aria-hidden="true"
+        >men<span class="relative inline-block">ı<span class="absolute rounded-[0.05em] bg-saffron-500" style="left: 50%; top: 0.04em; width: 0.19em; height: 0.19em; margin-left: -0.095em"></span></span>tra</span>
+        <span class="sr-only">{{ __('auth.brand') }}</span>
     @endif
 </span>

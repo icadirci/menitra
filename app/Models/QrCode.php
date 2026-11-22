@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 /**
- * Stable QR code: restano.app/q/{code} → redirect computed at scan time.
+ * Stable QR code: menitra.com/q/{code} → redirect computed at scan time.
  * `code` is 10 random Crockford base32 characters, never sequential.
  */
 class QrCode extends Model

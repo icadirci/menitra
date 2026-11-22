@@ -17,7 +17,7 @@ use RuntimeException;
 
 /**
  * Printable images of a stable QR code (chillerlan/php-qrcode). They encode
- * only the stable URL restano.app/q/{code}, never a menu URL, so they never
+ * only the stable URL menitra.com/q/{code}, never a menu URL, so they never
  * change and are rendered on demand instead of being stored.
  */
 final class QrCodeImage

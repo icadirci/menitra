@@ -10,7 +10,7 @@ declare(strict_types=1);
 return [
     'code' => 'Error :code',
     'home' => 'Back to the home page',
-    'platform_home' => 'Discover Restano',
+    'platform_home' => 'Discover Menitra',
 
     '403' => [
         'title' => 'You don’t have access to this page',
@@ -34,7 +34,7 @@ return [
     ],
     '503' => [
         'title' => 'We’ll be right back',
-        'body' => 'Restano is undergoing brief maintenance. We’ll be back in a few minutes.',
+        'body' => 'Menitra is undergoing brief maintenance. We’ll be back in a few minutes.',
     ],
     'client' => [
         'title' => 'The request could not be processed',

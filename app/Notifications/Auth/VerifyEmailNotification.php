@@ -10,7 +10,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 
 /**
- * Queued, Restano-branded email verification mail (tr/en). The locale is
+ * Queued, Menitra-branded email verification mail (tr/en). The locale is
  * fixed when the notification is queued (User::sendEmailVerificationNotification),
  * the signed link is built by the worker from APP_URL.
  */

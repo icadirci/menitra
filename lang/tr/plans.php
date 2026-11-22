@@ -14,7 +14,7 @@ return [
         'max_members' => 'Ekip üyesi sayısı',
         'premium_themes' => 'Premium temalar',
         'custom_domain' => 'Özel alan adı',
-        'remove_branding' => 'Restano markasını gizleme',
+        'remove_branding' => 'Menitra markasını gizleme',
         'qr_analytics' => 'QR tarama analitiği',
         'waiter_call' => 'Garson çağırma',
     ],

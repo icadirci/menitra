@@ -5,7 +5,7 @@ declare(strict_types=1);
 return [
 
     'admin' => [
-        'brand' => 'Restano Yönetim',
+        'brand' => 'Menitra Yönetim',
         'dashboard' => [
             'title' => 'Platform paneli',
         ],
@@ -99,7 +99,7 @@ return [
     ],
 
     'app' => [
-        'brand' => 'Restano İşletme',
+        'brand' => 'Menitra İşletme',
         'dashboard' => [
             'title' => 'Panel',
             'onboarding' => [

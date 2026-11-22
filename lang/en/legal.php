@@ -22,14 +22,14 @@ return [
 
     'privacy' => [
         'title' => 'Privacy and Personal Data Protection',
-        'description' => 'Why Restano processes personal data, how it is protected and your rights under the Turkish Personal Data Protection Law (KVKK).',
+        'description' => 'Why Menitra processes personal data, how it is protected and your rights under the Turkish Personal Data Protection Law (KVKK).',
         'updated' => '15 November 2026',
-        'intro' => 'This notice explains, in line with the Turkish Personal Data Protection Law No. 6698 ("KVKK"), how your personal data is processed when you use the Restano platform (website, business panel and QR menu pages).',
+        'intro' => 'This notice explains, in line with the Turkish Personal Data Protection Law No. 6698 ("KVKK"), how your personal data is processed when you use the Menitra platform (website, business panel and QR menu pages).',
         'sections' => [
             [
                 'title' => '1. Data controller',
                 'paragraphs' => [
-                    'The data controller is [company name], [address], [registration / tax number] ("Restano").',
+                    'The data controller is [company name], [address], [registration / tax number] ("Menitra").',
                     'Content that businesses publish in their QR menus (products, prices, business details) is the responsibility of the business concerned.',
                 ],
             ],
@@ -72,13 +72,13 @@ return [
 
     'terms' => [
         'title' => 'Terms of Use',
-        'description' => 'Terms of use of the Restano QR menu platform: accounts, trial and subscription, content responsibility and limits of the service.',
+        'description' => 'Terms of use of the Menitra QR menu platform: accounts, trial and subscription, content responsibility and limits of the service.',
         'updated' => '15 November 2026',
-        'intro' => 'These terms govern the use by businesses of the QR menu platform provided by [company name] ("Restano"). By creating an account you accept these terms.',
+        'intro' => 'These terms govern the use by businesses of the QR menu platform provided by [company name] ("Menitra"). By creating an account you accept these terms.',
         'sections' => [
             [
                 'title' => '1. The service',
-                'paragraphs' => ['Restano is software that lets businesses create digital menus, publish them through QR codes and manage their branches, menus and item availability. It does not provide online ordering, payment or reservations.'],
+                'paragraphs' => ['Menitra is software that lets businesses create digital menus, publish them through QR codes and manage their branches, menus and item availability. It does not provide online ordering, payment or reservations.'],
             ],
             [
                 'title' => '2. Account and security',

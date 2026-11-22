@@ -83,7 +83,7 @@
 - Contact messages are only mailed (queued), never stored. The mail renders visitor input escaped (HTML view + plain text, no Markdown) and uses it only as Reply-To, never as From; names with line breaks are rejected.
 
 ## Sessions and domains
-- The session cookie is bound to the central domain only, never `.restano.app`, so tenant subdomains never receive auth cookies.
+- The session cookie is bound to the central domain only, never `.menitra.com`, so tenant subdomains never receive auth cookies.
 - Slugs are validated against the reserved list in `config/tenancy.php` and the slug format rule.
 
 ## Queues and cache

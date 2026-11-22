@@ -7,9 +7,9 @@ return [
     'default_menu_name' => 'Menü',
 
     'welcome_mail' => [
-        'subject' => 'Restano\'ya hoş geldiniz: :business',
+        'subject' => 'Menitra\'ya hoş geldiniz: :business',
         'heading' => 'Hoş geldiniz, :name!',
-        'intro' => ':business için Restano hesabınız hazır. Dijital menünüzü birkaç adımda yayına alabilirsiniz.',
+        'intro' => ':business için Menitra hesabınız hazır. Dijital menünüzü birkaç adımda yayına alabilirsiniz.',
         'trial' => 'Deneme süreniz :date tarihine kadar sürüyor. Bu sürede tüm plan özelliklerini deneyebilirsiniz.',
         'steps_title' => 'Başlamak için:',
         'steps' => [
@@ -19,7 +19,7 @@ return [
         ],
         'cta' => 'İşletme paneline git',
         'verify_hint' => 'Panele girebilmek için ayrıca gönderdiğimiz e-postadaki bağlantıyla e-posta adresinizi doğrulayın.',
-        'signature' => 'Restano ekibi',
+        'signature' => 'Menitra ekibi',
     ],
 
 ];

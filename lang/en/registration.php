@@ -7,9 +7,9 @@ return [
     'default_menu_name' => 'Menu',
 
     'welcome_mail' => [
-        'subject' => 'Welcome to Restano: :business',
+        'subject' => 'Welcome to Menitra: :business',
         'heading' => 'Welcome, :name!',
-        'intro' => 'Your Restano account for :business is ready. You can publish your digital menu in a few steps.',
+        'intro' => 'Your Menitra account for :business is ready. You can publish your digital menu in a few steps.',
         'trial' => 'Your trial runs until :date. Until then you can try every feature of your plan.',
         'steps_title' => 'To get started:',
         'steps' => [
@@ -19,7 +19,7 @@ return [
         ],
         'cta' => 'Go to your business panel',
         'verify_hint' => 'To open the panel, please also verify your email address with the link in the separate email we sent.',
-        'signature' => 'The Restano team',
+        'signature' => 'The Menitra team',
     ],
 
 ];

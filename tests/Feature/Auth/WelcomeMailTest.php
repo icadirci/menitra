@@ -131,15 +131,15 @@ class WelcomeMailTest extends TestCase
 
     public function test_the_mail_renders_in_turkish_and_english_with_escaped_business_name(): void
     {
-        $message = fn (string $locale) => new WelcomeMessage('Ayşe', 'Yaman & <b>Kahve</b>', 'https://restano.app/app/yaman', '29 Kasım 2026', $locale);
+        $message = fn (string $locale) => new WelcomeMessage('Ayşe', 'Yaman & <b>Kahve</b>', 'https://menitra.com/app/yaman', '29 Kasım 2026', $locale);
 
         $tr = (new WelcomeMail($message('tr')))->locale('tr');
         $tr->assertSeeInHtml('Hoş geldiniz, Ayşe!');
         $tr->assertSeeInHtml('Yaman &amp; &lt;b&gt;Kahve&lt;/b&gt;', false);
         $tr->assertDontSeeInHtml('<b>Kahve</b>', false);
-        $tr->assertSeeInHtml('https://restano.app/app/yaman');
+        $tr->assertSeeInHtml('https://menitra.com/app/yaman');
         $tr->assertSeeInText('İşletme paneline git');
-        $tr->assertHasSubject('Restano\'ya hoş geldiniz: Yaman & <b>Kahve</b>');
+        $tr->assertHasSubject('Menitra\'ya hoş geldiniz: Yaman & <b>Kahve</b>');
 
         $en = (new WelcomeMail($message('en')))->locale('en');
         $en->assertSeeInHtml('Welcome, Ayşe!');

@@ -1,6 +1,8 @@
-# CLAUDE.md — QR Menu SaaS Platform (Restano)
+# CLAUDE.md — QR Menu SaaS Platform (Menitra)
 
 Multi-tenant SaaS for cafes, restaurants, bakeries and other hospitality businesses to publish digital menus reached through QR codes. Primary market: **Turkey** (default currency TRY, languages `tr` + `en`).
+
+Brand: **Menitra**, production domain **menitra.com** (logo, icons and colours in [docs/design/brand.md](docs/design/brand.md)). Infrastructure names (containers `restano-*`, databases `restano`/`restano_test`, `/srv/restano`) intentionally keep `restano`.
 
 This file holds the binding rules. The approved architecture (v0.2) is documented in detail in [docs/architecture/](docs/architecture/) — read the relevant document before working on an area:
 
@@ -46,12 +48,12 @@ Area-specific rules live in [.claude/rules/](.claude/rules/) (backend, frontend,
 
 1. **Modular monolith**, server-side rendered. Controllers thin → Form Requests → Services → Models. No repositories, no CQRS.
 2. **Tenancy:** single database, shared schema, `tenant_id` column. One tenant = one business. Built in-house: `TenantContext` (scoped singleton), fail-closed `BelongsToTenant` global scope, resolver pipeline middleware.
-3. **Tenant identification (v1):** central domain `restano.app`, subdomains `{slug}.restano.app`, path `restano.app/m/{slug}`. In the business panel the URL is `/app/{tenant-slug}`. The slug is an identifier, not authorization: the tenant is set in `TenantContext` only after the user's active membership in it is verified. A raw tenant ID from the client is never trusted. Custom domains later.
+3. **Tenant identification (v1):** central domain `menitra.com`, subdomains `{slug}.menitra.com`, path `menitra.com/m/{slug}`. In the business panel the URL is `/app/{tenant-slug}`. The slug is an identifier, not authorization: the tenant is set in `TenantContext` only after the user's active membership in it is verified. A raw tenant ID from the client is never trusted. Custom domains later.
 4. **Business structure:** tenant → many `locations` (branches) ↔ many `menus` via the `location_menu` pivot. Menus belong to the tenant so they can be shared across branches. Content is shared; operational state (sold-out, hours) is per location.
 5. **Menu content:** menus → categories → items → variants; reusable extra groups → extras; allergens and dietary labels are PHP enums stored in pivot tables; featured/popular flags; availability per item and sold-out per location.
 6. **Translations:** one `{entity}_translations` table per translatable entity; base tables hold no translatable text. In-house `HasTranslations` trait with fallback (requested → tenant default → first available). Platform locales in `config/locales.php`; per-tenant locales in `tenant_locales`. UI strings in `lang/{locale}/`. App locale `tr`, fallback `en`; new businesses always start with `default_locale = tr`.
 7. **Integrity:** every tenant-owned table has `UNIQUE (tenant_id, id)`; tenant-owned children and pivots reference parents with **composite foreign keys** `(tenant_id, parent_id)` so cross-tenant links cannot be stored.
-8. **QR codes:** stable `restano.app/q/{code}` (random, non-sequential) → 302 to the current canonical menu URL computed at scan time by `MenuUrlGenerator`. `QrCodeScanned` event is the analytics hook.
+8. **QR codes:** stable `menitra.com/q/{code}` (random, non-sequential) → 302 to the current canonical menu URL computed at scan time by `MenuUrlGenerator`. `QrCodeScanned` event is the analytics hook.
 9. **Rendering:** `PublicMenuService` builds a cached, locale-resolved, allow-listed `MenuSnapshot` DTO; time-dependent state (open now, serving now) is computed per request in `LiveMenuState` and never cached.
 10. **Themes:** pure presentation. Selected per tenant with an optional location override; per-theme settings (colours, font pair, layout options) in `theme_settings`, validated incl. WCAG AA contrast and written only through `ThemeService`. Themes receive only `MenuSnapshot`, `LiveMenuState`, `ThemeSettings`. Eight themes: `classic`, `minimal` (every plan) and `bistro`, `cafe`, `grid`, `zen`, `coastal`, `lounge` (`premium_themes`: Profesyonel and Çoklu Şube); only themes with views are selectable (the rest show as "coming soon").
 11. **Caching:** version-counter invalidation — a tenant content version and a per-location version, both embedded in snapshot keys. All keys built only by `MenuCacheKeys`, prefixed `qrmenu:`.

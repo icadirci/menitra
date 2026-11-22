@@ -16,7 +16,7 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 |
 | Registered for the central domain only. Tenant subdomains have no route
-| here, so e.g. {slug}.restano.app/ returns 404 until public menus exist.
+| here, so e.g. {slug}.menitra.com/ returns 404 until public menus exist.
 |
 | One route group per platform locale: the default locale (tr) at /, the
 | others under /{locale} (e.g. /en). Names: marketing.{locale}.{page}.

@@ -9,7 +9,7 @@
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;margin:0 auto;background:#FFFFFF;border:1px solid #E3E1D9;border-radius:16px">
         <tr>
             <td style="padding:28px">
-                <p style="margin:0 0 16px;font-weight:700;color:#1F4D3B;font-size:18px">Restano</p>
+                <p style="margin:0 0 16px;font-weight:700;color:#1F4D3B;font-size:18px">Menitra</p>
                 <p style="margin:0 0 12px">{{ __('team.mail.greeting') }}</p>
                 <p style="margin:0 0 24px">{{ __('team.mail.intro', ['inviter' => $inviterName, 'business' => $businessName, 'role' => $roleLabel]) }}</p>
                 <p style="margin:0 0 24px">

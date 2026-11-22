@@ -53,10 +53,10 @@ class SentryPrivacyTest extends TestCase
     public function test_token_paths_are_redacted(): void
     {
         $cases = [
-            'https://restano.app/reset-password/abcDEF123' => 'https://restano.app/reset-password/[redacted]',
-            'https://restano.app/email/verify/42/5f2b?expires=1&signature=x' => 'https://restano.app/email/verify/[redacted]?expires=1&signature=x',
-            'https://restano.app/invitations/tok3n' => 'https://restano.app/invitations/[redacted]',
-            'https://restano.app/app/kahve/menus' => 'https://restano.app/app/kahve/menus',
+            'https://menitra.com/reset-password/abcDEF123' => 'https://menitra.com/reset-password/[redacted]',
+            'https://menitra.com/email/verify/42/5f2b?expires=1&signature=x' => 'https://menitra.com/email/verify/[redacted]?expires=1&signature=x',
+            'https://menitra.com/invitations/tok3n' => 'https://menitra.com/invitations/[redacted]',
+            'https://menitra.com/app/kahve/menus' => 'https://menitra.com/app/kahve/menus',
         ];
 
         foreach ($cases as $url => $expected) {

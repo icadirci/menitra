@@ -48,7 +48,7 @@ class AdminPanelProvider extends PanelProvider
             ->brandLogoHeight('2rem')
             ->favicon(fn (): string => asset('favicon.svg'))
             ->colors([
-                // Restano design system: Forest primary on warm neutrals.
+                // Menitra design system: Forest primary on warm neutrals.
                 'primary' => Color::hex('#1F4D3B'),
                 'gray' => Color::Stone,
             ])

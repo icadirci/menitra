@@ -25,7 +25,7 @@ final class MultiFactor
             AppAuthentication::make()
                 // One secret serves both panels, so the authenticator entry
                 // carries the product name, not a panel's brand.
-                ->brandName('Restano')
+                ->brandName('Menitra')
                 ->recoverable(),
         ];
     }

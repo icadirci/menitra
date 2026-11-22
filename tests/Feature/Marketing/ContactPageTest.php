@@ -48,7 +48,7 @@ class ContactPageTest extends TestCase
             'name' => 'Ayşe Demir',
             'email' => 'ayse@example.com',
             'subject' => ContactSubject::Setup->value,
-            'message' => 'Menümüzü Restano’ya taşımak istiyoruz, yardımcı olur musunuz?',
+            'message' => 'Menümüzü Menitra’ya taşımak istiyoruz, yardımcı olur musunuz?',
             ...$overrides,
         ];
     }

@@ -66,13 +66,13 @@ Route model binding goes through the scope. A record that belongs to another ten
 
 | Context | Mechanism | Phase |
 |---|---|---|
-| Central site | Host equals `config('tenancy.central_domain')` (`restano.app`) | v1 |
-| Subdomain | `{slug}.restano.app` | v1 |
-| Path | `restano.app/m/{slug}/…` | v1 |
+| Central site | Host equals `config('tenancy.central_domain')` (`menitra.com`) | v1 |
+| Subdomain | `{slug}.menitra.com` | v1 |
+| Path | `menitra.com/m/{slug}/…` | v1 |
 | Custom domain | `tenant_domains.domain` (verified) | Later. The table exists (created 2026-11-15, `TenantDomain`, unused); `DomainTenantResolver` is a reserved slot |
-| Business panel | `restano.app/app/{tenant-slug}` — slug in the URL, **verified against the user's active membership** (Filament tenancy) | v1 |
+| Business panel | `menitra.com/app/{tenant-slug}` — slug in the URL, **verified against the user's active membership** (Filament tenancy) | v1 |
 | `/account` | The logged-in user's membership (first active one until a selector exists): `ResolveAccountTenant` prefers active tenants, then the oldest membership, and sets `TenantContext` only after `membershipFor()` grants access. Request input is never used. Suspended-only → 403 page, no context; no membership → `/admin` for platform users, otherwise a 403 page | v1 (done 2026-11-15) |
-| QR code | `restano.app/q/{code}` → `qr_codes.tenant_id` → redirect | v1 |
+| QR code | `menitra.com/q/{code}` → `qr_codes.tenant_id` → redirect | v1 |
 
 Rules:
 
@@ -213,7 +213,7 @@ Livewire is used only by the panels, so its endpoints follow the panels:
 | Queue leakage | Payload-level tenant id; restored before unserialization; always cleared |
 | Cache leakage | Keys built only by `MenuCacheKeys`, always containing the tenant id |
 | File leakage | Tenant-prefixed paths, random names |
-| Auth cookies on tenant subdomains | `SESSION_DOMAIN` is the central host only (never `.restano.app`) |
+| Auth cookies on tenant subdomains | `SESSION_DOMAIN` is the central host only (never `.menitra.com`) |
 | `/account` tenant | Derived only from the user's active membership (`ResolveAccountTenant`); no tenant parameter exists and `?tenant=` is ignored; QR downloads are looked up through the tenant scope (404) and checked with `QrCodePolicy::view` |
 | Tenant slug in `/app` URL | Identifier only: `canAccessTenant()` + `ResolveTenantFromMembership` verify the active membership; otherwise 404 |
 | Panels on tenant hosts | `/admin`, `/app` and Livewire's update/upload/preview endpoints are bound to the central domain |

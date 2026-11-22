@@ -72,7 +72,7 @@ class AccountMailTest extends TestCase
 
         $tr = $this->render(new VerifyEmailNotification, $user, 'tr');
         $this->assertSame('E-posta adresinizi doğrulayın', $tr['subject']);
-        $this->assertStringContainsString('Restano', $tr['html']);
+        $this->assertStringContainsString('Menitra', $tr['html']);
         $this->assertStringContainsString('E-posta adresimi doğrula', $tr['html']);
         $this->assertStringContainsString('Ayşe &lt;b&gt;Yaman&lt;/b&gt;', $tr['html']);
         $this->assertStringNotContainsString('<b>Yaman</b>', $tr['html']);

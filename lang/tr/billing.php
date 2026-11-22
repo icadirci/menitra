@@ -49,7 +49,7 @@ return [
         'back_to_subscription' => 'Aboneliğe dön',
     ],
 
-    'subscription_note' => 'Ödemeler iyzico güvencesiyle 3D Secure ile alınır; kart bilgileriniz Restano\'da saklanmaz. Her ödeme bir ayı ya da bir veya birkaç yılı kapsar, süreyi istediğiniz zaman uzatabilirsiniz ve otomatik çekim yapılmaz; süre bitmeden size hatırlatma e-postası göndeririz.',
+    'subscription_note' => 'Ödemeler iyzico güvencesiyle 3D Secure ile alınır; kart bilgileriniz Menitra\'da saklanmaz. Her ödeme bir ayı ya da bir veya birkaç yılı kapsar, süreyi istediğiniz zaman uzatabilirsiniz ve otomatik çekim yapılmaz; süre bitmeden size hatırlatma e-postası göndeririz.',
 
     'checkout' => [
         'title' => 'Ödeme',
@@ -125,7 +125,7 @@ return [
         'pay_amount' => ':amount öde',
         'trust' => [
             'secure' => 'iyzico güvencesi ve 3D Secure ile ödeme',
-            'card' => 'Kart bilgileriniz Restano\'da saklanmaz',
+            'card' => 'Kart bilgileriniz Menitra\'da saklanmaz',
             'receipt' => 'Makbuzunuz fatura e-postanıza gönderilir',
             'no_auto' => 'Otomatik çekim yok; dönem bitmeden hatırlatırız',
         ],

@@ -10,7 +10,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 
 /**
- * Queued, Restano-branded password reset mail (tr/en). The locale is fixed
+ * Queued, Menitra-branded password reset mail (tr/en). The locale is fixed
  * when the notification is queued (User::sendPasswordResetNotification); the
  * link is built by the worker from APP_URL.
  */

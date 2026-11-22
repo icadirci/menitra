@@ -83,7 +83,7 @@ class CacheKeyTest extends TestCase
     {
         $samples = [
             'tenantId' => $tenantId, 'locationId' => $locationId, 'menuId' => 3, 'locale' => 'tr',
-            'tenantVersion' => 5, 'locationVersion' => 6, 'host' => 'acme.restano.app', 'slug' => 'acme', 'code' => 'ABCDEFGHJK',
+            'tenantVersion' => 5, 'locationVersion' => 6, 'host' => 'acme.menitra.com', 'slug' => 'acme', 'code' => 'ABCDEFGHJK',
         ];
         $keys = [];
 

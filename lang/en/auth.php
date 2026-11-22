@@ -5,9 +5,9 @@ declare(strict_types=1);
 // Merged with Laravel's built-in auth.php (failed, password, throttle).
 return [
 
-    'brand' => 'Restano',
+    'brand' => 'Menitra',
 
-    'home_link' => 'Restano home page',
+    'home_link' => 'Menitra home page',
     'password_toggle' => 'Show or hide password',
 
     'fields' => [
@@ -62,7 +62,7 @@ return [
         'sent_title' => 'Check your inbox',
         'sent_subtitle' => 'If an account exists for that address, we have sent it a password reset link.',
         'sent_steps' => [
-            'Open the email from Restano',
+            'Open the email from Menitra',
             'Tap the reset link',
             'Log in with your new password',
         ],
@@ -87,10 +87,10 @@ return [
     'mail' => [
         'greeting' => 'Hello :name,',
         'fallback' => 'If the button does not work, paste this link into your browser:',
-        'signature' => 'The Restano team',
+        'signature' => 'The Menitra team',
         'verify' => [
             'subject' => 'Verify your email address',
-            'intro' => 'Please verify your email address to activate your Restano account.',
+            'intro' => 'Please verify your email address to activate your Menitra account.',
             'cta' => 'Verify my email address',
             'expiry' => 'The link is valid for :count minutes.',
             'outro' => 'If you did not create this account, you can ignore this email.',

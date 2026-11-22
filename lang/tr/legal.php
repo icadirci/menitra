@@ -21,14 +21,14 @@ return [
 
     'privacy' => [
         'title' => 'Gizlilik ve Kişisel Verilerin Korunması',
-        'description' => 'Restano\'nun kişisel verileri hangi amaçlarla işlediği, nasıl koruduğu ve 6698 sayılı KVKK kapsamındaki haklarınız.',
+        'description' => 'Menitra\'nın kişisel verileri hangi amaçlarla işlediği, nasıl koruduğu ve 6698 sayılı KVKK kapsamındaki haklarınız.',
         'updated' => '15 Kasım 2026',
-        'intro' => 'Bu aydınlatma metni, 6698 sayılı Kişisel Verilerin Korunması Kanunu ("KVKK") uyarınca, Restano platformunu (web sitesi, işletme paneli ve QR menü sayfaları) kullanırken kişisel verilerinizin nasıl işlendiğini açıklar.',
+        'intro' => 'Bu aydınlatma metni, 6698 sayılı Kişisel Verilerin Korunması Kanunu ("KVKK") uyarınca, Menitra platformunu (web sitesi, işletme paneli ve QR menü sayfaları) kullanırken kişisel verilerinizin nasıl işlendiğini açıklar.',
         'sections' => [
             [
                 'title' => '1. Veri sorumlusu',
                 'paragraphs' => [
-                    'Veri sorumlusu, [şirket unvanı] ([adres], [MERSİS / vergi numarası]) olup bu metinde "Restano" olarak anılır.',
+                    'Veri sorumlusu, [şirket unvanı] ([adres], [MERSİS / vergi numarası]) olup bu metinde "Menitra" olarak anılır.',
                     'İşletmelerin QR menülerinde yayımladıkları içerik (ürünler, fiyatlar, işletme bilgileri) ilgili işletmenin sorumluluğundadır.',
                 ],
             ],
@@ -71,13 +71,13 @@ return [
 
     'terms' => [
         'title' => 'Kullanım Koşulları',
-        'description' => 'Restano QR menü platformunun kullanım koşulları: hesap, deneme ve abonelik, içerik sorumluluğu ve hizmetin sınırları.',
+        'description' => 'Menitra QR menü platformunun kullanım koşulları: hesap, deneme ve abonelik, içerik sorumluluğu ve hizmetin sınırları.',
         'updated' => '15 Kasım 2026',
-        'intro' => 'Bu koşullar, [şirket unvanı] ("Restano") tarafından sunulan QR menü platformunun işletmeler tarafından kullanımını düzenler. Hesap oluşturarak bu koşulları kabul etmiş olursunuz.',
+        'intro' => 'Bu koşullar, [şirket unvanı] ("Menitra") tarafından sunulan QR menü platformunun işletmeler tarafından kullanımını düzenler. Hesap oluşturarak bu koşulları kabul etmiş olursunuz.',
         'sections' => [
             [
                 'title' => '1. Hizmet',
-                'paragraphs' => ['Restano; işletmelerin dijital menülerini oluşturmasını, QR kodlarla yayımlamasını ve şubelerini, menülerini ve ürün durumlarını yönetmesini sağlayan bir yazılım hizmetidir. Online sipariş, ödeme veya rezervasyon hizmeti sunulmaz.'],
+                'paragraphs' => ['Menitra; işletmelerin dijital menülerini oluşturmasını, QR kodlarla yayımlamasını ve şubelerini, menülerini ve ürün durumlarını yönetmesini sağlayan bir yazılım hizmetidir. Online sipariş, ödeme veya rezervasyon hizmeti sunulmaz.'],
             ],
             [
                 'title' => '2. Hesap ve güvenlik',

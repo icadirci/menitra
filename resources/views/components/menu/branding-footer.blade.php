@@ -1,4 +1,4 @@
-{{-- "Made with Restano", hidden when the plan includes remove_branding. --}}
+{{-- "Made with Menitra", hidden when the plan includes remove_branding. --}}
 @props(['brand'])
 @if ($brand->showPlatformBranding)
     <p {{ $attributes->merge(['class' => 'menu-branding']) }}>

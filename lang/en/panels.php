@@ -5,7 +5,7 @@ declare(strict_types=1);
 return [
 
     'admin' => [
-        'brand' => 'Restano Admin',
+        'brand' => 'Menitra Admin',
         'dashboard' => [
             'title' => 'Platform dashboard',
         ],
@@ -99,7 +99,7 @@ return [
     ],
 
     'app' => [
-        'brand' => 'Restano Business',
+        'brand' => 'Menitra Business',
         'dashboard' => [
             'title' => 'Dashboard',
             'onboarding' => [

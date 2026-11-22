@@ -135,7 +135,7 @@ resources/
 | `opening-hours` | Weekly and special hours with the open-now state |
 | `language-switcher` | `?lang=` links for the tenant's enabled locales |
 | `search` | Client-side filter over rendered items |
-| `branding-footer` | "Powered by Restano", hidden when the plan includes `remove_branding` |
+| `branding-footer` | "Powered by Menitra", hidden when the plan includes `remove_branding` |
 | `item-details` | Body of the detail sheet: variants, extra groups (Alpine display-only choices), preparation / calories / allergens, dietary labels (classes `menu-detail*`, `menu-choice`, `menu-fact`). Used by the four Phase 7 themes |
 | `item-status` | Popular and effective sold-out / unavailable badges (`$live->isSoldOut()`) |
 | `open-state` | "Open · until …" / "Closed · opens at …" from `LiveMenuState` |

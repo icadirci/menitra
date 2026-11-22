@@ -53,9 +53,9 @@ Tenant (business)
 
 | Form | Pattern |
 |---|---|
-| Subdomain (canonical in v1) | `{slug}.restano.app/` · `/{location}` · `/{location}/{menu}` |
-| Path | `restano.app/m/{slug}/` · `/{location}` · `/{location}/{menu}` |
-| Stable QR | `restano.app/q/{code}` |
+| Subdomain (canonical in v1) | `{slug}.menitra.com/` · `/{location}` · `/{location}/{menu}` |
+| Path | `menitra.com/m/{slug}/` · `/{location}` · `/{location}/{menu}` |
+| Stable QR | `menitra.com/q/{code}` |
 | Custom domain (later) | `menu.example.com/{location}/{menu}` |
 
 - `/` lists the locations. If the tenant has only one active location, it renders that location directly.
@@ -77,7 +77,7 @@ Tenant (business)
 
 ## QR codes
 
-- **The URL is stable:** `restano.app/q/{code}`. `code` is 10 random Crockford base32 characters, globally unique and non-sequential.
+- **The URL is stable:** `menitra.com/q/{code}`. `code` is 10 random Crockford base32 characters, globally unique and non-sequential.
 - A QR code targets a location, and optionally a specific menu (deep link). A **table code** also names one table of that branch (`location_table_id`, see [Tables](#tables)); otherwise it is a branch code.
 - **Redirect flow (`QrRedirectController` → `QrCodeResolver`):**
   1. Look up the code through the cache `qrmenu:qr:{code}`. This is a documented scope bypass, because the tenant isn't known yet.
@@ -102,7 +102,7 @@ Requested 2026-11-18, built step by step: (1) tables and table codes — see [Ta
 ## Rendering pipeline
 
 ```
-GET {slug}.restano.app/kadikoy/kahvalti?lang=en
+GET {slug}.menitra.com/kadikoy/kahvalti?lang=en
  ① ResolveTenantFromRequest  → ResolvedTenant (cached)                     [tenancy.md]
  ② ResolveMenuLocale         → validated locale
  ③ MenuController@show       → thin; delegates

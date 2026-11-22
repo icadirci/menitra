@@ -10,9 +10,9 @@ return [
         'features_title' => 'Özellikler — QR menü, çok dilli menüler ve temalar',
         'features_description' => 'Kalıcı QR kodlar, telefon için tasarlanmış hızlı menüler, Türkçe, İngilizce ve Arapça içerik, mekânınıza uyan temalar; alerjenler, ekstralar ve tükendi bilgisi.',
         'pricing_title' => 'Fiyatlar — QR menü paketleri',
-        'pricing_description' => 'Restano paketlerini, aylık ve yıllık fiyatları ve paket limitlerini karşılaştırın. Ücretsiz denemeyle başlayın, kredi kartı gerekmez.',
-        'contact_title' => 'İletişim — Restano ekibine yazın',
-        'contact_description' => 'Paketler, menü kurulumu ya da faturalandırma hakkında sorunuz mu var? Restano ekibine yazın, bir iş günü içinde yanıtlayalım.',
+        'pricing_description' => 'Menitra paketlerini, aylık ve yıllık fiyatları ve paket limitlerini karşılaştırın. Ücretsiz denemeyle başlayın, kredi kartı gerekmez.',
+        'contact_title' => 'İletişim — Menitra ekibine yazın',
+        'contact_description' => 'Paketler, menü kurulumu ya da faturalandırma hakkında sorunuz mu var? Menitra ekibine yazın, bir iş günü içinde yanıtlayalım.',
         'themes_title' => 'Menü temaları — canlı demo menüler',
         'themes_description' => 'Kafe, restoran ve fırınlar için beş menü teması. Her birinin canlı demo menüsünü açın, mekânınıza uyanı seçin.',
     ],
@@ -40,7 +40,7 @@ return [
     'hero' => [
         'badge' => 'Kafe ve restoranlar için dijital menü',
         'title' => 'Menünüz, her masada özenle sunulsun.',
-        'lead' => 'Restano menünüzü, misafirlerinizin tek bir okutmayla açtığı hızlı ve fotoğraflı bir sayfaya dönüştürür. Bir fiyatı değiştirin, mevsimlik bir ürün ekleyin ya da tükeneni işaretleyin; bir sonraki siparişten önce yayında olsun.',
+        'lead' => 'Menitra menünüzü, misafirlerinizin tek bir okutmayla açtığı hızlı ve fotoğraflı bir sayfaya dönüştürür. Bir fiyatı değiştirin, mevsimlik bir ürün ekleyin ya da tükeneni işaretleyin; bir sonraki siparişten önce yayında olsun.',
         'cta_primary' => 'Hemen başla',
         'cta_secondary' => 'Fiyatları gör',
         'trust' => [
@@ -67,13 +67,13 @@ return [
     ],
 
     'benefits' => [
-        'eyebrow' => 'Neden Restano',
+        'eyebrow' => 'Neden Menitra',
         'title' => 'Servisin gerçekte işleyişine göre tasarlandı.',
         'items' => [
             ['title' => 'Saniyeler içinde değiştirin', 'body' => 'Yeni fiyat, günün önerisi, tükenen kruvasan. Bir kez güncelleyin, her masa anında görsün.'],
             ['title' => 'Misafirler gönül rahatlığıyla seçer', 'body' => 'Fotoğraflar, açıklamalar ve alerjen etiketleri soruları garsona ulaşmadan yanıtlar.'],
             ['title' => 'Her misafire kendi dili', 'body' => 'Menünüzü Türkçe, İngilizce ve Arapça sunun; misafirler dili tek dokunuşla değiştirir.'],
-            ['title' => 'Tamamen sizin', 'body' => 'Logonuz ve renkleriniz öne çıkar; Restano arka planda sessizce kalır.'],
+            ['title' => 'Tamamen sizin', 'body' => 'Logonuz ve renkleriniz öne çıkar; Menitra arka planda sessizce kalır.'],
         ],
         'live' => [
             'label' => 'Canlı menü · örnek',
@@ -201,7 +201,7 @@ return [
         ],
 
         'cta' => [
-            'title' => 'Kendi menünüzü bugün Restano’da görün.',
+            'title' => 'Kendi menünüzü bugün Menitra’da görün.',
             'lead' => ':days gün ücretsiz deneme. Kredi kartı gerekmez.',
             'primary' => 'Ücretsiz başla',
             'secondary' => 'Fiyatları gör',
@@ -309,8 +309,8 @@ return [
         'contact' => 'İletişim',
         'help' => 'Yardım ve SSS',
         'social_label' => 'Sosyal medya',
-        'social_link' => 'Restano :network hesabı',
-        'copyright' => '© :year Restano. İnsanları doyuranlar için yapıldı.',
+        'social_link' => 'Menitra :network hesabı',
+        'copyright' => '© :year Menitra. İnsanları doyuranlar için yapıldı.',
         'privacy' => 'Gizlilik',
         'terms' => 'Kullanım koşulları',
         'themes' => 'Menü temaları',

@@ -14,7 +14,7 @@ return [
         'max_members' => 'Number of team members',
         'premium_themes' => 'Premium themes',
         'custom_domain' => 'Custom domain',
-        'remove_branding' => 'Remove Restano branding',
+        'remove_branding' => 'Remove Menitra branding',
         'qr_analytics' => 'QR scan analytics',
         'waiter_call' => 'Waiter calls',
     ],

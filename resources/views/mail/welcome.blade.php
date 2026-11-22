@@ -9,7 +9,7 @@
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;margin:0 auto;background:#FFFFFF;border:1px solid #E3E1D9;border-radius:16px">
         <tr>
             <td style="padding:28px">
-                <p style="margin:0 0 16px;font-weight:700;color:#1F4D3B;font-size:18px">Restano</p>
+                <p style="margin:0 0 16px;font-weight:700;color:#1F4D3B;font-size:18px">Menitra</p>
                 <h1 style="margin:0 0 12px;font-size:22px">{{ __('registration.welcome_mail.heading', ['name' => $welcome->name]) }}</h1>
                 <p style="margin:0 0 16px">{{ __('registration.welcome_mail.intro', ['business' => $welcome->businessName]) }}</p>
                 @if ($welcome->trialEndsOn)

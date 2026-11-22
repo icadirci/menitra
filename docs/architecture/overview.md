@@ -54,7 +54,7 @@ Not used: React, Vue, Next, Nuxt, Inertia, Bootstrap, jQuery, Laravel starter ki
 
 ```
                     ┌──────────────────────────────────────────────────────┐
- restano.app ──────▶│ Central context                                       │
+ menitra.com ──────▶│ Central context                                       │
                     │  • Marketing + pricing (tr at /, en at /en)            │
                     │  • Fortify auth, /account (tenant from user membership)│
                     │  • /admin  platform panel (platform_role)              │
@@ -62,7 +62,7 @@ Not used: React, Vue, Next, Nuxt, Inertia, Bootstrap, jQuery, Laravel starter ki
                     │  • /q/{code}  stable QR redirect                       │
                     │  • /m/{slug}/…  path-based public menus                │
                     ├──────────────────────────────────────────────────────┤
- {slug}.restano.app▶│ Tenant public menu context                            │
+ {slug}.menitra.com▶│ Tenant public menu context                            │
                     │  ResolveTenantFromRequest → TenantContext              │
                     │  → PublicMenuService (Redis) → theme view              │
  custom domain ────▶│  (later phase — resolver slot reserved)                │
@@ -97,7 +97,7 @@ There are no repositories, no CQRS and no DDD layering. Do not create a service 
 
 **Public menu**
 ```
-GET {slug}.restano.app/{location}/{menu}?lang=en
+GET {slug}.menitra.com/{location}/{menu}?lang=en
   → ResolveTenantFromRequest → ResolveMenuLocale → MenuController (thin)
   → PublicMenuService: access check → cached MenuSnapshot + LiveMenuState
   → ThemeRenderer → themes/{key}/menu.blade.php
@@ -105,7 +105,7 @@ GET {slug}.restano.app/{location}/{menu}?lang=en
 
 **QR scan**
 ```
-GET restano.app/q/{code} → QrCodeResolver (cached) → 302 to MenuUrlGenerator URL
+GET menitra.com/q/{code} → QrCodeResolver (cached) → 302 to MenuUrlGenerator URL
                          → QrCodeScanned event (analytics hook; RecordQrCodeScan sets last_scanned_at)
 ```
 
@@ -136,7 +136,7 @@ Details: [tenancy.md](tenancy.md), [menu-system.md](menu-system.md).
 - After commit, `TenantRegistered` is fired (`ShouldDispatchAfterCommit`; never after a rollback, also not when an outer transaction rolls back). *Implemented 2026-11-15 (autorun):* the listener `SendWelcomeMail` builds a plain `WelcomeMessage` (name, business name, `/app/{slug}` URL, trial end date) and queues `WelcomeMail` (HTML + plain text, `lang/{tr,en}/registration.php` `welcome_mail`) in the registration locale. It is a platform mail: the event fires after the registration has restored the empty tenant context, and the queued mail carries no model and no tenant id. It links to the panel, not to the public menu (the default menu starts unpublished). The verification email is still sent separately (`WelcomeMailTest`).
 - Registration fields: name, email, password, business name, slug (auto-suggested, editable).
 - Rate limits: Filament login (5/min), registration (`registration`: 5/min per IP), password reset (`password-reset`: 5/min per email+IP, 20/min per IP), verification links and resends (6/min). The session is regenerated on login.
-- `User` implements `MustVerifyEmail`, so registration sends a verification email. **The business panel requires a verified email** (`EnsureEmailIsVerified` in the `app` panel's auth middleware, Livewire-persistent); unverified users are redirected to `/email/verify`. The admin panel doesn't require it. A central `POST /logout` (Fortify controller) lets an unverified user leave the verification page. Verification and password reset mails are queued (`App\Notifications\Auth\VerifyEmailNotification`, `ResetPasswordNotification`, overridden in `User::sendEmailVerificationNotification()` / `sendPasswordResetNotification()`), Restano-branded (`mail/auth-action` HTML + text, `lang/{tr,en}/auth.php` `mail`) and keep the locale of the request that triggered them. Every mailable and notification in the app is queued (`AccountMailTest`).
+- `User` implements `MustVerifyEmail`, so registration sends a verification email. **The business panel requires a verified email** (`EnsureEmailIsVerified` in the `app` panel's auth middleware, Livewire-persistent); unverified users are redirected to `/email/verify`. The admin panel doesn't require it. A central `POST /logout` (Fortify controller) lets an unverified user leave the verification page. Verification and password reset mails are queued (`App\Notifications\Auth\VerifyEmailNotification`, `ResetPasswordNotification`, overridden in `User::sendEmailVerificationNotification()` / `sendPasswordResetNotification()`), Menitra-branded (`mail/auth-action` HTML + text, `lang/{tr,en}/auth.php` `mail`) and keep the locale of the request that triggered them. Every mailable and notification in the app is queued (`AccountMailTest`).
 - The session cookie is bound to the central domain only (see [tenancy.md](tenancy.md#security-controls)).
 - `/account` is minimal and read-only: plan, trial/grace status, public menu link and QR link. **It is not a dashboard.** Implemented 2026-11-15:
   - Route `account` (`AccountController`) in `routes/auth.php`: central domain only, `auth` + `verified` (unverified users go to `/email/verify`), Blade on `layouts/account` with `app.css` + `app.js` only (no Livewire/Filament), `Cache-Control: no-store, private`, `noindex` (meta and `X-Robots-Tag`). Copy in `lang/{tr,en}/account.php`.
@@ -156,7 +156,7 @@ Two independent Filament 5 panels, registered only on the central domain (`confi
 | Login | `/admin/login` | `/app/login` |
 | Who | Users with `platform_role` (`super_admin`, `platform_staff`) | Users with an active membership in an active tenant (`owner`, `manager`, `branch_staff`) |
 | Code | `app/Filament/Admin/{Pages,Resources,Widgets}` | `app/Filament/App/{Pages,Resources,Widgets}` |
-| Look | Filament defaults; Restano logo, Forest primary, Stone gray | Filament defaults; Restano logo, Forest primary, Stone gray |
+| Look | Filament defaults; Menitra logo, Forest primary, Stone gray | Filament defaults; Menitra logo, Forest primary, Stone gray |
 | Resources | Plans (`PlanPolicy`: super admins only; saved by `PlanService`; never deleted), FAQ and testimonials (`FaqPolicy`, `TestimonialPolicy`: any platform role); page **Site settings** (`/admin/site-settings`, `ManageSiteSettings`, `SiteSettingPolicy`: super admins only). Tenants, users, audit log and impersonation ([Platform management](#platform-management-launch)) | Phase B modules; team management ([Team management](#team-management-launch)) |
 | Two-factor | Mandatory (Filament MFA: TOTP + recovery codes): without it a platform user only reaches `/admin/multi-factor-authentication/set-up` | Optional |
 | Profile | `/admin/profile` and `/app/profile` (`App\Filament\Shared\Auth\EditProfile`): two-factor management only (set up, new recovery codes, disable); name, email and password are not editable there | |
@@ -409,7 +409,7 @@ Each phase ends with tests run, a summary of changed files, and a review pause. 
 
 The approved visual design (2026-11-15) is kept as source files in `docs/design/source/` (`*.dc.html` artboards from the design canvas: marketing pages, auth pages, five menu identities with product detail views, the three premium menus `Premium{Kori,Lodos,Lumen}` added 2026-11-19, and `DesignSystem.dc.html`). They are reference material, not code: views are rebuilt in Blade + Tailwind and never load these files.
 
-- **Brand:** the product name stays **Restano**; the design's "Masa" name is not used. Its visual language (Forest `#1F4D3B`, Saffron `#E7A33E`, Paper/Ink neutrals, Bricolage Grotesque + Inter, radii 6/12/14/20/28) is implemented as tokens in `resources/css/app.css` and components in `resources/views/components/ui/`.
+- **Brand:** the product name stays **Menitra**; the design's "Masa" name is not used. Its visual language (Forest `#1F4D3B`, Saffron `#E7A33E`, Paper/Ink neutrals, Bricolage Grotesque + Inter, radii 6/12/14/20/28) is implemented as tokens in `resources/css/app.css` and components in `resources/views/components/ui/`.
 - **Fonts** are self-hosted from `resources/fonts/` (OFL, latin + latin-ext); no third-party font CDN on public pages. Menu theme fonts follow the same rule when the themes are built.
 - **Panels** keep Filament's native design system; only the panel colours (`primary` Forest, `gray` Stone), the brand logo (`resources/views/filament/brand-logo.blade.php`) and the favicon are set in the panel providers. No custom Filament theme.
 - **Menu themes** map onto the existing `MenuTheme` keys ([themes.md § Theme registry](themes.md#theme-registry)).

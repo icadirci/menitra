@@ -49,7 +49,7 @@ return [
         'back_to_subscription' => 'Back to subscription',
     ],
 
-    'subscription_note' => 'Payments are taken by iyzico with 3-D Secure; Restano never stores your card details. Each payment covers one month or one or more years, you can extend at any time and nothing is charged automatically; we email you a reminder before your time runs out.',
+    'subscription_note' => 'Payments are taken by iyzico with 3-D Secure; Menitra never stores your card details. Each payment covers one month or one or more years, you can extend at any time and nothing is charged automatically; we email you a reminder before your time runs out.',
 
     'checkout' => [
         'title' => 'Payment',
@@ -125,7 +125,7 @@ return [
         'pay_amount' => 'Pay :amount',
         'trust' => [
             'secure' => 'Paid with iyzico and 3-D Secure',
-            'card' => 'Restano never stores your card details',
+            'card' => 'Menitra never stores your card details',
             'receipt' => 'The receipt goes to your billing email',
             'no_auto' => 'No automatic charges; we remind you before the period ends',
         ],

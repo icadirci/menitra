@@ -8,9 +8,9 @@ return [
     'password' => 'Girilen şifre hatalı.',
     'throttle' => 'Çok fazla deneme yapıldı. Lütfen :seconds saniye sonra tekrar deneyin.',
 
-    'brand' => 'Restano',
+    'brand' => 'Menitra',
 
-    'home_link' => 'Restano ana sayfası',
+    'home_link' => 'Menitra ana sayfası',
     'password_toggle' => 'Şifreyi göster veya gizle',
 
     'fields' => [
@@ -65,7 +65,7 @@ return [
         'sent_title' => 'Gelen kutunuzu kontrol edin',
         'sent_subtitle' => 'Bu adrese kayıtlı bir hesap varsa şifre sıfırlama bağlantısı gönderdik.',
         'sent_steps' => [
-            'Restano\'dan gelen e-postayı açın',
+            'Menitra\'dan gelen e-postayı açın',
             'Sıfırlama bağlantısına dokunun',
             'Yeni şifrenizle giriş yapın',
         ],
@@ -90,10 +90,10 @@ return [
     'mail' => [
         'greeting' => 'Merhaba :name,',
         'fallback' => 'Düğme çalışmazsa bu bağlantıyı tarayıcınıza yapıştırın:',
-        'signature' => 'Restano ekibi',
+        'signature' => 'Menitra ekibi',
         'verify' => [
             'subject' => 'E-posta adresinizi doğrulayın',
-            'intro' => 'Restano hesabınızı etkinleştirmek için e-posta adresinizi doğrulayın.',
+            'intro' => 'Menitra hesabınızı etkinleştirmek için e-posta adresinizi doğrulayın.',
             'cta' => 'E-posta adresimi doğrula',
             'expiry' => 'Bağlantı :count dakika geçerlidir.',
             'outro' => 'Bu hesabı siz oluşturmadıysanız bu e-postayı yok sayabilirsiniz.',
