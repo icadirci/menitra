@@ -57,24 +57,76 @@ class CheckoutService
         }
 
         $interval = $this->calculator->intervalOf($subscription);
-        $opensAt = $subscription->current_period_ends_at->subDays((int) config('billing.renewal_window_days'));
-        $renewalOpen = ! $opensAt->isAfter($now);
+        // An extension starts at the current end; one more month must still fit under the limit.
+        $extendable = ! $subscription->current_period_ends_at->isAfter($this->prepaidLimit($now)->subMonthNoOverflow());
 
         return new CheckoutEligibility(
-            allowed: $renewalOpen,
+            allowed: $extendable,
             canChangePlan: false,
             subscription: $subscription,
-            reason: $renewalOpen ? null : 'renewal_not_open',
-            opensAt: $renewalOpen ? null : $opensAt,
+            reason: $extendable ? null : 'prepaid_limit',
+            opensAt: $extendable ? null : $subscription->current_period_ends_at->subYears($this->maxPrepaidYears()),
             canUpgrade: $this->upgradePlans($subscription, $interval) !== [],
             fixedInterval: $interval,
         );
     }
 
     /**
+     * Where a new paid period would start if paid now (the processor decides
+     * again when the money arrives): the end of the running paid period, the
+     * end of a running trial, else now.
+     */
+    public function nextPeriodStart(CheckoutEligibility $eligibility, ?CarbonImmutable $now = null): CarbonImmutable
+    {
+        $now ??= CarbonImmutable::now();
+        $subscription = $eligibility->subscription;
+
+        return match (true) {
+            $eligibility->isActivePeriod() && $subscription?->current_period_ends_at?->isAfter($now) => $subscription->current_period_ends_at,
+            $subscription?->status === SubscriptionStatus::Trialing && $subscription->trial_ends_at?->isAfter($now) === true => $subscription->trial_ends_at,
+            default => $now,
+        };
+    }
+
+    /**
+     * How many periods of $interval one payment may cover now: monthly at
+     * most one, yearly up to billing.max_years_per_payment; never past the
+     * prepaid limit (billing.max_prepaid_years from today plus one month of
+     * slack for a running trial or month). 0 = this interval can't be paid now.
+     */
+    public function maxPeriods(CheckoutEligibility $eligibility, BillingInterval $interval, ?CarbonImmutable $now = null): int
+    {
+        $now ??= CarbonImmutable::now();
+        $startsAt = $this->nextPeriodStart($eligibility, $now);
+        $limit = $this->prepaidLimit($now);
+        $max = $interval === BillingInterval::Yearly ? max(1, (int) config('billing.max_years_per_payment')) : 1;
+
+        for ($periods = $max; $periods >= 1; $periods--) {
+            if (! $startsAt->addMonthsNoOverflow($interval->months() * $periods)->isAfter($limit)) {
+                return $periods;
+            }
+        }
+
+        return 0;
+    }
+
+    /**
+     * The latest moment a paid period may reach.
+     */
+    private function prepaidLimit(CarbonImmutable $now): CarbonImmutable
+    {
+        return $now->addYears($this->maxPrepaidYears())->addMonthNoOverflow();
+    }
+
+    private function maxPrepaidYears(): int
+    {
+        return max(1, (int) config('billing.max_prepaid_years'));
+    }
+
+    /**
      * Plans the owner can pay for now: every selectable plan without a
-     * running paid period; during one, the current plan (renewal window) and
-     * the higher-priced plans (upgrade).
+     * running paid period; during one, the current plan (extension) and the
+     * higher-priced plans (upgrade).
      *
      * @return list<Plan>
      */
@@ -134,11 +186,12 @@ class CheckoutService
     }
 
     /**
+     * @param  int  $periods  periods of $interval to pay for at once (yearly: up to maxPeriods(); monthly and upgrades: 1)
      * @return string the provider's payment page URL
      *
      * @throws AuthorizationException|CheckoutNotAllowedException
      */
-    public function start(Tenant $tenant, User $user, Plan $plan, BillingInterval $interval, string $ip, string $locale): string
+    public function start(Tenant $tenant, User $user, Plan $plan, BillingInterval $interval, string $ip, string $locale, int $periods = 1): string
     {
         $this->ensureCurrentTenant($tenant);
 
@@ -156,15 +209,23 @@ class CheckoutService
 
         if (! collect($this->payablePlans($eligibility))->contains(fn (Plan $payable): bool => $payable->is($plan))) {
             throw CheckoutNotAllowedException::because($eligibility->isActivePeriod() && ! $eligibility->allowed && $plan->is($eligibility->subscription?->plan)
-                ? 'renewal_not_open'
+                ? 'prepaid_limit'
                 : 'plan_not_allowed', [
                     'date' => $eligibility->opensAt?->setTimezone('Europe/Istanbul')->locale($locale)->isoFormat('LL'),
                 ]);
         }
 
-        // An upgrade keeps the running period's interval; a renewal may switch it.
+        // An upgrade keeps the running period's interval and covers the remaining time; a renewal may switch it.
         $upgrade = $this->isUpgrade($eligibility, $plan) ? $this->calculator->upgradeQuote($eligibility->subscription, $plan) : null;
         $interval = $upgrade?->interval ?? $interval;
+
+        if ($upgrade !== null) {
+            $periods = 1;
+        } elseif ($periods < 1 || $periods > $this->maxPeriods($eligibility, $interval)) {
+            throw CheckoutNotAllowedException::because('periods_not_allowed', [
+                'max' => max(1, $this->maxPeriods($eligibility, $interval)),
+            ]);
+        }
 
         $profile = $this->profiles->current() ?? throw CheckoutNotAllowedException::because('billing_profile_missing');
 
@@ -172,7 +233,7 @@ class CheckoutService
             throw CheckoutNotAllowedException::because('too_many_attempts');
         }
 
-        $quote = $this->calculator->quote($plan, $interval);
+        $quote = $this->calculator->quote($plan, $interval, $periods);
 
         $payment = new Payment;
         $payment->forceFill([
@@ -180,6 +241,7 @@ class CheckoutService
             'plan_price_id' => $quote->price->getKey(),
             'user_id' => $user->getKey(),
             'interval' => $interval,
+            'period_count' => $periods,
             'status' => PaymentStatus::Pending,
             'currency' => $quote->total->currency,
             'provider' => $this->gateway->name(),
@@ -227,14 +289,16 @@ class CheckoutService
     private function request(Payment $payment, BillingQuote $quote, User $user, string $ip, string $locale, ?UpgradeQuote $upgrade): CheckoutRequest
     {
         $planName = $quote->plan->translate($locale)?->name ?? $quote->plan->code;
-        $interval = __("plans.intervals.{$payment->interval->value}", [], $locale);
+        $interval = $payment->interval->periodLabel($payment->period_count, $locale);
 
         $lines = $upgrade !== null
             ? [new CheckoutLine('upgrade-'.$quote->plan->code, __('billing.checkout.upgrade_line', ['plan' => $planName, 'days' => $upgrade->remainingDays], $locale), $upgrade->total)]
             : [new CheckoutLine('plan-'.$quote->plan->code, "{$planName} ({$interval})", $quote->base)];
 
         if ($upgrade === null && ! $quote->extra->isZero()) {
-            $lines[] = new CheckoutLine('extra-locations', __('billing.checkout.extra_locations_line', ['count' => $quote->extraLocations], $locale), $quote->extra);
+            $lines[] = new CheckoutLine('extra-locations', $quote->periods > 1
+                ? __('billing.checkout.extra_locations_line_periods', ['count' => $quote->extraLocations, 'period' => $interval], $locale)
+                : __('billing.checkout.extra_locations_line', ['count' => $quote->extraLocations], $locale), $quote->extra);
         }
 
         return new CheckoutRequest(

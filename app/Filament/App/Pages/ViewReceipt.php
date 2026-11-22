@@ -85,7 +85,7 @@ class ViewReceipt extends Page
         $lines = [[
             'label' => $payment->isUpgrade()
                 ? __('billing.checkout.summary.upgrade_charge', ['days' => $payment->prorated_days])
-                : $planName.' · '.$payment->interval->label(),
+                : $planName.' · '.$payment->periodLabel(),
             'detail' => $date($payment->period_starts_at).' – '.$date($payment->period_ends_at),
             'amount' => $payment->baseMoney()->format(),
         ]];
@@ -116,7 +116,7 @@ class ViewReceipt extends Page
             'number' => $payment->receipt_number,
             'status' => $payment->status->label(),
             'paidAt' => $date($payment->paid_at),
-            'plan' => $planName.' · '.$payment->interval->label(),
+            'plan' => $planName.' · '.$payment->periodLabel(),
             'period' => $date($payment->period_starts_at).' – '.$date($payment->period_ends_at),
             'card' => $payment->card_last_four !== null ? trim(($payment->card_association ?? '').' •••• '.$payment->card_last_four) : null,
             'reference' => $payment->provider_payment_id,

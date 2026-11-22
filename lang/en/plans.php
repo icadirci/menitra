@@ -54,6 +54,11 @@ return [
         'yearly' => 'Yearly',
     ],
 
+    'interval_counts' => [
+        'monthly' => '{1} 1 month|[2,*] :count months',
+        'yearly' => '{1} 1 year|[2,*] :count years',
+    ],
+
     'statuses' => [
         'trialing' => 'Trial',
         'active' => 'Active',

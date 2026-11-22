@@ -33,6 +33,7 @@ class Payment extends Model
     {
         return [
             'interval' => BillingInterval::class,
+            'period_count' => 'integer',
             'kind' => PaymentKind::class,
             'status' => PaymentStatus::class,
             'base_amount' => 'integer',
@@ -77,6 +78,14 @@ class Payment extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    /**
+     * "Yearly", "3 years", "Monthly": the interval and how many periods it covers.
+     */
+    public function periodLabel(): string
+    {
+        return $this->interval->periodLabel(max(1, (int) $this->period_count));
     }
 
     public function money(): Money

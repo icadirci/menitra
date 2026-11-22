@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services\Billing;
 
 use App\Enums\BillingInterval;
+use App\Enums\PaymentKind;
 use App\Enums\PaymentStatus;
 use App\Exceptions\CheckoutNotAllowedException;
 use App\Models\Location;
@@ -29,11 +30,15 @@ class BillingCalculator
     private array $quotes = [];
 
     /**
+     * @param  int  $periods  how many periods of $interval one payment covers (≥ 1)
+     *
      * @throws CheckoutNotAllowedException when the plan has no active price for the interval
      */
-    public function quote(Plan $plan, BillingInterval $interval): BillingQuote
+    public function quote(Plan $plan, BillingInterval $interval, int $periods = 1): BillingQuote
     {
-        return $this->quotes[$plan->getKey().'|'.$interval->value] ??= $this->computeQuote($plan, $interval);
+        $periods = max(1, $periods);
+
+        return $this->quotes[$plan->getKey().'|'.$interval->value.'|'.$periods] ??= $this->computeQuote($plan, $interval, $periods);
     }
 
     /**
@@ -55,7 +60,11 @@ class BillingCalculator
     }
 
     /**
-     * Upgrading the active subscription to $plan for the rest of its period.
+     * Upgrading the active subscription to $plan for all of its remaining
+     * prepaid time. The rate is one period ("unit") of the running interval:
+     * the current segment's length divided by the periods its payment covered
+     * (a renewal during an active period stacks a segment that starts at the
+     * previous end, so the remaining time may exceed one segment).
      *
      * @throws CheckoutNotAllowedException when $plan has no price in the period's interval
      */
@@ -65,13 +74,14 @@ class BillingCalculator
         $interval = $this->intervalOf($subscription);
         $full = $this->quote($plan, $interval);
         $endsAt = $subscription->current_period_ends_at ?? throw CheckoutNotAllowedException::because('not_allowed');
-        $startsAt = $subscription->current_period_starts_at ?? $endsAt->subMonthsNoOverflow($interval->months());
+        [$paidPerUnit, $units] = $this->paidForPeriod($subscription, $interval);
+        $startsAt = $subscription->current_period_starts_at ?? $endsAt->subMonthsNoOverflow($interval->months() * $units);
 
-        $period = max(1, $startsAt->diffInSeconds($endsAt, true));
-        $remaining = (int) min($period, max(0, $now->diffInSeconds($endsAt, false)));
+        $unit = max(1, intdiv((int) $startsAt->diffInSeconds($endsAt, true), $units));
+        $remaining = (int) max(0, $now->diffInSeconds($endsAt, false));
 
-        $charge = intdiv($full->total->minor * $remaining, (int) $period);
-        $credit = intdiv($this->paidForPeriod($subscription, $interval) * $remaining, (int) $period);
+        $charge = intdiv($full->total->minor * $remaining, $unit);
+        $credit = intdiv($paidPerUnit * $remaining, $unit);
         $currency = $full->total->currency;
 
         return new UpgradeQuote(
@@ -86,30 +96,35 @@ class BillingCalculator
     }
 
     /**
-     * The value of the running period on the current plan: what was actually
-     * paid for it on this plan (extra branches included), else the plan's
-     * list price (after an earlier upgrade, or a period not paid in the app).
+     * The value of one period of the running segment on the current plan and
+     * how many periods the segment covers: what was actually paid for it on
+     * this plan per period (extra branches included), else the plan's list
+     * price (after an earlier upgrade, or a period not paid in the app).
+     *
+     * @return array{int, int} [value per period in kuruş, periods in the segment]
      */
-    private function paidForPeriod(Subscription $subscription, BillingInterval $interval): int
+    private function paidForPeriod(Subscription $subscription, BillingInterval $interval): array
     {
         $payment = Payment::query()
             ->where('subscription_id', $subscription->getKey())
             ->where('status', PaymentStatus::Succeeded)
-            ->where('plan_id', $subscription->plan_id)
+            ->where(fn ($query) => $query->whereNull('kind')->orWhere('kind', '!=', PaymentKind::Upgrade))
             ->where('period_ends_at', $subscription->current_period_ends_at)
             ->latest('id')
             ->first();
 
-        if ($payment !== null && ! $payment->isUpgrade()) {
-            return $payment->amount;
+        $units = max(1, (int) ($payment?->period_count ?? 1));
+
+        if ($payment !== null && (int) $payment->plan_id === (int) $subscription->plan_id) {
+            return [intdiv($payment->amount, $units), $units];
         }
 
         $plan = Plan::query()->with('prices')->find($subscription->plan_id);
 
-        return $plan?->priceFor($interval) !== null ? $this->quote($plan, $interval)->total->minor : 0;
+        return [$plan?->priceFor($interval) !== null ? $this->quote($plan, $interval)->total->minor : 0, $units];
     }
 
-    private function computeQuote(Plan $plan, BillingInterval $interval): BillingQuote
+    private function computeQuote(Plan $plan, BillingInterval $interval, int $periods): BillingQuote
     {
         $plan->loadMissing('prices');
         $price = $plan->priceFor($interval) ?? throw CheckoutNotAllowedException::because('no_price');
@@ -119,16 +134,18 @@ class BillingCalculator
             ? max(0, $locations - $plan->included_locations)
             : 0;
 
-        $extra = $extraLocations * (int) $price->extra_location_amount;
+        $base = $price->amount * $periods;
+        $extra = $extraLocations * (int) $price->extra_location_amount * $periods;
 
         return new BillingQuote(
             plan: $plan,
             price: $price,
             locations: $locations,
             extraLocations: $extraLocations,
-            base: Money::fromMinor($price->amount, $price->currency),
+            base: Money::fromMinor($base, $price->currency),
             extra: Money::fromMinor($extra, $price->currency),
-            total: Money::fromMinor($price->amount + $extra, $price->currency),
+            total: Money::fromMinor($base + $extra, $price->currency),
+            periods: $periods,
         );
     }
 }

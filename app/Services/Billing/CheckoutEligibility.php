@@ -13,9 +13,11 @@ use Carbon\CarbonImmutable;
  *
  * - No live subscription, trialing, grace or past due: any selectable plan,
  *   monthly or yearly (no paid period runs, nothing to prorate).
- * - Active: the current plan only within the renewal window before the
- *   period ends ($allowed); a higher-priced plan at any time as an
- *   immediate, prorated upgrade ($canUpgrade) in the period's interval
+ * - Active: the current plan can be extended at any time ($allowed) until
+ *   the paid time reaches billing.max_prepaid_years ahead (then $reason =
+ *   prepaid_limit and $opensAt says when it can be extended again); a
+ *   higher-priced plan at any time as an immediate upgrade prorated over all
+ *   the remaining prepaid time ($canUpgrade) in the period's interval
  *   ($fixedInterval).
  */
 final readonly class CheckoutEligibility

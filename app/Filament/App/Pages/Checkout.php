@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Filament\App\Pages;
 
 use App\Enums\BillingInterval;
-use App\Enums\SubscriptionStatus;
 use App\Exceptions\CheckoutNotAllowedException;
 use App\Models\Plan;
 use App\Models\Tenant;
@@ -52,7 +51,8 @@ use Livewire\Attributes\Url;
 /**
  * Pay / renew / upgrade (docs/architecture/subscriptions.md § Payments).
  *
- * Billing period toggle with the yearly advantage, plan cards (price, the
+ * Billing period toggle with the yearly advantage and the number of years
+ * (multi-year payments; also extends a running subscription), plan cards (price, the
  * per-month equivalent and saving of yearly billing, plan highlights, the
  * prorated amount of an upgrade), billing details and an order summary,
  * then off to the provider's hosted payment page (3-D Secure).
@@ -90,6 +90,8 @@ class Checkout extends Page
 
     private ?BillingCalculator $calculator = null;
 
+    private ?int $maxYears = null;
+
     private TenantBillingProfile|false|null $profile = false;
 
     public static function canAccess(): bool
@@ -104,9 +106,11 @@ class Checkout extends Page
 
     public function getTitle(): string
     {
-        return $this->eligibility()->isActivePeriod() && ! $this->eligibility()->allowed
-            ? __('billing.checkout.title_upgrade')
-            : __('billing.checkout.title');
+        return match (true) {
+            ! $this->eligibility()->isActivePeriod() => __('billing.checkout.title'),
+            $this->eligibility()->allowed => __('billing.checkout.title_active'),
+            default => __('billing.checkout.title_upgrade'),
+        };
     }
 
     public function getSubheading(): ?string
@@ -141,6 +145,7 @@ class Checkout extends Page
         $this->form->fill([
             'plan' => $selected?->code,
             'interval' => in_array($preferred, $intervals, true) ? $preferred : ($intervals[0] ?? BillingInterval::Monthly->value),
+            'years' => 1,
             'terms' => false,
         ]);
     }
@@ -199,9 +204,12 @@ class Checkout extends Page
         $data = $this->form->getState();
         $plan = $this->planByCode($data['plan'] ?? null);
         // An upgrade hides the interval field (hidden fields aren't in the state); it keeps the period's interval.
-        $interval = $plan !== null && $this->isUpgrade($plan->code)
+        $upgrade = $plan !== null && $this->isUpgrade($plan->code);
+        $interval = $upgrade
             ? $this->eligibility()->fixedInterval
             : BillingInterval::tryFrom((string) ($data['interval'] ?? ''));
+        // Hidden for monthly and upgrades; the service re-checks the number against its limit.
+        $periods = ! $upgrade && $interval === BillingInterval::Yearly ? (int) ($data['years'] ?? 1) : 1;
         $user = auth()->user();
 
         if ($plan === null || $interval === null || ! $user instanceof User) {
@@ -211,7 +219,7 @@ class Checkout extends Page
         }
 
         try {
-            $url = app(CheckoutService::class)->start($this->tenant(), $user, $plan, $interval, (string) request()->ip(), app()->getLocale());
+            $url = app(CheckoutService::class)->start($this->tenant(), $user, $plan, $interval, (string) request()->ip(), app()->getLocale(), $periods);
         } catch (CheckoutNotAllowedException $exception) {
             Notification::make()->danger()->title($exception->getMessage())->send();
 
@@ -233,8 +241,8 @@ class Checkout extends Page
         $body = collect([
             $eligibility->canUpgrade ? __('billing.checkout.active.upgrade_help') : null,
             $eligibility->allowed
-                ? __('billing.checkout.active.renewal_open')
-                : __('billing.errors.renewal_not_open', ['date' => $this->date($eligibility->opensAt)]),
+                ? __('billing.checkout.active.extend_open')
+                : __('billing.errors.prepaid_limit', ['date' => $this->date($eligibility->opensAt)]),
         ])->filter()->implode(' ');
 
         return Callout::make(__('billing.checkout.active.title', [
@@ -268,6 +276,18 @@ class Checkout extends Page
                     ->required()
                     ->live()
                     ->visible(fn (Get $get): bool => ! $this->isUpgrade($get('plan'))),
+                ToggleButtons::make('years')
+                    ->label(__('billing.checkout.fields.years'))
+                    ->helperText(fn (): ?string => $this->eligibility()->isActivePeriod() ? __('billing.checkout.years_extend_help', ['date' => $this->date($this->eligibility()->subscription?->current_period_ends_at)]) : null)
+                    ->options(fn (): array => collect(range(1, max(1, $this->maxYears())))
+                        ->mapWithKeys(fn (int $years): array => [$years => trans_choice('plans.interval_counts.yearly', $years, ['count' => $years])])
+                        ->all())
+                    ->in(fn (): array => range(1, max(1, $this->maxYears())))
+                    ->default(1)
+                    ->inline()
+                    ->required()
+                    ->live()
+                    ->visible(fn (Get $get): bool => ! $this->isUpgrade($get('plan')) && $get('interval') === BillingInterval::Yearly->value && $this->maxYears() > 1),
                 Text::make(fn (Get $get): ?string => $this->yearlyPerkText($this->planByCode($get('plan'))))
                     ->icon(Heroicon::OutlinedGift)
                     ->color('success')
@@ -314,6 +334,8 @@ class Checkout extends Page
         if (! in_array($this->data['interval'] ?? null, $intervals, true)) {
             $this->data['interval'] = $intervals[0] ?? null;
         }
+
+        $this->data['years'] = min(max(1, (int) ($this->data['years'] ?? 1)), max(1, $this->maxYears()));
     }
 
     /**
@@ -401,7 +423,9 @@ class Checkout extends Page
                 Text::make(fn (Get $get): string => $this->summaryTitle($get))
                     ->weight(FontWeight::SemiBold),
                 TextEntry::make('summary_base')
-                    ->label(__('billing.checkout.summary.base'))
+                    ->label(fn (Get $get): string => $this->years($get) > 1
+                        ? __('billing.checkout.summary.base_years', ['period' => trans_choice('plans.interval_counts.yearly', $this->years($get), ['count' => $this->years($get)])])
+                        : __('billing.checkout.summary.base'))
                     ->inlineLabel()
                     ->state(fn (Get $get): string => $this->quoteFor($get)?->base->format() ?? '—')
                     ->visible(fn (Get $get): bool => ! $this->isUpgrade($get('plan'))),
@@ -548,7 +572,7 @@ class Checkout extends Page
 
         $interval = BillingInterval::tryFrom((string) $get('interval'));
 
-        return $interval === null ? $name : "{$name} · {$interval->label()}";
+        return $interval === null ? $name : "{$name} · {$interval->periodLabel($this->years($get))}";
     }
 
     private function summarySaving(Get $get): ?string
@@ -564,7 +588,7 @@ class Checkout extends Page
         }
 
         return __('billing.checkout.summary.saving', [
-            'amount' => $this->yearlySaving($display)->format(omitZeroFraction: true),
+            'amount' => $this->yearlySaving($display, $this->years($get))->format(omitZeroFraction: true),
             'percent' => $display->yearlySavingPercent,
             'monthly' => $display->yearlyPerMonth?->format(omitZeroFraction: true),
         ]);
@@ -588,9 +612,9 @@ class Checkout extends Page
         ]);
     }
 
-    private function yearlySaving(PricingPlan $display): Money
+    private function yearlySaving(PricingPlan $display, int $years = 1): Money
     {
-        return Money::fromMinor($display->monthly->minor * 12 - (int) $display->yearly?->minor, $display->monthly->currency);
+        return Money::fromMinor(($display->monthly->minor * 12 - (int) $display->yearly?->minor) * $years, $display->monthly->currency);
     }
 
     private function totalFor(Get $get): ?Money
@@ -609,7 +633,24 @@ class Checkout extends Page
             return null;
         }
 
-        return $this->calculator()->quote($plan, $interval);
+        return $this->calculator()->quote($plan, $interval, $this->years($get));
+    }
+
+    /**
+     * The selected number of years, clamped to what can be paid now (1 for monthly and upgrades).
+     */
+    private function years(Get $get): int
+    {
+        if ($this->isUpgrade($get('plan')) || $get('interval') !== BillingInterval::Yearly->value) {
+            return 1;
+        }
+
+        return min(max(1, (int) $get('years')), max(1, $this->maxYears()));
+    }
+
+    private function maxYears(): int
+    {
+        return $this->maxYears ??= app(CheckoutService::class)->maxPeriods($this->eligibility(), BillingInterval::Yearly);
     }
 
     private function upgradeFor(Get $get): ?UpgradeQuote
@@ -631,20 +672,14 @@ class Checkout extends Page
         }
 
         $interval = BillingInterval::tryFrom((string) $get('interval'));
-        $subscription = $this->eligibility()->subscription;
 
         if ($interval === null) {
             return '—';
         }
 
-        $now = CarbonImmutable::now();
-        $startsAt = match (true) {
-            $this->eligibility()->isActivePeriod() && $subscription?->current_period_ends_at?->isAfter($now) => $subscription->current_period_ends_at,
-            $subscription?->status === SubscriptionStatus::Trialing && $subscription->trial_ends_at?->isAfter($now) => $subscription->trial_ends_at,
-            default => $now,
-        };
+        $startsAt = app(CheckoutService::class)->nextPeriodStart($this->eligibility());
 
-        return $this->date($startsAt).' – '.$this->date($startsAt->addMonthsNoOverflow($interval->months()));
+        return $this->date($startsAt).' – '.$this->date($startsAt->addMonthsNoOverflow($interval->months() * $this->years($get)));
     }
 
     private function isUpgrade(?string $code): bool
@@ -663,8 +698,11 @@ class Checkout extends Page
             return [];
         }
 
+        $service = app(CheckoutService::class);
+
         return collect(BillingInterval::cases())
-            ->filter(fn (BillingInterval $interval): bool => $plan->priceFor($interval) !== null)
+            ->filter(fn (BillingInterval $interval): bool => $plan->priceFor($interval) !== null
+                && ($service->isUpgrade($this->eligibility(), $plan) || $service->maxPeriods($this->eligibility(), $interval) > 0))
             ->map(fn (BillingInterval $interval): string => $interval->value)
             ->values()
             ->all();

@@ -37,7 +37,7 @@ use Illuminate\Support\Facades\Mail;
  * - none (expired)          → resubscribe(), period from now
  * - trialing                → [changePlan()] + activate(), period from the trial end
  * - grace / past due        → [changePlan()] + activate(), period from now
- * - active                  → renew(), period from the current period end
+ * - active                  → renew(), period from the current period end (an extension)
  * - an upgrade payment      → upgrade(): the plan changes at once, the period stays
  */
 class PaymentProcessor
@@ -137,6 +137,7 @@ class PaymentProcessor
                 businessName: $tenant->translate($locale)?->name ?? $tenant->slug,
                 planName: $plan->translate($locale)?->name ?? $plan->code,
                 interval: $payment->interval,
+                periodCount: max(1, (int) $payment->period_count),
                 amountMinor: $payment->amount,
                 currency: $payment->currency,
                 periodStartsAt: $startsAt,
@@ -155,7 +156,8 @@ class PaymentProcessor
     private function applyToSubscription(Tenant $tenant, Plan $plan, PlanPrice $price, Payment $payment, string $reference): array
     {
         $now = CarbonImmutable::now();
-        $months = $payment->interval->months();
+        // A multi-year payment covers several periods of its interval at once.
+        $months = $payment->interval->months() * max(1, (int) $payment->period_count);
         $live = Subscription::query()->whereNull('ended_at')->latest('id')->first();
         $provider = $payment->provider;
 

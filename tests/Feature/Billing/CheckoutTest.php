@@ -106,7 +106,7 @@ class CheckoutTest extends TestCase
         $this->startCheckout($this->tenant, $hidden);
     }
 
-    public function test_an_active_period_is_renewed_only_within_the_window_but_upgraded_at_any_time(): void
+    public function test_an_active_period_is_extended_and_upgraded_at_any_time(): void
     {
         $this->billingProfile($this->tenant);
         $pro = $this->pricedPlan('pro', 50000, 400000);
@@ -116,38 +116,163 @@ class CheckoutTest extends TestCase
         $this->inTenant($this->tenant, function () use ($cheap): void {
             $service = app(CheckoutService::class);
             $eligibility = $service->eligibility();
-            $this->assertFalse($eligibility->allowed);
+            $this->assertTrue($eligibility->allowed, 'an extension needs no renewal window');
             $this->assertTrue($eligibility->canUpgrade);
             $this->assertSame(BillingInterval::Monthly, $eligibility->fixedInterval);
             $codes = collect($service->payablePlans($eligibility))->pluck('code')->all();
-            $this->assertSame(['pro'], $codes, 'only higher plans while the renewal window is closed');
+            $this->assertSame(['starter', 'pro'], $codes, 'the current plan (extension) and higher plans');
             $this->assertNotContains($cheap->code, $codes);
+        });
+
+        // An upgrade keeps the period's interval even when yearly is asked for.
+        $upgrade = $this->startCheckout($this->tenant, $pro, BillingInterval::Yearly, 3);
+        $this->assertSame(PaymentKind::Upgrade, $upgrade->kind);
+        $this->assertSame(BillingInterval::Monthly, $upgrade->interval);
+        $this->assertSame(1, $upgrade->period_count);
+
+        $extension = $this->startCheckout($this->tenant, $this->starter, BillingInterval::Yearly, 2);
+        $this->assertNull($extension->kind);
+        $this->assertSame(BillingInterval::Yearly, $extension->interval, 'an extension may switch to yearly');
+        $this->assertSame(2, $extension->period_count);
+        $this->assertSame(480000, $extension->amount);
+
+        $this->expectException(CheckoutNotAllowedException::class);
+        $this->startCheckout($this->tenant, $cheap);
+    }
+
+    public function test_several_years_are_paid_at_once(): void
+    {
+        $this->freezeSecond();
+        $this->billingProfile($this->tenant);
+        $multi = $this->pricedPlan('multi-branch', 70000, 560000, ['included_locations' => 1]);
+        Location::factory()->for($this->tenant)->create(); // 2 branches: 1 extra
+
+        $payment = $this->startCheckout($this->tenant, $multi, BillingInterval::Yearly, 3);
+
+        $this->assertSame(3, $payment->period_count);
+        $this->assertSame(3 * 560000, $payment->base_amount);
+        $this->assertSame(1, $payment->extra_locations);
+        $extra = (int) $multi->priceFor(BillingInterval::Yearly)->extra_location_amount;
+        $this->assertSame(3 * (560000 + $extra), $payment->amount);
+
+        $request = $this->gateway->started[0];
+        $this->assertSame($payment->amount, $request->amount->minor);
+        $this->assertSame($payment->amount, array_sum(array_map(fn ($line): int => $line->amount->minor, $request->lines)));
+        $this->assertStringContainsString('3 yıl', $request->lines[0]->name);
+
+        // Paid during the trial: three years from the trial end.
+        $this->gateway->paid($payment->provider_token, $payment->public_id, $payment->amount);
+        app(TenantContext::class)->clear();
+
+        $this->inTenant($this->tenant, function () use ($payment): void {
+            app(PaymentProcessor::class)->complete(Payment::query()->findOrFail($payment->getKey()));
+
+            $subscription = Subscription::query()->whereNull('ended_at')->sole();
+            $this->assertTrue($subscription->current_period_starts_at->equalTo($subscription->trial_ends_at));
+            $this->assertTrue($subscription->current_period_ends_at->equalTo($subscription->trial_ends_at->addMonthsNoOverflow(36)));
+
+            $paid = Payment::query()->findOrFail($payment->getKey());
+            $this->assertTrue($paid->period_ends_at->equalTo($subscription->current_period_ends_at));
+            $this->assertSame('3 yıl', $paid->periodLabel());
+        });
+    }
+
+    public function test_the_number_of_periods_is_limited(): void
+    {
+        $this->billingProfile($this->tenant);
+
+        foreach ([[BillingInterval::Yearly, 6], [BillingInterval::Yearly, 0], [BillingInterval::Monthly, 2]] as [$interval, $periods]) {
+            try {
+                $this->startCheckout($this->tenant, $this->starter, $interval, $periods);
+                $this->fail("{$periods} × {$interval->value} was allowed.");
+            } catch (CheckoutNotAllowedException $exception) {
+                $this->assertSame(__('billing.errors.periods_not_allowed', ['max' => $interval === BillingInterval::Yearly ? 5 : 1]), $exception->getMessage());
+            }
+        }
+
+        $this->assertSame(5, $this->startCheckout($this->tenant, $this->starter, BillingInterval::Yearly, 5)->period_count);
+    }
+
+    public function test_an_extension_is_added_to_the_current_end_up_to_the_prepaid_limit(): void
+    {
+        $this->freezeSecond();
+        $this->billingProfile($this->tenant);
+        $this->activateMonthly(20);
+
+        $payment = $this->startCheckout($this->tenant, $this->starter, BillingInterval::Yearly, 2);
+        $this->gateway->paid($payment->provider_token, $payment->public_id, 480000);
+        app(TenantContext::class)->clear();
+
+        $this->inTenant($this->tenant, function () use ($payment): void {
+            app(PaymentProcessor::class)->complete(Payment::query()->findOrFail($payment->getKey()));
+
+            $subscription = Subscription::query()->whereNull('ended_at')->sole();
+            $previousEnd = CarbonImmutable::now()->addDays(20);
+            $this->assertTrue($subscription->current_period_ends_at->equalTo($previousEnd->addYears(2)), 'no remaining day is lost');
+            $this->assertSame(BillingInterval::Yearly, app(BillingCalculator::class)->intervalOf($subscription));
+
+            // Paid until ~2 years ahead: 3 more years still fit under 5 years (+1 month), 4 don't.
+            $service = app(CheckoutService::class);
+            $this->assertSame(3, $service->maxPeriods($service->eligibility(), BillingInterval::Yearly));
+            $this->assertSame(1, $service->maxPeriods($service->eligibility(), BillingInterval::Monthly));
+        });
+
+        $this->expectException(CheckoutNotAllowedException::class);
+        $this->startCheckout($this->tenant, $this->starter, BillingInterval::Yearly, 4);
+    }
+
+    public function test_a_subscription_paid_to_the_limit_can_not_be_extended_but_still_upgraded(): void
+    {
+        $this->freezeSecond();
+        $this->billingProfile($this->tenant);
+        $this->pricedPlan('pro', 50000, 400000);
+        $this->activateMonthly(5 * 365 + 10);
+
+        $this->inTenant($this->tenant, function (): void {
+            $service = app(CheckoutService::class);
+            $eligibility = $service->eligibility();
+            $this->assertFalse($eligibility->allowed);
+            $this->assertSame('prepaid_limit', $eligibility->reason);
+            $this->assertTrue($eligibility->canUpgrade);
+            $this->assertSame(0, $service->maxPeriods($eligibility, BillingInterval::Monthly));
+            $this->assertSame(['pro'], collect($service->payablePlans($eligibility))->pluck('code')->all());
         });
 
         try {
             $this->startCheckout($this->tenant, $this->starter);
-            $this->fail('Renewal outside the window was allowed.');
+            $this->fail('An extension past the prepaid limit was allowed.');
         } catch (CheckoutNotAllowedException $exception) {
-            $this->assertStringContainsString('aktif', $exception->getMessage());
+            $this->assertStringContainsString('önceden ödenmiş', $exception->getMessage());
         }
+    }
 
-        // An upgrade keeps the period's interval even when yearly is asked for.
-        $upgrade = $this->startCheckout($this->tenant, $pro, BillingInterval::Yearly);
-        $this->assertSame(PaymentKind::Upgrade, $upgrade->kind);
-        $this->assertSame(BillingInterval::Monthly, $upgrade->interval);
+    public function test_an_upgrade_of_a_multi_year_period_covers_all_the_remaining_time(): void
+    {
+        $this->freezeSecond();
+        $this->billingProfile($this->tenant);
+        $pro = $this->pricedPlan('pro', 50000, 400000);
 
-        $this->travel(31)->days();
+        $first = $this->startCheckout($this->tenant, $this->starter, BillingInterval::Yearly, 3);
+        $this->gateway->paid($first->provider_token, $first->public_id, 720000);
+        $this->post('/billing/iyzico/callback', ['token' => $first->provider_token]);
 
-        $this->inTenant($this->tenant, function (): void {
-            $this->assertTrue(app(CheckoutService::class)->eligibility()->allowed);
+        // Trial end + 1 year: two of the three paid years are left.
+        $this->travel(14)->days();
+        $this->travel(365)->days();
+
+        $upgrade = $this->startCheckout($this->tenant, $pro);
+        $this->assertSame(BillingInterval::Yearly, $upgrade->interval);
+
+        $this->inTenant($this->tenant, function () use ($upgrade): void {
+            $subscription = Subscription::query()->sole();
+            $unit = intdiv((int) $subscription->current_period_starts_at->diffInSeconds($subscription->current_period_ends_at), 3);
+            $remaining = (int) CarbonImmutable::now()->diffInSeconds($subscription->current_period_ends_at);
+
+            $this->assertGreaterThan(1.9, $remaining / $unit);
+            $this->assertSame(intdiv(240000 * $remaining, $unit), $upgrade->credit_amount);
+            $this->assertSame(intdiv(400000 * $remaining, $unit), $upgrade->base_amount);
+            $this->assertSame($upgrade->base_amount - $upgrade->credit_amount, $upgrade->amount);
         });
-
-        $renewal = $this->startCheckout($this->tenant, $this->starter, BillingInterval::Yearly);
-        $this->assertNull($renewal->kind);
-        $this->assertSame(BillingInterval::Yearly, $renewal->interval, 'a renewal may switch to yearly');
-
-        $this->expectException(CheckoutNotAllowedException::class);
-        $this->startCheckout($this->tenant, $cheap);
     }
 
     public function test_an_upgrade_charges_the_difference_for_the_remaining_days(): void
@@ -285,7 +410,7 @@ class CheckoutTest extends TestCase
         $this->actingAs($this->ownerOf($this->tenant))
             ->get('/app/yaman-kahvesi/subscription')
             ->assertSee(__('billing.actions.choose_paid_plan'))
-            ->assertDontSee(__('billing.actions.renew'));
+            ->assertDontSee(__('billing.actions.extend'));
 
         // Paid: the complimentary row becomes the paid plan with a period starting now.
         $this->gateway->paid($payment->provider_token, $payment->public_id, 50000);
@@ -389,22 +514,44 @@ class CheckoutTest extends TestCase
         $this->freezeSecond();
         $this->billingProfile($this->tenant);
         $this->pricedPlan('pro', 50000, 400000);
-        // 45 of 60 days left: the renewal window is closed, only the upgrade is offered.
+        // 45 of 60 days left: the extension and the upgrade are offered; the upgrade button preselects the plan.
         $this->activateMonthly(60);
         $this->travel(15)->days();
         app(TenantContext::class)->clear();
 
         $this->actingAs($this->ownerOf($this->tenant))
-            ->get('/app/yaman-kahvesi/subscription/checkout')
+            ->get('/app/yaman-kahvesi/subscription/checkout?plan=pro')
             ->assertOk()
-            ->assertSee(__('billing.checkout.title_upgrade'))
+            ->assertSee(__('billing.checkout.title_active'))
+            ->assertSee(__('billing.checkout.active.extend_open'))
             ->assertSee(__('billing.checkout.upgrade_today', ['amount' => '₺150', 'days' => 45]))
             ->assertSee(__('billing.checkout.summary.upgrade_credit'))
             ->assertSee('₺225,00');
 
         $this->actingAs($this->ownerOf($this->tenant))
             ->get('/app/yaman-kahvesi/subscription')
-            ->assertSee(__('billing.actions.upgrade'));
+            ->assertSee(__('billing.actions.upgrade'))
+            ->assertSee(__('billing.actions.extend'));
+    }
+
+    public function test_the_page_pays_several_years(): void
+    {
+        $this->billingProfile($this->tenant);
+        $this->enter();
+
+        Livewire::test(Checkout::class)
+            ->assertSet('data.interval', 'yearly')
+            ->assertSet('data.years', 1)
+            ->assertSee(__('billing.checkout.fields.years'))
+            ->set('data.years', 3)
+            ->assertSee(__('billing.checkout.pay_amount', ['amount' => '₺7.200,00']))
+            ->assertSee(__('billing.checkout.summary.base_years', ['period' => '3 yıl']))
+            ->set('data.terms', true)
+            ->call('pay')
+            ->assertRedirect('https://sandbox-cpp.iyzipay.com/?token=fake');
+
+        $this->assertSame(720000, $this->gateway->started[0]->amount->minor);
+        $this->assertSame(3, Payment::query()->withoutGlobalScopes()->sole()->period_count);
     }
 
     public function test_the_page_pays_an_upgrade_although_the_interval_field_is_hidden(): void

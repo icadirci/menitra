@@ -30,7 +30,8 @@ return [
 
     'errors' => [
         'not_allowed' => 'A payment is not possible right now.',
-        'renewal_not_open' => 'Your subscription is active. You can pay for the next period from :date.',
+        'prepaid_limit' => 'Your subscription is already prepaid for the longest time allowed. You can extend it again from :date.',
+        'periods_not_allowed' => 'You can pay for at most :max years in this payment.',
         'plan_not_allowed' => 'This plan can\'t be paid for right now. You can change plans once the paid period ends.',
         'billing_profile_missing' => 'Enter your billing details before paying.',
         'too_many_attempts' => 'Too many payment attempts. Please try again later.',
@@ -41,23 +42,24 @@ return [
 
     'actions' => [
         'pay' => 'Pay and continue',
-        'renew' => 'Renew subscription',
+        'extend' => 'Extend subscription',
         'choose_paid_plan' => 'Switch to a paid plan',
         'upgrade' => 'Upgrade plan',
         'billing_details' => 'Billing details',
         'back_to_subscription' => 'Back to subscription',
     ],
 
-    'subscription_note' => 'Payments are taken by iyzico with 3-D Secure; Restano never stores your card details. Each payment covers one period (monthly or yearly) and nothing is charged automatically; we email you a reminder before the period ends.',
+    'subscription_note' => 'Payments are taken by iyzico with 3-D Secure; Restano never stores your card details. Each payment covers one month or one or more years, you can extend at any time and nothing is charged automatically; we email you a reminder before your time runs out.',
 
     'checkout' => [
         'title' => 'Payment',
+        'title_active' => 'Extend or upgrade your plan',
         'title_upgrade' => 'Upgrade your plan',
         'subheading' => 'Choose your plan and billing period, then pay securely with iyzico.',
         'active' => [
             'title' => 'Your subscription: :plan · :interval · until :date',
-            'upgrade_help' => 'Upgrade now and the new plan is active right after payment; you only pay the difference for the remaining days.',
-            'renewal_open' => 'You can renew your current plan now; the new period starts when the current one ends.',
+            'upgrade_help' => 'Upgrade now and the new plan is active right after payment; you only pay the difference for your remaining prepaid time.',
+            'extend_open' => 'You can extend your plan at any time; the new time is added to your current end date, so no days are lost.',
         ],
         'badges' => [
             'current' => 'Current plan',
@@ -87,17 +89,19 @@ return [
             'interval' => 'Billing period',
             'plan' => 'Plan',
             'plan_help' => 'Pick the plan that fits your business. Your data is always kept and you can upgrade at any time.',
-            'plan_active' => 'Renew your current plan or upgrade right away.',
+            'plan_active' => 'Extend your current plan or upgrade right away.',
             'summary' => 'Order summary',
             'billing' => 'Billing details',
         ],
         'fields' => [
             'terms' => 'I confirm that this is a one-off payment for one period and that I have read and accept the',
             'terms_link' => 'terms of use.',
+            'years' => 'How many years do you want to pay for?',
             'terms_required' => 'Please tick the box to continue.',
         ],
         'summary' => [
             'base' => 'Plan price',
+            'base_years' => 'Plan price (:period)',
             'extra' => 'Additional branches',
             'extra_value' => ':count branch(es) · :amount',
             'total' => 'Total',
@@ -115,6 +119,8 @@ return [
             'missing' => 'Add your billing details to pay.',
         ],
         'extra_locations_line' => 'Additional branches (:count)',
+        'extra_locations_line_periods' => 'Additional branches (:count, :period)',
+        'years_extend_help' => 'The selected time is added to your current end date, :date.',
         'pay' => 'Pay securely with iyzico',
         'pay_amount' => 'Pay :amount',
         'trust' => [

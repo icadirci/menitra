@@ -9,8 +9,9 @@ use App\Models\PlanPrice;
 use App\Support\Money;
 
 /**
- * What one period costs for a tenant: the plan price plus each branch beyond
- * plans.included_locations at plan_prices.extra_location_amount.
+ * What $periods periods cost for a tenant: the plan price plus each branch
+ * beyond plans.included_locations at plan_prices.extra_location_amount, both
+ * multiplied by the number of periods (multi-year payments).
  */
 final readonly class BillingQuote
 {
@@ -22,5 +23,6 @@ final readonly class BillingQuote
         public Money $base,
         public Money $extra,
         public Money $total,
+        public int $periods = 1,
     ) {}
 }

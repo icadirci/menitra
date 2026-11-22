@@ -30,7 +30,8 @@ return [
 
     'errors' => [
         'not_allowed' => 'Şu anda ödeme yapılamıyor.',
-        'renewal_not_open' => 'Aboneliğiniz aktif. Bir sonraki dönemin ödemesini :date tarihinden itibaren yapabilirsiniz.',
+        'prepaid_limit' => 'Aboneliğiniz izin verilen en uzun süreye kadar önceden ödenmiş durumda. Süreyi :date tarihinden itibaren tekrar uzatabilirsiniz.',
+        'periods_not_allowed' => 'Bu ödemede en fazla :max yıl seçebilirsiniz.',
         'plan_not_allowed' => 'Bu paket için şu anda ödeme yapılamıyor. Paket değişikliği ücretli dönem bitince yapılabilir.',
         'billing_profile_missing' => 'Ödemeden önce fatura bilgilerinizi girin.',
         'too_many_attempts' => 'Çok fazla ödeme denemesi yapıldı. Lütfen bir süre sonra tekrar deneyin.',
@@ -41,23 +42,24 @@ return [
 
     'actions' => [
         'pay' => 'Öde ve devam et',
-        'renew' => 'Aboneliği yenile',
+        'extend' => 'Süreyi uzat',
         'choose_paid_plan' => 'Ücretli pakete geç',
         'upgrade' => 'Paketi yükselt',
         'billing_details' => 'Fatura bilgileri',
         'back_to_subscription' => 'Aboneliğe dön',
     ],
 
-    'subscription_note' => 'Ödemeler iyzico güvencesiyle 3D Secure ile alınır; kart bilgileriniz Restano\'da saklanmaz. Her ödeme bir dönemi (aylık veya yıllık) kapsar ve otomatik çekim yapılmaz; dönem bitmeden size hatırlatma e-postası göndeririz.',
+    'subscription_note' => 'Ödemeler iyzico güvencesiyle 3D Secure ile alınır; kart bilgileriniz Restano\'da saklanmaz. Her ödeme bir ayı ya da bir veya birkaç yılı kapsar, süreyi istediğiniz zaman uzatabilirsiniz ve otomatik çekim yapılmaz; süre bitmeden size hatırlatma e-postası göndeririz.',
 
     'checkout' => [
         'title' => 'Ödeme',
+        'title_active' => 'Süreyi uzat veya paketi yükselt',
         'title_upgrade' => 'Paketi yükselt',
         'subheading' => 'Paketinizi ve ödeme döneminizi seçin; ödemeyi iyzico güvencesiyle tamamlayın.',
         'active' => [
             'title' => 'Aktif aboneliğiniz: :plan · :interval · :date tarihine kadar',
-            'upgrade_help' => 'Üst pakete geçerseniz yeni paketiniz ödemeden hemen sonra açılır; yalnızca kalan günler için fark ödersiniz.',
-            'renewal_open' => 'Mevcut paketinizi şimdi yenileyebilirsiniz; yeni dönem mevcut dönemin bitişinden başlar.',
+            'upgrade_help' => 'Üst pakete geçerseniz yeni paketiniz ödemeden hemen sonra açılır; yalnızca önceden ödenmiş kalan süreniz için fark ödersiniz.',
+            'extend_open' => 'Paketinizin süresini istediğiniz zaman uzatabilirsiniz; yeni süre mevcut bitiş tarihinin üzerine eklenir, kalan günleriniz kaybolmaz.',
         ],
         'badges' => [
             'current' => 'Mevcut paket',
@@ -87,17 +89,19 @@ return [
             'interval' => 'Ödeme dönemi',
             'plan' => 'Paket',
             'plan_help' => 'İşletmenize uygun paketi seçin. Tüm paketlerde verileriniz korunur, istediğiniz zaman yükseltebilirsiniz.',
-            'plan_active' => 'Mevcut paketinizi yenileyebilir ya da üst pakete hemen geçebilirsiniz.',
+            'plan_active' => 'Mevcut paketinizin süresini uzatabilir ya da üst pakete hemen geçebilirsiniz.',
             'summary' => 'Sipariş özeti',
             'billing' => 'Fatura bilgileri',
         ],
         'fields' => [
             'terms' => 'Ödemenin tek seferlik bir dönem için alındığını ve',
             'terms_link' => 'kullanım koşullarını okuyup kabul ettiğimi onaylıyorum.',
+            'years' => 'Kaç yıllık ödemek istiyorsunuz?',
             'terms_required' => 'Devam etmek için onay kutusunu işaretleyin.',
         ],
         'summary' => [
             'base' => 'Paket ücreti',
+            'base_years' => 'Paket ücreti (:period)',
             'extra' => 'Ek şubeler',
             'extra_value' => ':count şube · :amount',
             'total' => 'Toplam',
@@ -115,6 +119,8 @@ return [
             'missing' => 'Ödeme yapabilmek için fatura bilgilerinizi ekleyin.',
         ],
         'extra_locations_line' => 'Ek şube (:count adet)',
+        'extra_locations_line_periods' => 'Ek şube (:count adet, :period)',
+        'years_extend_help' => 'Seçtiğiniz süre mevcut bitiş tarihiniz olan :date tarihinin üzerine eklenir.',
         'pay' => 'iyzico ile güvenli öde',
         'pay_amount' => ':amount öde',
         'trust' => [

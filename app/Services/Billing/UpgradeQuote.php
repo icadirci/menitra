@@ -9,10 +9,11 @@ use App\Support\Money;
 use Carbon\CarbonImmutable;
 
 /**
- * A mid-period upgrade: the new plan's price for the remaining part of the
- * running period minus the unused value of what was paid for it.
+ * A mid-period upgrade: the new plan's price for all the remaining prepaid
+ * time (several stacked or multi-year periods included) minus the unused
+ * value of what was paid for it, both at the rate of one period ("unit").
  *
- *   charge = full × remaining / period      credit = paid × remaining / period
+ *   charge = full × remaining / unit      credit = paid per unit × remaining / unit
  *   total  = max(charge − credit, minimum)
  */
 final readonly class UpgradeQuote

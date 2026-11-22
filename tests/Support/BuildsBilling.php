@@ -73,10 +73,10 @@ trait BuildsBilling
         });
     }
 
-    protected function startCheckout(Tenant $tenant, Plan $plan, BillingInterval $interval = BillingInterval::Monthly): Payment
+    protected function startCheckout(Tenant $tenant, Plan $plan, BillingInterval $interval = BillingInterval::Monthly, int $periods = 1): Payment
     {
-        return $this->inTenant($tenant, function () use ($tenant, $plan, $interval): Payment {
-            app(CheckoutService::class)->start($tenant, $this->ownerOf($tenant), $plan, $interval, '85.34.78.112', 'tr');
+        return $this->inTenant($tenant, function () use ($tenant, $plan, $interval, $periods): Payment {
+            app(CheckoutService::class)->start($tenant, $this->ownerOf($tenant), $plan, $interval, '85.34.78.112', 'tr', $periods);
 
             return Payment::query()->latest('id')->firstOrFail();
         });

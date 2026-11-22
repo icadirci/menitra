@@ -6,9 +6,9 @@ namespace App\Filament\App\Pages;
 
 use App\Enums\PaymentStatus;
 use App\Enums\PlanFeature;
-use App\Enums\SubscriptionStatus;
 use App\Filament\App\Navigation\AppNavigationGroup;
 use App\Models\Payment;
+use App\Models\Plan;
 use App\Models\Subscription;
 use App\Models\Tenant;
 use App\Models\User;
@@ -86,23 +86,29 @@ class ViewSubscription extends Page implements HasTable
 
     protected function getHeaderActions(): array
     {
-        $eligibility = app(CheckoutService::class)->eligibility();
+        $checkout = app(CheckoutService::class);
+        $eligibility = $checkout->eligibility();
+        // The upgrade button preselects the first higher plan; the extension keeps the current one.
+        $upgradePlan = $eligibility->canUpgrade
+            ? collect($checkout->payablePlans($eligibility))->first(fn (Plan $plan): bool => $checkout->isUpgrade($eligibility, $plan))
+            : null;
 
         return [
             Action::make('upgrade')
                 ->label(__('billing.actions.upgrade'))
                 ->icon(Heroicon::OutlinedArrowTrendingUp)
-                ->url(Checkout::getUrl())
-                ->visible($eligibility->canUpgrade && ! $eligibility->allowed),
+                ->url(Checkout::getUrl($upgradePlan !== null ? ['plan' => $upgradePlan->code] : []))
+                ->color($eligibility->allowed ? 'gray' : 'primary')
+                ->visible($upgradePlan !== null),
             Action::make('pay')
                 ->label(match (true) {
                     $eligibility->subscription?->isComplimentary() === true => __('billing.actions.choose_paid_plan'),
-                    $eligibility->subscription?->status === SubscriptionStatus::Active => __('billing.actions.renew'),
+                    $eligibility->isActivePeriod() => __('billing.actions.extend'),
                     default => __('billing.actions.pay'),
                 })
-                ->icon(Heroicon::OutlinedCreditCard)
-                ->url(Checkout::getUrl())
-                ->color($eligibility->canUpgrade && ! $eligibility->allowed ? 'gray' : 'primary')
+                ->icon($eligibility->isActivePeriod() ? Heroicon::OutlinedCalendarDays : Heroicon::OutlinedCreditCard)
+                ->url(Checkout::getUrl($eligibility->isActivePeriod() && $eligibility->subscription?->plan !== null ? ['plan' => $eligibility->subscription->plan->code] : []))
+                ->color($eligibility->allowed ? 'primary' : 'gray')
                 ->disabled(! $eligibility->allowed)
                 ->tooltip($eligibility->allowed ? null : __('billing.errors.'.($eligibility->reason ?? 'not_allowed'), [
                     'date' => $eligibility->opensAt?->setTimezone('Europe/Istanbul')->locale(app()->getLocale())->isoFormat('LL'),
@@ -129,7 +135,7 @@ class ViewSubscription extends Page implements HasTable
                     ->formatStateUsing(fn (Payment $record): string => $this->date($record->paid_at ?? $record->failed_at ?? $record->created_at->toImmutable())),
                 TextColumn::make('plan_id')
                     ->label(__('billing.history.columns.plan'))
-                    ->formatStateUsing(fn (Payment $record): string => ($record->plan?->translate()?->name ?? $record->plan?->code).' · '.$record->interval->label()),
+                    ->formatStateUsing(fn (Payment $record): string => ($record->plan?->translate()?->name ?? $record->plan?->code).' · '.$record->periodLabel()),
                 TextColumn::make('amount')
                     ->label(__('billing.history.columns.amount'))
                     ->formatStateUsing(fn (Payment $record): string => $record->money()->format()),

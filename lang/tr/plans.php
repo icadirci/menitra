@@ -54,6 +54,11 @@ return [
         'yearly' => 'Yıllık',
     ],
 
+    'interval_counts' => [
+        'monthly' => '{1} 1 ay|[2,*] :count ay',
+        'yearly' => '{1} 1 yıl|[2,*] :count yıl',
+    ],
+
     'statuses' => [
         'trialing' => 'Deneme',
         'active' => 'Aktif',

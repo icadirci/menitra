@@ -66,7 +66,7 @@ class PaymentsRelationManager extends RelationManager
                     ->formatStateUsing(fn (Payment $record): string => $record->money()->format()),
                 TextColumn::make('interval')
                     ->label(__('admin.tenants.payments.interval'))
-                    ->formatStateUsing(fn (Payment $record): string => $record->interval->label()),
+                    ->formatStateUsing(fn (Payment $record): string => $record->periodLabel()),
                 TextColumn::make('receipt_number')
                     ->label(__('admin.tenants.payments.receipt'))
                     ->placeholder('—'),

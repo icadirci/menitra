@@ -13,9 +13,13 @@ return [
     // Payment provider adapter bound to App\Contracts\PaymentGateway.
     'gateway' => 'iyzico',
 
-    // An active subscription can be paid (extended) only this many days
-    // before its period ends, so a period can't be prepaid indefinitely.
-    'renewal_window_days' => 30,
+    // A yearly payment covers 1 to this many years at once.
+    'max_years_per_payment' => 5,
+
+    // A running subscription can be extended at any time, but a paid period
+    // may reach at most this many years (plus one month of slack for the
+    // running trial or month) beyond today.
+    'max_prepaid_years' => 5,
 
     // A checkout that is still unpaid after this many minutes is marked
     // expired by the reconciliation command (the iyzico token is no longer usable).

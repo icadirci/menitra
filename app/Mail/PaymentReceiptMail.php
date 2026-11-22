@@ -36,6 +36,7 @@ class PaymentReceiptMail extends Mailable implements ShouldQueue
         public readonly CarbonImmutable $periodEndsAt,
         public readonly CarbonImmutable $paidAt,
         public readonly string $url,
+        public readonly int $periodCount = 1,
     ) {}
 
     public function envelope(): Envelope
@@ -54,7 +55,7 @@ class PaymentReceiptMail extends Mailable implements ShouldQueue
             text: 'mail.payment-receipt-text',
             with: [
                 'amount' => Money::fromMinor($this->amountMinor, $this->currency)->format(),
-                'intervalLabel' => $this->interval->label(),
+                'intervalLabel' => $this->interval->periodLabel($this->periodCount),
                 'period' => $date($this->periodStartsAt).' – '.$date($this->periodEndsAt),
                 'paidOn' => $date($this->paidAt),
             ],
