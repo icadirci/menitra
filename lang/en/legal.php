@@ -29,7 +29,7 @@ return [
             [
                 'title' => '1. Data controller',
                 'paragraphs' => [
-                    'The data controller is [company name], [address], [registration / tax number] ("Menitra").',
+                    'The data controller is Menitra.',
                     'Content that businesses publish in their QR menus (products, prices, business details) is the responsibility of the business concerned.',
                 ],
             ],
@@ -74,7 +74,7 @@ return [
         'title' => 'Terms of Use',
         'description' => 'Terms of use of the Menitra QR menu platform: accounts, trial and subscription, content responsibility and limits of the service.',
         'updated' => '15 November 2026',
-        'intro' => 'These terms govern the use by businesses of the QR menu platform provided by [company name] ("Menitra"). By creating an account you accept these terms.',
+        'intro' => 'These terms govern the use by businesses of the QR menu platform provided by Menitra. By creating an account you accept these terms.',
         'sections' => [
             [
                 'title' => '1. The service',

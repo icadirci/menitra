@@ -28,7 +28,7 @@ return [
             [
                 'title' => '1. Veri sorumlusu',
                 'paragraphs' => [
-                    'Veri sorumlusu, [şirket unvanı] ([adres], [MERSİS / vergi numarası]) olup bu metinde "Menitra" olarak anılır.',
+                    'Veri sorumlusu Menitra\'dır.',
                     'İşletmelerin QR menülerinde yayımladıkları içerik (ürünler, fiyatlar, işletme bilgileri) ilgili işletmenin sorumluluğundadır.',
                 ],
             ],
@@ -73,7 +73,7 @@ return [
         'title' => 'Kullanım Koşulları',
         'description' => 'Menitra QR menü platformunun kullanım koşulları: hesap, deneme ve abonelik, içerik sorumluluğu ve hizmetin sınırları.',
         'updated' => '15 Kasım 2026',
-        'intro' => 'Bu koşullar, [şirket unvanı] ("Menitra") tarafından sunulan QR menü platformunun işletmeler tarafından kullanımını düzenler. Hesap oluşturarak bu koşulları kabul etmiş olursunuz.',
+        'intro' => 'Bu koşullar, Menitra tarafından sunulan QR menü platformunun işletmeler tarafından kullanımını düzenler. Hesap oluşturarak bu koşulları kabul etmiş olursunuz.',
         'sections' => [
             [
                 'title' => '1. Hizmet',
