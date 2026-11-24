@@ -41,7 +41,42 @@ Compose takes the database and Redis credentials from the same `.env` that Larav
 
 > **Never run `docker compose -f docker-compose.prod.yml down -v`**: it deletes the database.
 
-TLS, HSTS and proxy headers aren't set up yet (separate proxy / HTTPS work). Until a TLS proxy sits in front of nginx, the generated URLs use `http://`.
+TLS ends at the **host's nginx** (the server already routes other projects with it), which proxies `menitra.com` and `*.menitra.com` to the Compose webserver on `127.0.0.1:${HTTP_PORT}`. See [Reverse proxy and HTTPS](#reverse-proxy-and-https).
+
+### Reverse proxy and HTTPS
+
+In `.env`: `HTTP_PORT=127.0.0.1:37100` (any free port, localhost only, so TLS can't be bypassed) and `TRUSTED_PROXIES` set to the Docker bridge the proxied requests come from (default `172.16.0.0/12`; the exact gateway is in `docker network inspect restano_default`). Laravel trusts only `X-Forwarded-For`, `-Proto` and `-Port` from those addresses; `X-Forwarded-Host` is ignored, the `Host` header decides the tenant.
+
+Host nginx server block (certificate paths are examples; `*.menitra.com` needs a wildcard certificate, i.e. certbot with your DNS provider's plugin, DNS-01):
+
+```nginx
+server {
+    listen 80;
+    server_name menitra.com *.menitra.com;
+    return 301 https://$host$request_uri;
+}
+
+server {
+    listen 443 ssl;
+    http2 on;
+    server_name menitra.com *.menitra.com;
+
+    ssl_certificate     /etc/letsencrypt/live/menitra.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/menitra.com/privkey.pem;
+
+    client_max_body_size 8M;   # same as the container nginx; the default 1M breaks uploads
+
+    location / {
+        proxy_pass http://127.0.0.1:37100;
+        proxy_set_header Host              $host;   # required: tenant resolution and the container's server_name
+        proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-Port  $server_port;
+    }
+}
+```
+
+Don't add HSTS here: the app sends it on HTTPS responses (`SecurityHeaders`). Check after the first deploy: `curl -sI https://menitra.com/up` shows `Strict-Transport-Security`, and links in mails start with `https://menitra.com`.
 
 ### First deploy
 

@@ -45,9 +45,9 @@ Tables are defined in [database.md](database.md#subscriptions).
 
 | Code | Name | Monthly | Yearly | Differences |
 |---|---|---|---|---|
-| `starter` (registration default) | Başlangıç / Starter | ₺300 | ₺2.400 | No `premium_themes`: only the basic themes `classic` and `minimal` |
-| `pro` (featured) | Profesyonel / Professional | ₺500 | ₺4.000 | All themes |
-| `multi-branch` | Çoklu Şube / Multi-Branch | ₺700 | ₺5.600 | All themes; unlimited branches, 2 included, each further branch +₺200/month (+₺1.600/year); 10 menus, 500 items, 3 languages, 50 QR codes, 15 members |
+| `starter` (registration default) | Başlangıç / Starter | ₺299 | ₺2.392 | No `premium_themes`: only the basic themes `classic` and `minimal` |
+| `pro` (featured) | Profesyonel / Professional | ₺499 | ₺3.992 | All themes |
+| `multi-branch` | Çoklu Şube / Multi-Branch | ₺699 | ₺5.592 | All themes; unlimited branches, 2 included, each further branch +₺200/month (+₺1.600/year); 10 menus, 500 items, 3 languages, 50 QR codes, 15 members |
 
 **New tenants:** registration always creates a `trialing` subscription for the default plan in the same transaction (`SubscriptionService::startTrial()`, with a `trial_started` event), so a new tenant's plan limits apply immediately. Registration fails as a whole if the default plan is missing.
 

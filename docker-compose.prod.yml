@@ -99,7 +99,7 @@ services:
             - '.:/application:ro'
             - './phpdocker/nginx/nginx.prod.conf.template:/etc/nginx/templates/default.conf.template:ro'
         ports:
-            # TLS termination is out of scope for now (launch plan: proxy / HTTPS).
+            # TLS ends at the host's nginx: set HTTP_PORT=127.0.0.1:<port> in .env (README).
             - '${HTTP_PORT:-80}:80'
         depends_on:
             - php-fpm

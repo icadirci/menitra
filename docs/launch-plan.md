@@ -12,7 +12,9 @@ Oturum kuralları:
 
 **Ödeme (2026-11-18, yapıldı):** iyzico Checkout Form ile dönemlik manuel ödeme, kayıtta "hemen öde", makbuz, hatırlatma mailleri, webhook ve mutabakat; ayrıntılar [subscriptions.md § Payments](architecture/subscriptions.md#payments). Canlıya çıkış için kullanıcı kontrol listesi orada.
 
-**Kapsam dışı (ayrı iş):** otomatik tekrarlı çekim, kıst hesabı, e-Arşiv entegrasyonu, proxy / HTTPS (`trustProxies`, SSL sonlandırma, HSTS).
+**Kapsam dışı (ayrı iş):** otomatik tekrarlı çekim, kıst hesabı, e-Arşiv entegrasyonu.
+
+**Proxy / HTTPS (2026-11-23):** TLS sunucudaki host nginx'te sonlanıyor (kullanıcı kuruyor). Uygulama tarafı yapıldı: `config/trustedproxy.php` (`TRUSTED_PROXIES`), `bootstrap/app.php` sadece `X-Forwarded-For/-Proto/-Port`'a güveniyor (Host'a değil), `.env.production.example` → `HTTP_PORT=127.0.0.1:37100`. Host nginx örneği README § Reverse proxy and HTTPS.
 
 ## Durum
 

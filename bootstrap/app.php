@@ -9,6 +9,7 @@ use Illuminate\Contracts\Auth\Middleware\AuthenticatesRequests;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Sentry\Laravel\Integration as Sentry;
 use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
@@ -33,6 +34,15 @@ return Application::configure(basePath: dirname(__DIR__))
         // signed-in users hitting `guest` routes (register, password reset) go to /app.
         $middleware->redirectGuestsTo(fn () => route('login'));
         $middleware->redirectUsersTo('/app');
+
+        // Reverse proxy (TLS on the host's nginx): the trusted addresses come
+        // from config/trustedproxy.php (TRUSTED_PROXIES). Only client IP,
+        // scheme and port are taken from the proxy; X-Forwarded-Host is never
+        // trusted, so the host stays the one nginx's server_name allowed and
+        // tenant resolution can't be steered by a forwarded header.
+        $middleware->trustProxies(headers: Request::HEADER_X_FORWARDED_FOR
+            | Request::HEADER_X_FORWARDED_PROTO
+            | Request::HEADER_X_FORWARDED_PORT);
 
         // Impersonation limits and deactivated accounts (launch plan Faz 8). The
         // panels list their own middleware and add both there too.

@@ -63,7 +63,7 @@ class PlanSeeder extends Seeder
                 // The registration default (config subscriptions.default_plan).
                 'code' => config('subscriptions.default_plan'),
                 'featured' => false,
-                'monthly' => 30_000,
+                'monthly' => 29_900,
                 'extra_location' => null,
                 'included_locations' => null,
                 'limits' => ['premium_themes' => 0],
@@ -75,7 +75,7 @@ class PlanSeeder extends Seeder
             [
                 'code' => 'pro',
                 'featured' => true,
-                'monthly' => 50_000,
+                'monthly' => 49_900,
                 'extra_location' => null,
                 'included_locations' => null,
                 'limits' => ['max_tables' => 30, 'waiter_call' => 1],
@@ -87,7 +87,7 @@ class PlanSeeder extends Seeder
             [
                 'code' => 'multi-branch',
                 'featured' => false,
-                'monthly' => 70_000,
+                'monthly' => 69_900,
                 'extra_location' => 20_000,
                 'included_locations' => 2,
                 'limits' => [
