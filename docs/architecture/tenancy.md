@@ -143,16 +143,17 @@ Livewire is used only by the panels, so its endpoints follow the panels:
 | `ResolveTenantFromMembership` / membership lookups | The tenant is derived from the user's verified membership |
 | Commands and jobs implementing `TenantAgnostic` | Cross-tenant maintenance, e.g. subscription lifecycle, payment reconciliation (`billing:reconcile-payments`) and payment reminders (`billing:send-reminders`); they only find tenant ids and dispatch one tenant-scoped job per tenant |
 | `TenantRegistrationService` | Creates the tenant, then sets the context for the remaining inserts and restores the previous context afterwards |
-| **Admin area** (launch plan Faz 8): `app/Filament/Admin/Resources/Tenants/**` and `app/Services/Admin/**` (`TenantInspector`) | Platform management must list and inspect every tenant. Rules below |
+| **Admin area** (launch plan Faz 8): `app/Filament/Admin/Resources/Tenants/**` and `app/Services/Admin/**` (`TenantInspector`, `ShopOrderAdminService`) | Platform management must list and inspect every tenant. Rules below |
 
 **Admin bypass rules** (decided 2026-11-16). The admin area is the only place where a platform user reads tenant-owned rows without a `TenantContext`:
 
 - Reached only through the `admin` panel (`platform_role`) and a resource policy; never from `/app`, public routes, jobs or commands.
-- **Read-only.** A bypassed query never writes. Admin actions change only non-scoped models (`Tenant`, `User`, `TenantMembership`, `admin_audit_events`) through services (`TenantSlugService`, `TenantStatus` changes, …); state changes of subscriptions still go only through `SubscriptionService`.
+- **Read-only.** A bypassed query never writes (shop orders: see below). Admin actions change only non-scoped models (`Tenant`, `User`, `TenantMembership`, `admin_audit_events`) through services (`TenantSlugService`, `TenantStatus` changes, …); state changes of subscriptions still go only through `SubscriptionService`.
 - **Allow-listed models:** `Location`, `Subscription`, `SubscriptionEvent` (members are `TenantMembership`, which isn't scoped). Menu content, QR codes, theme settings and media are not read across tenants in `/admin`.
 - Every query on one tenant constrains `where('tenant_id', $tenant->id)` explicitly; cross-tenant lists (e.g. subscription status per tenant in the tenant table) are eager-loaded for the listed tenants only.
 - `TenantScopeBypassTest` allows these two path prefixes; any bypass elsewhere still fails. Impersonation doesn't need a bypass: the impersonated user goes through the normal `/app` membership resolution.
 - As built: `TenantInspector` (live subscription; `HasMany` relations over `Location` / `SubscriptionEvent` without the scope, constrained to one tenant, for read-only relation managers) and the tenant list's plain subqueries (live subscription status/plan, owner email). Relation counts over scoped models (`withCount('locations')`) would trip the fail-closed scope; count the pivot instead. `UserResource` needs no bypass (users, memberships and tenants aren't scoped).
+- **Shop orders (2026-11-25):** `ShopOrderAdminService` reads `ShopOrder`, `ShopOrderItem` and the order's `Payment` across tenants. A state change never goes through the bypass: the service authorizes (`ShopOrderPolicy::manage`), sets `TenantContext` to the order's own tenant, calls `ShopOrderService` through the normal scope, writes the audit event and restores the previous context.
 - **Former slugs:** `ResolvedTenantFactory::currentSlugFor()` reads `tenant_slug_redirects` (platform data, not tenant-scoped) only after resolution failed; `ResolveTenantFromRequest` answers 301 to the current slug. Not cached.
 
 ## Queue processing

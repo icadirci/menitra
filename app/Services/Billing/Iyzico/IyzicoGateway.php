@@ -36,7 +36,8 @@ use Iyzipay\Request\RetrieveCheckoutFormRequest;
  * - Every response is checked for status and its HMAC signature; an unsigned
  *   or mismatching answer is an exception, never a result.
  * - Only allow-listed, masked fields leave the adapter (CheckoutResult).
- * - Single payment, no installments, virtual basket items.
+ * - Single payment, no installments. Virtual basket items for plans, physical
+ *   ones with a shipping address for shop orders.
  */
 final class IyzicoGateway implements PaymentGateway
 {
@@ -69,17 +70,22 @@ final class IyzicoGateway implements PaymentGateway
         $iyzico->setPrice($request->amount->toDecimalString());
         $iyzico->setPaidPrice($request->amount->toDecimalString());
         $iyzico->setCurrency($this->currency($request->amount));
-        $iyzico->setPaymentGroup(PaymentGroup::SUBSCRIPTION);
+        $iyzico->setPaymentGroup($request->shipping === null ? PaymentGroup::SUBSCRIPTION : PaymentGroup::PRODUCT);
         $iyzico->setCallbackUrl($request->callbackUrl);
         $iyzico->setEnabledInstallments([1]);
         $iyzico->setBuyer($this->buyer($request));
-        $iyzico->setBillingAddress($this->address($request));
+        $iyzico->setBillingAddress($this->address($request->billing));
+
+        if ($request->shipping !== null) {
+            $iyzico->setShippingAddress($this->address(['name' => $request->shipping['recipient'] ?? null] + $request->shipping));
+        }
+
         $iyzico->setBasketItems(array_map(function ($line): BasketItem {
             $item = new BasketItem;
             $item->setId($line->id);
             $item->setName(Str::limit($line->name, 120, ''));
-            $item->setCategory1('Abonelik');
-            $item->setItemType(BasketItemType::VIRTUAL);
+            $item->setCategory1($line->physical ? 'QR stand' : 'Abonelik');
+            $item->setItemType($line->physical ? BasketItemType::PHYSICAL : BasketItemType::VIRTUAL);
             $item->setPrice($line->amount->toDecimalString());
 
             return $item;
@@ -266,10 +272,11 @@ final class IyzicoGateway implements PaymentGateway
         return $buyer;
     }
 
-    private function address(CheckoutRequest $request): Address
+    /**
+     * @param  array<string, string|null>  $billing
+     */
+    private function address(array $billing): Address
     {
-        $billing = $request->billing;
-
         $address = new Address;
         $address->setContactName((string) $billing['name']);
         $address->setCity((string) $billing['city']);

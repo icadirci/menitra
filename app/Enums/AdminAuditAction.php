@@ -22,6 +22,12 @@ enum AdminAuditAction: string
     case ImpersonationStarted = 'impersonation.started';
     case ImpersonationEnded = 'impersonation.ended';
 
+    case ShopOrderPreparing = 'shop_order.preparing';
+    case ShopOrderShipped = 'shop_order.shipped';
+    case ShopOrderDelivered = 'shop_order.delivered';
+    case ShopOrderCancelled = 'shop_order.cancelled';
+    case ShopOrderRefunded = 'shop_order.refunded';
+
     public function label(): string
     {
         return __('admin.audit.actions.'.str_replace('.', '_', $this->value));

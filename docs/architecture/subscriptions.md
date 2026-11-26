@@ -217,6 +217,8 @@ iyzico hosted payment page (3-D Secure, single payment, no installments)
 - **`/admin`:** a tenant's payments are listed read-only (`PaymentsRelationManager`, `TenantInspector`; no billing details). Refunds are made in the iyzico merchant panel.
 - **Adapter:** `App\Contracts\PaymentGateway` (`initializeCheckout`, `retrieveCheckout`, `parseWebhook`), implemented by `IyzicoGateway`, the only class that uses the SDK. The SDK's curl wrapper has no timeouts; `IyzicoCurl` adds 10 s connect / 30 s total and keeps TLS verification. Only masked card data (association, family, last four) leaves the adapter.
 
+- **Shop orders** (2026-11-25) use the same payments table, callback, webhook and reconciliation; such a payment has `shop_order_id` and no plan, never touches a subscription and is not in the subscription page's history. See [shop.md](shop.md).
+
 ### Production checklist (iyzico)
 
 1. Approved iyzico merchant account; production keys in `.env` (`IYZICO_API_KEY`, `IYZICO_SECRET_KEY`, `IYZICO_BASE_URL=https://api.iyzipay.com`); sandbox keys from sandbox-merchant.iyzipay.com for staging.

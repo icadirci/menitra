@@ -12,5 +12,6 @@ final readonly class CheckoutLine
         public string $id,
         public string $name,
         public Money $amount,
+        public bool $physical = false,
     ) {}
 }

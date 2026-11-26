@@ -113,10 +113,15 @@
                     <dl class="rst-rcpt__facts">
                         <dt>{{ __('billing.receipt.paid_at') }}</dt>
                         <dd>{{ $paidAt }}</dd>
-                        <dt>{{ __('billing.receipt.plan') }}</dt>
-                        <dd>{{ $plan }}</dd>
-                        <dt>{{ __('billing.receipt.period') }}</dt>
-                        <dd>{{ $period }}</dd>
+                        @if ($order)
+                            <dt>{{ __('shop.payment_label') }}</dt>
+                            <dd>{{ $order }}</dd>
+                        @else
+                            <dt>{{ __('billing.receipt.plan') }}</dt>
+                            <dd>{{ $plan }}</dd>
+                            <dt>{{ __('billing.receipt.period') }}</dt>
+                            <dd>{{ $period }}</dd>
+                        @endif
                         @if ($card)
                             <dt>{{ __('billing.receipt.card') }}</dt>
                             <dd>{{ $card }}</dd>

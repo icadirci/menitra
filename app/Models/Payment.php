@@ -15,7 +15,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
  * Tenant-owned record of one checkout (docs/architecture/subscriptions.md § Payments).
- * Written only by CheckoutService and PaymentProcessor, so nothing is
+ * Written only by CheckoutService, ShopCheckoutService and PaymentProcessor, so nothing is
  * mass-assignable. Amounts are kuruş and computed on the server.
  * billing_details is an encrypted snapshot of the billing profile.
  */
@@ -75,17 +75,22 @@ class Payment extends Model
         return $this->belongsTo(Subscription::class);
     }
 
+    public function shopOrder(): BelongsTo
+    {
+        return $this->belongsTo(ShopOrder::class);
+    }
+
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
     /**
-     * "Yearly", "3 years", "Monthly": the interval and how many periods it covers.
+     * "Yearly", "3 years", "Monthly" ("QR stand order" for shop orders): the interval and how many periods it covers.
      */
     public function periodLabel(): string
     {
-        return $this->interval->periodLabel(max(1, (int) $this->period_count));
+        return $this->interval === null ? __('shop.payment_label') : $this->interval->periodLabel(max(1, (int) $this->period_count));
     }
 
     public function money(): Money
@@ -111,6 +116,11 @@ class Payment extends Model
     public function isUpgrade(): bool
     {
         return $this->kind === PaymentKind::Upgrade;
+    }
+
+    public function isShopOrder(): bool
+    {
+        return $this->shop_order_id !== null;
     }
 
     public function isPending(): bool

@@ -185,6 +185,11 @@ return [
             'user_reactivated' => 'User reactivated',
             'impersonation_started' => 'Impersonation started',
             'impersonation_ended' => 'Impersonation ended',
+            'shop_order_preparing' => 'Shop order in preparation',
+            'shop_order_shipped' => 'Shop order shipped',
+            'shop_order_delivered' => 'Shop order delivered',
+            'shop_order_cancelled' => 'Shop order cancelled',
+            'shop_order_refunded' => 'Shop order refund recorded',
         ],
     ],
 

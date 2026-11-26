@@ -16,6 +16,7 @@ return [
         'renewal' => 'Renewal',
         'resubscription' => 'Resubscription',
         'upgrade' => 'Plan upgrade',
+        'shop_order' => 'QR stand order',
     ],
 
     'profile_types' => [
@@ -29,6 +30,10 @@ return [
     ],
 
     'errors' => [
+        'shop_closed' => 'The shop is closed right now.',
+        'shop_cart_empty' => 'There is nothing in your cart that can be bought.',
+        'shop_stock' => 'At most :max of :product can be ordered.',
+        'shop_price_changed' => 'Prices in your cart have changed. Check the new total and try again.',
         'not_allowed' => 'A payment is not possible right now.',
         'prepaid_limit' => 'Your subscription is already prepaid for the longest time allowed. You can extend it again from :date.',
         'periods_not_allowed' => 'You can pay for at most :max years in this payment.',

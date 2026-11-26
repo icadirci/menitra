@@ -78,6 +78,13 @@
 - Payment logs and Sentry get the payment's public id and tenant id only, never billing details or card data.
 - iyzico credentials only in `.env` (`IYZICO_*`); the SDK is used only inside `IyzicoGateway`, with timeouts (`IyzicoCurl`) and TLS verification on.
 
+## QR stand shop
+- Cart, checkout and orders are owner-only (`TenantPolicy::manageSettings`, also in `ShopCart` and `ShopCheckoutService`). QR codes are resolved through the tenant scope; composite FKs refuse another tenant's code.
+- Products, prices and shop settings are super-admin only; platform staff only read orders; fulfilment is super-admin only (`ShopOrderPolicy::manage`), in the order's own tenant context, and audited.
+- `shop_orders.delivery_address` is encrypted and hidden; it never enters mails, logs, Sentry or the audit log. Shown only to the owner and in the `/admin` order details.
+- The registration form's `stands[...]` is visitor input: unknown products and invalid quantities are ignored, and the cart belongs to the tenant of the new user's own membership.
+- Product images are stored only through `PlatformMedia` (`platform/shop/`); tracking links must be `https://`.
+
 ## Public forms
 - The contact form validates through `ContactRequest`, is rate limited per IP (`throttle:contact`) and has a honeypot; a filled honeypot answers like a success and sends nothing.
 - Contact messages are only mailed (queued), never stored. The mail renders visitor input escaped (HTML view + plain text, no Markdown) and uses it only as Reply-To, never as From; names with line breaks are rejected.

@@ -15,8 +15,10 @@ use App\Mail\PaymentReceiptMail;
 use App\Models\Payment;
 use App\Models\Plan;
 use App\Models\PlanPrice;
+use App\Models\ShopOrder;
 use App\Models\Subscription;
 use App\Models\Tenant;
+use App\Services\Shop\ShopOrderService;
 use App\Services\Subscription\SubscriptionService;
 use App\Support\Billing\CheckoutOutcome;
 use App\Support\Billing\CheckoutResult;
@@ -38,6 +40,7 @@ use Illuminate\Support\Facades\Mail;
  * - trialing                → [changePlan()] + activate(), period from the trial end
  * - grace / past due        → [changePlan()] + activate(), period from now
  * - active                  → renew(), period from the current period end (an extension)
+ * - a shop order's payment → no subscription change; ShopOrderService::markPaid()
  * - an upgrade payment      → upgrade(): the plan changes at once, the period stays
  */
 class PaymentProcessor
@@ -46,6 +49,7 @@ class PaymentProcessor
         private readonly TenantContext $context,
         private readonly PaymentGateway $gateway,
         private readonly SubscriptionService $subscriptions,
+        private readonly ShopOrderService $shopOrders,
     ) {}
 
     /**
@@ -101,6 +105,12 @@ class PaymentProcessor
             return;
         }
 
+        if ($payment->isShopOrder()) {
+            $this->succeedShopOrder($payment, $result);
+
+            return;
+        }
+
         $tenant = $this->context->tenant();
         $plan = Plan::query()->findOrFail($payment->plan_id);
         $price = PlanPrice::query()->findOrFail($payment->plan_price_id);
@@ -148,6 +158,31 @@ class PaymentProcessor
 
             DB::afterCommit(fn () => Mail::to($email)->locale($locale)->queue($mail));
         }
+    }
+
+    private function succeedShopOrder(Payment $payment, CheckoutResult $result): void
+    {
+        $now = CarbonImmutable::now();
+
+        $payment->forceFill([
+            'status' => PaymentStatus::Succeeded,
+            'provider_payment_id' => $result->paymentId,
+            'card_association' => $result->cardAssociation,
+            'card_family' => $result->cardFamily,
+            'card_last_four' => $result->cardLastFour,
+            'failure_code' => null,
+            'failure_message' => null,
+            'failed_at' => null,
+            'paid_at' => $now,
+            'receipt_number' => sprintf('RST-%s-%06d', $now->format('Y'), $payment->getKey()),
+        ])->save();
+
+        $this->shopOrders->markPaid($this->shopOrder($payment), $now);
+    }
+
+    private function shopOrder(Payment $payment): ShopOrder
+    {
+        return ShopOrder::query()->findOrFail($payment->shop_order_id);
     }
 
     /**
@@ -237,6 +272,10 @@ class PaymentProcessor
             'failure_message' => $message !== null ? mb_substr($message, 0, 255) : null,
             'failed_at' => CarbonImmutable::now(),
         ])->save();
+
+        if ($payment->isShopOrder()) {
+            $this->shopOrders->markPaymentFailed($this->shopOrder($payment));
+        }
     }
 
     private function expireIfStale(Payment $payment): void
@@ -245,6 +284,10 @@ class PaymentProcessor
 
         if ($payment->status === PaymentStatus::Pending && $payment->created_at->lessThanOrEqualTo($staleBefore)) {
             $payment->forceFill(['status' => PaymentStatus::Expired])->save();
+
+            if ($payment->isShopOrder()) {
+                $this->shopOrders->markPaymentFailed($this->shopOrder($payment));
+            }
         }
     }
 

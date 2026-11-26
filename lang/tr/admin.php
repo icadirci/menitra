@@ -185,6 +185,11 @@ return [
             'user_reactivated' => 'Kullanıcı aktifleştirildi',
             'impersonation_started' => 'Kullanıcı adına görüntüleme başladı',
             'impersonation_ended' => 'Kullanıcı adına görüntüleme bitti',
+            'shop_order_preparing' => 'Stand siparişi hazırlanıyor',
+            'shop_order_shipped' => 'Stand siparişi kargoya verildi',
+            'shop_order_delivered' => 'Stand siparişi teslim edildi',
+            'shop_order_cancelled' => 'Stand siparişi iptal edildi',
+            'shop_order_refunded' => 'Stand siparişi iadesi kaydedildi',
         ],
     ],
 

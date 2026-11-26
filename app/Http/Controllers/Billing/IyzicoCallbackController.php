@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Billing;
 
+use App\Filament\App\Pages\ShopOrders;
 use App\Filament\App\Pages\ViewSubscription;
 use App\Services\Billing\PaymentProcessor;
 use App\Services\Billing\PaymentTokenResolver;
@@ -21,7 +22,7 @@ use Throwable;
  * Nothing posted is trusted: the token only finds the payment
  * (PaymentTokenResolver), the result comes from the provider's API
  * (PaymentProcessor). The browser then goes (303, GET, cookies sent) to the
- * subscription page, which shows the payment's state through the normal
+ * subscription page (shop orders: the orders page), which shows the payment's state through the normal
  * panel checks.
  */
 class IyzicoCallbackController
@@ -48,7 +49,7 @@ class IyzicoCallbackController
         }
 
         return $this->noStore(redirect()->to(
-            ViewSubscription::getUrl(['payment' => $payment->public_id], panel: 'app', tenant: $tenant),
+            ($payment->isShopOrder() ? ShopOrders::class : ViewSubscription::class)::getUrl(['payment' => $payment->public_id], panel: 'app', tenant: $tenant),
             303,
         ));
     }

@@ -8,6 +8,7 @@ use App\Actions\Fortify\CreateNewUser;
 use App\Actions\Fortify\ResetUserPassword;
 use App\Http\Responses\RegisteredResponse;
 use App\Models\Plan;
+use App\Services\Shop\ShopCatalog;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
@@ -40,7 +41,12 @@ class FortifyServiceProvider extends ServiceProvider
                 ? Plan::query()->selectable()->where('code', $code)->with('translations')->first()
                 : null;
 
-            return view('auth.register', ['selectedPlan' => $plan]);
+            return view('auth.register', [
+                'selectedPlan' => $plan,
+                // QR stands offered next to the sign-up (empty while the shop is closed).
+                'standProducts' => app(ShopCatalog::class)->products(),
+                'selectedStand' => $request->query('stand'),
+            ]);
         });
         Fortify::requestPasswordResetLinkView(fn () => view('auth.forgot-password'));
         Fortify::resetPasswordView(fn (Request $request) => view('auth.reset-password', ['request' => $request]));

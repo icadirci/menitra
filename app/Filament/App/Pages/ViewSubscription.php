@@ -13,6 +13,7 @@ use App\Models\Subscription;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Services\Billing\CheckoutService;
+use App\Services\Shop\ShopCart;
 use App\Services\Subscription\FeatureGate;
 use App\Tenancy\TenantContext;
 use BackedEnum;
@@ -124,7 +125,7 @@ class ViewSubscription extends Page implements HasTable
     public function table(Table $table): Table
     {
         return $table
-            ->query(Payment::query()->with('plan.translations')->whereIn('status', [PaymentStatus::Succeeded, PaymentStatus::Failed]))
+            ->query(Payment::query()->with('plan.translations')->whereNull('shop_order_id')->whereIn('status', [PaymentStatus::Succeeded, PaymentStatus::Failed]))
             ->heading(__('billing.history.heading'))
             ->defaultSort('created_at', 'desc')
             ->paginated([10, 25])
@@ -214,7 +215,7 @@ class ViewSubscription extends Page implements HasTable
             return null;
         }
 
-        $payment = Payment::query()->where('public_id', $this->payment)->first();
+        $payment = Payment::query()->whereNull('shop_order_id')->where('public_id', $this->payment)->first();
 
         if ($payment === null) {
             return null;
@@ -225,6 +226,16 @@ class ViewSubscription extends Page implements HasTable
                 'date' => $this->date($payment->period_ends_at),
             ]))
             ->columnSpanFull();
+
+        // QR stands picked at registration wait in the cart until the plan is paid.
+        if ($payment->isSucceeded() && app(ShopCart::class)->quantity() > 0) {
+            $callout->actions([
+                Action::make('finishStandOrder')
+                    ->label(__('shop.actions.finish_order'))
+                    ->icon(Heroicon::OutlinedShoppingCart)
+                    ->url(ShopCheckout::getUrl()),
+            ]);
+        }
 
         return match ($payment->status) {
             PaymentStatus::Succeeded => $callout->success(),

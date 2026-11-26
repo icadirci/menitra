@@ -45,7 +45,7 @@ return [
         'static', 'cdn', 'assets', 'img', 'docs', 'help', 'support', 'status', 'blog',
         'billing', 'pricing', 'fiyatlar', 'features', 'ozellikler', 'contact', 'iletisim',
         'themes', 'temalar', 'privacy', 'gizlilik', 'terms', 'kullanim-kosullari', 'sitemap',
-        'login', 'register',
+        'login', 'register', 'qr-stand', 'qr-stands', 'shop', 'magaza',
     ],
 
     /*

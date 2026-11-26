@@ -16,7 +16,7 @@ final class MarketingUrl
      *
      * @var list<string>
      */
-    public const array PAGES = ['home', 'features', 'themes', 'pricing', 'contact', 'privacy', 'terms'];
+    public const array PAGES = ['home', 'features', 'themes', 'pricing', 'stands', 'contact', 'privacy', 'terms'];
 
     public static function to(string $page, ?string $locale = null, ?string $fragment = null): string
     {

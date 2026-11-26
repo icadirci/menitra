@@ -4,6 +4,7 @@ use App\Http\Controllers\Marketing\ContactController;
 use App\Http\Controllers\Marketing\HomeController;
 use App\Http\Controllers\Marketing\PricingController;
 use App\Http\Controllers\Marketing\SitemapController;
+use App\Http\Controllers\Marketing\StandsController;
 use App\Http\Controllers\Marketing\ThemeShowcaseController;
 use App\Http\Middleware\PreventSharedCaching;
 use App\Http\Middleware\SetMarketingLocale;
@@ -29,6 +30,7 @@ use Illuminate\Support\Facades\Route;
 $marketingPaths = [
     'features' => ['tr' => 'ozellikler', 'en' => 'features'],
     'pricing' => ['tr' => 'fiyatlar', 'en' => 'pricing'],
+    'stands' => ['tr' => 'qr-stand', 'en' => 'qr-stands'],
     'contact' => ['tr' => 'iletisim', 'en' => 'contact'],
     'themes' => ['tr' => 'temalar', 'en' => 'themes'],
     'privacy' => ['tr' => 'gizlilik', 'en' => 'privacy'],
@@ -46,6 +48,7 @@ Route::domain(config('tenancy.central_domain'))->group(function () use ($marketi
                 Route::get('/', HomeController::class)->name('home');
                 Route::view($marketingPaths['features'][$locale] ?? 'features', 'marketing.features')->name('features');
                 Route::get($marketingPaths['pricing'][$locale] ?? 'pricing', PricingController::class)->name('pricing');
+                Route::get($marketingPaths['stands'][$locale] ?? 'qr-stands', StandsController::class)->name('stands');
                 Route::get($marketingPaths['themes'][$locale] ?? 'themes', ThemeShowcaseController::class)->name('themes');
                 Route::get($marketingPaths['contact'][$locale] ?? 'contact', [ContactController::class, 'show'])->name('contact');
                 Route::post($marketingPaths['contact'][$locale] ?? 'contact', [ContactController::class, 'store'])

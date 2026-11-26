@@ -68,6 +68,35 @@
                             </label>
                         @endforeach
                     </fieldset>
+                    @if (($standProducts ?? collect())->isNotEmpty())
+                        <fieldset class="flex flex-col gap-2.5">
+                            <legend class="mb-1 text-[15px] font-semibold text-ink">{{ __('shop.register.title') }}</legend>
+                            <p class="text-[13px] text-muted">{{ __('shop.register.help') }}</p>
+                            @foreach ($standProducts as $product)
+                                @php($available = $product->availableQuantity())
+                                <div class="flex items-center gap-3 rounded-input border border-line-strong px-3 py-2.5">
+                                    @if ($product->imageUrl())
+                                        <img src="{{ $product->imageUrl() }}" alt="" width="56" height="56" loading="lazy" class="size-14 shrink-0 rounded-lg object-cover">
+                                    @endif
+                                    <label for="stand-{{ $product->public_id }}" class="flex min-w-0 flex-1 flex-col">
+                                        <span class="text-[15px] font-semibold text-ink">{{ $product->translate()?->name }}</span>
+                                        <span class="text-[13px] text-muted">{{ $available > 0 ? __('shop.unit_price', ['amount' => $product->price()->format(omitZeroFraction: true)]) : __('shop.sold_out') }}</span>
+                                    </label>
+                                    <input
+                                        id="stand-{{ $product->public_id }}"
+                                        type="number"
+                                        inputmode="numeric"
+                                        name="stands[{{ $product->public_id }}]"
+                                        value="{{ is_array(old('stands')) && is_scalar(old('stands')[$product->public_id] ?? null) ? old('stands')[$product->public_id] : (($selectedStand ?? null) === $product->public_id && $available > 0 ? 1 : 0) }}"
+                                        min="0"
+                                        max="{{ $available }}"
+                                        @disabled($available === 0)
+                                        class="h-11 w-20 rounded-input border border-line-strong px-2 text-center text-[15px]"
+                                    >
+                                </div>
+                            @endforeach
+                        </fieldset>
+                    @endif
                     <x-ui.terms-consent />
 
                     <x-ui.button size="lg" class="mt-1 w-full">{{ __('auth.register.submit') }}</x-ui.button>

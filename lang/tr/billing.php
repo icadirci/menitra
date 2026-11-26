@@ -16,6 +16,7 @@ return [
         'renewal' => 'Yenileme',
         'resubscription' => 'Yeniden abonelik',
         'upgrade' => 'Paket yükseltme',
+        'shop_order' => 'QR stand siparişi',
     ],
 
     'profile_types' => [
@@ -29,6 +30,10 @@ return [
     ],
 
     'errors' => [
+        'shop_closed' => 'Mağaza şu anda kapalı.',
+        'shop_cart_empty' => 'Sepetinizde satın alınabilecek ürün yok.',
+        'shop_stock' => ':product için en fazla :max adet sipariş verilebilir.',
+        'shop_price_changed' => 'Sepetinizdeki fiyatlar güncellendi. Yeni toplamı kontrol edip tekrar deneyin.',
         'not_allowed' => 'Şu anda ödeme yapılamıyor.',
         'prepaid_limit' => 'Aboneliğiniz izin verilen en uzun süreye kadar önceden ödenmiş durumda. Süreyi :date tarihinden itibaren tekrar uzatabilirsiniz.',
         'periods_not_allowed' => 'Bu ödemede en fazla :max yıl seçebilirsiniz.',

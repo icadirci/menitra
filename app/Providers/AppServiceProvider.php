@@ -8,6 +8,7 @@ use App\Contracts\PaymentGateway;
 use App\Http\Middleware\RestrictLivewireFileEndpoints;
 use App\Services\Billing\Iyzico\IyzicoGateway;
 use App\Services\Marketing\MarketingContent;
+use App\Services\Shop\ShopCatalog;
 use App\Support\ErrorPage;
 use App\Support\MarketingUrl;
 use Illuminate\Cache\RateLimiting\Limit;
@@ -26,6 +27,7 @@ class AppServiceProvider extends ServiceProvider
     {
         // Memoizes platform content (e.g. contact details) within one request.
         $this->app->scoped(MarketingContent::class);
+        $this->app->scoped(ShopCatalog::class);
 
         // Payment provider (config/billing.php, credentials in config/services.php).
         $this->app->singleton(PaymentGateway::class, fn (): PaymentGateway => match (config('billing.gateway')) {

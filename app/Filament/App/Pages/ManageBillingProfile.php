@@ -38,7 +38,7 @@ class ManageBillingProfile extends Page
     /** @var array<string, mixed>|null */
     public ?array $data = [];
 
-    /** "checkout": back to the payment page after saving. */
+    /** "checkout" / "shop": back to that payment page after saving. */
     #[Url]
     public ?string $return = null;
 
@@ -177,6 +177,10 @@ class ManageBillingProfile extends Page
 
         if ($this->return === 'checkout') {
             $this->redirect(Checkout::getUrl());
+        }
+
+        if ($this->return === 'shop') {
+            $this->redirect(ShopCheckout::getUrl());
         }
     }
 

@@ -15,6 +15,7 @@ This file holds the binding rules. The approved architecture (v0.2) is documente
 | Theme system | [themes.md](docs/architecture/themes.md) |
 | Redis caching and invalidation | [caching.md](docs/architecture/caching.md) |
 | Plans, subscription lifecycle, grace period | [subscriptions.md](docs/architecture/subscriptions.md) |
+| QR stand shop (products, cart, orders, delivery) | [shop.md](docs/architecture/shop.md) |
 | Filament panels, roles, panel authorization | [overview.md § Admin and business panels](docs/architecture/overview.md#admin-and-business-panels) |
 
 Area-specific rules live in [.claude/rules/](.claude/rules/) (backend, frontend, database, security).
@@ -28,6 +29,8 @@ Area-specific rules live in [.claude/rules/](.claude/rules/) (backend, frontend,
 - **Platform management in `/admin`** (launch plan Faz 8, built): tenant management (list, detail, suspend/unsuspend, slug change with 301 from former slugs, soft delete/restore by super admins only), user management (list, detail, resend verification, create platform users, platform roles, deactivation), an append-only `admin_audit_events` log and **limited impersonation**. `platform_staff` only reads and resends verification mails. Subscriptions and payments stay read-only in `/admin` (refunds in the iyzico merchant panel).
 
 **Waiter calls (requested 2026-11-18, built step by step):** table QR codes (`location_tables`, one code per table, `max_tables`: Başlangıç 0, Profesyonel 30, Çoklu Şube unlimited — **done**), a `waiter_call` plan feature (Profesyonel + Çoklu Şube) with one tenant-wide on/off switch on the theme/appearance page (`tenants.waiter_calls_enabled`, `WaiterCallService` — **done**; the feature stays `isAvailable() = false` until guests can call), then a signed short-lived table token passed in the redirect's URL fragment, a stateless throttled call endpoint (reasons: waiter, bill), a polling calls screen in `/app` scoped to the member's branches, and call records pruned after 90 days. See [menu-system.md § Waiter calls](docs/architecture/menu-system.md#waiter-calls).
+
+**QR stand shop (requested 2026-11-25, built):** super admins manage products, shipping and the shop switch in `/admin`; owners order QR stands printed with their codes at registration and in `/app` (cart, delivery address, separate iyzico payment); super admins fulfil the orders. See [shop.md](docs/architecture/shop.md).
 
 **Out of scope — do not build unless explicitly requested:**
 - CRUD modules (Filament resources) in `/admin` beyond the ones listed here. Exists: the admin panel infrastructure, its initial dashboard, and the **marketing site content resources** requested on 2026-11-15 — plans (prices, limits, translations; super admins only), marketing FAQ and testimonials (any platform role), and the **site settings page** (platform contact details: email, phone/WhatsApp, address, support hours, social links; super admins only). Tenant/user management and impersonation are in scope for launch (above).

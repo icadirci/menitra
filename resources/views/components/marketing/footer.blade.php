@@ -10,6 +10,7 @@
             ['label' => __('marketing.nav.features'), 'href' => MarketingUrl::to('features')],
             ['label' => __('marketing.nav.pricing'), 'href' => MarketingUrl::to('pricing')],
             ['label' => __('marketing.footer.themes'), 'href' => MarketingUrl::to('themes')],
+            ['label' => __('shop.marketing.nav'), 'href' => MarketingUrl::to('stands')],
         ],
         __('marketing.footer.account') => [
             ['label' => __('marketing.footer.register'), 'href' => route('register')],

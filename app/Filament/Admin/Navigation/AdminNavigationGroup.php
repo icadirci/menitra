@@ -10,6 +10,7 @@ enum AdminNavigationGroup implements HasLabel
 {
     case Platform;
     case Subscriptions;
+    case Shop;
     case Website;
 
     public function getLabel(): string
@@ -17,6 +18,7 @@ enum AdminNavigationGroup implements HasLabel
         return match ($this) {
             self::Platform => __('panels.admin.navigation.platform'),
             self::Subscriptions => __('panels.admin.navigation.subscriptions'),
+            self::Shop => __('shop.admin.navigation'),
             self::Website => __('panels.admin.navigation.website'),
         };
     }
