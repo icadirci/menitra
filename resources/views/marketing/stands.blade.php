@@ -26,13 +26,20 @@
             <ul class="mx-auto grid max-w-[1200px] grid-cols-[repeat(auto-fill,minmax(min(280px,100%),1fr))] gap-6">
                 @foreach ($products as $product)
                     <li class="flex flex-col overflow-hidden rounded-[24px] border border-line bg-white">
-                        @if ($product->imageUrl())
-                            <img src="{{ $product->imageUrl() }}" alt="{{ $product->translate()?->name }}" width="600" height="450" loading="lazy" class="aspect-[4/3] w-full object-cover">
-                        @endif
+                        <x-marketing.product-gallery :images="$product->imageUrls()" :alt="$product->translate()?->name ?? ''" />
                         <div class="flex flex-1 flex-col gap-3 p-6">
                             <h2 class="font-display text-xl font-bold tracking-[-0.02em]">{{ $product->translate()?->name }}</h2>
-                            @if ($product->translate()?->description)
-                                <p class="text-[15px] whitespace-pre-line text-muted">{{ $product->translate()->description }}</p>
+                            @if ($description = $product->descriptionHtml())
+                                <details class="group text-[15px] text-muted">
+                                    <summary class="cursor-pointer list-none [&::-webkit-details-marker]:hidden">
+                                        <span class="line-clamp-3 group-open:hidden">{{ $product->descriptionExcerpt() }}</span>
+                                        <span class="mt-2 inline-block font-semibold text-forest-700 group-open:mt-0">
+                                            <span class="group-open:hidden">{{ __('shop.actions.details') }}</span>
+                                            <span class="hidden group-open:inline">{{ __('shop.actions.close') }}</span>
+                                        </span>
+                                    </summary>
+                                    <div class="mt-3 space-y-3 leading-relaxed [&_a]:text-forest-700 [&_a]:underline [&_ol]:list-decimal [&_ol]:pl-5 [&_strong]:font-semibold [&_strong]:text-ink [&_ul]:list-disc [&_ul]:pl-5">{{ $description }}</div>
+                                </details>
                             @endif
                             @if ($product->is_personalized)
                                 <p class="text-sm font-semibold text-forest-700">{{ __('shop.personalized') }}</p>

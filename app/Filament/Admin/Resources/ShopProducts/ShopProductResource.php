@@ -15,6 +15,7 @@ use App\Models\ShopProduct;
 use BackedEnum;
 use Closure;
 use Filament\Actions\EditAction;
+use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
@@ -61,7 +62,22 @@ class ShopProductResource extends Resource
                 ->schema([
                     PlatformImageUpload::make('image_path')
                         ->label(__('shop.admin.products.image'))
+                        ->helperText(__('shop.admin.products.image_help'))
                         ->columnSpanFull(),
+                    PlatformImageUpload::make('gallery')
+                        ->label(__('shop.admin.products.gallery'))
+                        ->helperText(__('shop.admin.products.gallery_help', ['max' => ShopProduct::MAX_GALLERY_IMAGES]))
+                        ->multiple()
+                        ->reorderable()
+                        ->appendFiles()
+                        ->panelLayout('grid')
+                        ->maxFiles(ShopProduct::MAX_GALLERY_IMAGES)
+                        ->columnSpanFull()
+                        ->dehydrated(false)
+                        // Existing paths in the state are client-controllable: only this product's stored images pass.
+                        ->preventFilePathTampering(allowFilePathUsing: fn (string $file, ?ShopProduct $record): bool => $record?->images()->where('path', $file)->exists() ?? false)
+                        ->loadStateFromRelationshipsUsing(fn (FileUpload $component, ShopProduct $record) => $component->state($record->images->pluck('path')->all()))
+                        ->saveRelationshipsUsing(fn (ShopProduct $record, ?array $state) => $record->syncGallery(array_values($state ?? []))),
                     MoneyInput::make('price_amount')
                         ->label(__('shop.admin.products.price'))
                         ->helperText(__('shop.admin.settings.vat_help'))
@@ -94,8 +110,9 @@ class ShopProductResource extends Resource
                     ->maxLength(120),
                 Textarea::make('description')
                     ->label(__('shop.admin.products.description'))
-                    ->rows(4)
-                    ->maxLength(1000),
+                    ->helperText(__('shop.admin.products.description_help'))
+                    ->rows(8)
+                    ->maxLength(3000),
             ]),
         ]);
     }

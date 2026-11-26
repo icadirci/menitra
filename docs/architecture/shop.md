@@ -27,6 +27,7 @@ With "pay now" at registration the plan is paid first; the stands wait in the ca
 |---|---|---|
 | `shop_settings` | platform, single row | `is_enabled` (default closed), `shipping_amount`, `free_shipping_from`, delivery days, `notification_email` |
 | `shop_products` + translations | platform | price in kuruş (KDV included), image, `is_personalized`, `stock_quantity` (null = not tracked), `max_per_order`, `is_active`. Never deleted |
+| `shop_product_images` | platform | additional images (`path`, `sort_order`, max 8) after the cover in `shop_products.image_path`; written only by `ShopProduct::syncGallery()`, removed files are deleted after commit |
 | `shop_cart_items` | tenant | product + QR code + quantity; stored so a registration choice survives verification on another device |
 | `shop_orders` | tenant | amounts, encrypted `delivery_address`, status timestamps, tracking |
 | `shop_order_items` | tenant | one line per product and QR code; name, price, code and label are snapshots (`qr_code_id` becomes null when a code is deleted) |
@@ -44,7 +45,8 @@ With "pay now" at registration the plan is paid first; the stands wait in the ca
 - **Delivery address** is personal data: encrypted, hidden from serialization, never in mails or logs; sent to iyzico as the shipping address. Turkey only (81 provinces). Prefilled from the last order, else the billing address.
 - **Refunds** are made in the iyzico merchant panel; "record refund" only marks the order.
 - **Mails:** order received, shipped, cancelled (billing email, business default locale); new order (platform, no personal data).
-- Product images: `platform/shop/{uuid}.{ext}` on the `media` disk (`PlatformMedia`), same checks as tenant images.
+- Product descriptions (≤ 3000 chars) accept basic Markdown, rendered by `ShopProduct::descriptionHtml()` with raw HTML stripped and unsafe links dropped. Cards show a plain-text excerpt (`descriptionExcerpt()`); the full text is in the panel's details modal and in a `<details>` block on `/qr-stand`.
+- Product images (cover + gallery): `platform/shop/{uuid}.{ext}` on the `media` disk (`PlatformMedia`), same checks as tenant images.
 
 ## Not built
 

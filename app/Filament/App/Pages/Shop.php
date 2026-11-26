@@ -92,6 +92,31 @@ class Shop extends Page
         ];
     }
 
+    public function detailsAction(): Action
+    {
+        return Action::make('details')
+            ->label(__('shop.actions.details'))
+            ->link()
+            ->modalHeading(fn (array $arguments): string => $this->product($arguments)?->translate()?->name ?? __('shop.title'))
+            ->modalWidth('2xl')
+            ->modalContent(function (array $arguments) {
+                $product = $this->product($arguments);
+                abort_if($product === null, 404);
+
+                return view('filament.app.pages.shop-product', ['product' => $product]);
+            })
+            ->modalSubmitAction(false)
+            ->modalCancelActionLabel(__('shop.actions.close'))
+            ->extraModalFooterActions(fn (array $arguments): array => $this->product($arguments)?->availableQuantity() > 0
+                ? [
+                    Action::make('addFromDetails')
+                        ->label(__('shop.actions.add'))
+                        ->icon(Heroicon::OutlinedPlus)
+                        ->action(fn () => $this->replaceMountedAction('addToCart', ['product' => $arguments['product'] ?? null])),
+                ]
+                : []);
+    }
+
     public function addToCartAction(): Action
     {
         return Action::make('addToCart')

@@ -39,7 +39,7 @@ class ShopCatalog
     public function products(): Collection
     {
         return $this->products ??= $this->settings()->is_enabled
-            ? ShopProduct::query()->active()->with('translations')->orderBy('sort_order')->orderBy('id')->get()
+            ? ShopProduct::query()->active()->with(['translations', 'images'])->orderBy('sort_order')->orderBy('id')->get()
             : new Collection;
     }
 

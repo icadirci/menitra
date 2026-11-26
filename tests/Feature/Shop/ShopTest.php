@@ -12,6 +12,7 @@ use App\Exceptions\CrossTenantWriteException;
 use App\Filament\Admin\Pages\ManageShopSettings;
 use App\Filament\Admin\Resources\ShopOrders\Pages\ListShopOrders;
 use App\Filament\Admin\Resources\ShopProducts\Pages\CreateShopProduct;
+use App\Filament\Admin\Resources\ShopProducts\Pages\EditShopProduct;
 use App\Filament\App\Pages\Shop;
 use App\Filament\App\Pages\ShopCheckout;
 use App\Filament\App\Pages\ShopOrders;
@@ -33,10 +34,12 @@ use App\Models\Tenant;
 use App\Models\TenantMembership;
 use App\Models\User;
 use App\Services\Billing\PaymentProcessor;
+use App\Services\Media\PlatformMedia;
 use App\Services\Shop\ShopCart;
 use App\Services\Shop\ShopCatalog;
 use App\Services\Shop\ShopCheckoutService;
 use App\Tenancy\TenantContext;
+use Filament\Actions\Testing\TestAction;
 use Filament\Facades\Filament;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\QueryException;
@@ -46,7 +49,9 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+use InvalidArgumentException;
 use Livewire\Features\SupportTesting\Testable;
 use Livewire\Livewire;
 use Tests\Support\BuildsBilling;
@@ -547,5 +552,113 @@ class ShopTest extends TestCase
         $this->settings(['is_enabled' => false]);
         $this->get('/qr-stand')->assertOk()->assertDontSee('Ahşap stand')->assertSee('noindex', false);
         $this->get('/register')->assertOk()->assertDontSee('stands[', false);
+    }
+
+    public function test_cards_show_a_summary_and_details_render_safe_markdown(): void
+    {
+        $long = "Masanız için şık bir stand.\n\n**Ürün Özellikleri**\n- 3D baskı\n- [Bilgi](https://menitra.com) [kötü](javascript:alert(1))\n<script>alert(1)</script>\n\n".str_repeat('Uzun açıklama metni. ', 20).'SON-KELIME';
+        $this->stand->translations()->update(['description' => $long]);
+        $stand = $this->stand->fresh();
+
+        $html = $stand->descriptionHtml()->toHtml();
+        $this->assertStringContainsString('<strong>Ürün Özellikleri</strong>', $html);
+        $this->assertStringContainsString('<li>3D baskı</li>', $html);
+        $this->assertStringContainsString('href="https://menitra.com"', $html);
+        $this->assertStringNotContainsString('<script', $html);
+        $this->assertStringNotContainsString('javascript:', $html);
+
+        $excerpt = $stand->descriptionExcerpt();
+        $this->assertStringStartsWith('Masanız için şık bir stand. Ürün Özellikleri 3D baskı', $excerpt);
+        $this->assertStringNotContainsString('**', $excerpt);
+        $this->assertLessThanOrEqual(143, mb_strlen($excerpt));
+
+        $this->inPanel($this->owner, Shop::class)
+            ->assertSee('Masanız için şık bir stand.')
+            ->assertDontSee('SON-KELIME')
+            ->mountAction('details', ['product' => $stand->public_id])
+            ->assertMountedActionModalSee('SON-KELIME')
+            ->assertMountedActionModalSeeHtml('<strong>Ürün Özellikleri</strong>');
+
+        $this->inPanel($this->owner, Shop::class)
+            ->callAction([TestAction::make('details')->arguments(['product' => $stand->public_id]), TestAction::make('addFromDetails')])
+            ->assertActionMounted(TestAction::make('addToCart')->arguments(['product' => $stand->public_id]));
+
+        $this->get('/qr-stand')->assertOk()->assertSee('<strong>Ürün Özellikleri</strong>', false)->assertDontSee('<script>alert', false);
+    }
+
+    public function test_the_details_modal_finds_only_products_on_sale(): void
+    {
+        $hidden = $this->product(['is_active' => false]);
+
+        $this->inPanel($this->owner, Shop::class)
+            ->mountAction('details', ['product' => $hidden->public_id])
+            ->assertStatus(404);
+    }
+
+    public function test_a_super_admin_manages_additional_images_in_order(): void
+    {
+        Storage::fake('media');
+        $this->actingAs(User::factory()->superAdmin()->create());
+        Filament::setCurrentPanel('admin');
+
+        Livewire::test(CreateShopProduct::class)
+            ->fillForm([
+                'image_path' => UploadedFile::fake()->image('cover.png', 300, 200),
+                'gallery' => [UploadedFile::fake()->image('a.png', 300, 200), UploadedFile::fake()->image('b.jpg', 300, 200)],
+                'price_amount' => '100',
+                'max_per_order' => 10,
+                'translations' => ['tr' => ['name' => 'Galerili stand', 'description' => ''], 'en' => ['name' => '', 'description' => '']],
+            ])
+            ->call('create')
+            ->assertHasNoFormErrors();
+
+        $product = ShopProduct::query()->latest('id')->firstOrFail();
+        [$first, $second] = $product->images->pluck('path')->all();
+        $this->assertCount(2, $product->images);
+        Storage::disk('media')->assertExists([$first, $second]);
+        $this->assertCount(3, $product->imageUrls());
+        $this->assertSame(PlatformMedia::url($product->image_path), $product->imageUrls()[0]);
+
+        // Reorder and drop one: the removed file is deleted after commit.
+        $edit = Livewire::test(EditShopProduct::class, ['record' => $product->getKey()]);
+        $state = $edit->get('data.gallery');
+        $this->assertSame([$first, $second], array_values($state));
+        $keys = array_keys($state);
+        $edit->set('data.gallery', [$keys[1] => $second])->call('save')->assertHasNoFormErrors();
+
+        $product->refresh();
+        $this->assertSame([$second], $product->images->pluck('path')->all());
+        Storage::disk('media')->assertMissing($first);
+        Storage::disk('media')->assertExists($second);
+
+        // A path that isn't this product's own image is refused in the form.
+        $other = $this->stand->images()->create(['path' => 'platform/shop/'.Str::uuid().'.png']);
+        Livewire::test(EditShopProduct::class, ['record' => $product->getKey()])
+            ->set('data.gallery', [(string) Str::uuid() => $other->path])
+            ->call('save')
+            ->assertHasFormErrors(['gallery']);
+        $this->assertSame([$second], $product->fresh()->images->pluck('path')->all());
+        $this->assertTrue($other->fresh()->exists);
+
+        // Paths outside the shop directory and too many images are refused.
+        $this->assertThrows(fn () => $product->syncGallery(['tenants/other/items/x.png']), InvalidArgumentException::class);
+        $this->assertThrows(fn () => $product->syncGallery(array_map(fn (int $i): string => 'platform/shop/'.Str::uuid().'.png', range(0, ShopProduct::MAX_GALLERY_IMAGES))), InvalidArgumentException::class);
+        $this->assertSame([$second], $product->fresh()->images->pluck('path')->all());
+    }
+
+    public function test_shoppers_see_every_image_in_the_details_and_on_the_site(): void
+    {
+        $this->stand->update(['image_path' => 'platform/shop/'.Str::uuid().'.png']);
+        $this->stand->images()->create(['path' => $extra = 'platform/shop/'.Str::uuid().'.webp', 'sort_order' => 0]);
+        $this->app->forgetInstance(ShopCatalog::class);
+
+        $this->inPanel($this->owner, Shop::class)
+            ->assertSee(__('shop.gallery_count', ['count' => 1]))
+            ->mountAction('details', ['product' => $this->stand->public_id])
+            ->assertMountedActionModalSeeHtml(e(PlatformMedia::url($extra)));
+
+        $this->get('/qr-stand')->assertOk()
+            ->assertSee(PlatformMedia::url($extra), false)
+            ->assertSee('aria-roledescription="carousel"', false);
     }
 }
