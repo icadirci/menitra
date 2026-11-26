@@ -111,7 +111,16 @@ dc exec -u www-data -e HOME=/tmp php-fpm php artisan db:seed --force
 dc exec -u www-data -e HOME=/tmp php-fpm php artisan db:seed --class=ShowcaseSeeder --force
 ```
 
-The super admin needs an account first: register through the public site, then grant the role with `platform:assign-role` as above (`dc exec -u www-data -e HOME=/tmp php-fpm php artisan platform:assign-role ...`). `/admin` requires two-factor: at the first `/admin` login the platform user scans the QR code with an authenticator app (TOTP) and stores the recovery codes. Lost authenticator and recovery codes: `platform:reset-two-factor {email}`, after confirming the person's identity; they set it up again at the next login.
+Create the first super admin without a business (public registration always creates one):
+
+```bash
+# Asks for the name and the password (hidden, twice).
+dc exec -u www-data -e HOME=/tmp php-fpm php artisan platform:create-user admin@menitra.com
+# Non-interactive shell: generates a password and prints it once.
+dc exec -T -u www-data -e HOME=/tmp php-fpm php artisan platform:create-user admin@menitra.com --name="Platform Yöneticisi" --generate-password
+```
+
+Further platform users are created in `/admin` (Users); an existing account gets a role with `platform:assign-role {email} {role}`. `/admin` requires two-factor: at the first `/admin` login the platform user scans the QR code with an authenticator app (TOTP) and stores the recovery codes. Lost authenticator and recovery codes: `platform:reset-two-factor {email}`, after confirming the person's identity; they set it up again at the next login.
 
 ### Every deploy
 
