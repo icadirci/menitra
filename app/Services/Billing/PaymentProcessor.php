@@ -27,6 +27,7 @@ use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Validation\ValidationException;
 
 /**
  * Applies the provider's verified result of a checkout
@@ -42,6 +43,10 @@ use Illuminate\Support\Facades\Mail;
  * - active                  → renew(), period from the current period end (an extension)
  * - a shop order's payment → no subscription change; ShopOrderService::markPaid()
  * - an upgrade payment      → upgrade(): the plan changes at once, the period stays
+ *
+ * Bank transfers never reach the provider: approveBankTransfer() applies them
+ * the same way once a super admin confirmed the money (closeBankTransfer()
+ * rejects or cancels them).
  */
 class PaymentProcessor
 {
@@ -105,8 +110,67 @@ class PaymentProcessor
             return;
         }
 
+        $this->settle($payment, $result->paymentId, $result->cardAssociation, $result->cardFamily, $result->cardLastFour);
+    }
+
+    /**
+     * A super admin saw a bank transfer arrive (PaymentAdminService, in the
+     * payment's own TenantContext): applied exactly like a verified card
+     * payment, at most once. The transition is chosen from the live
+     * subscription now, so the period starts when the money is confirmed.
+     *
+     * @throws ValidationException when the transfer is no longer open
+     */
+    public function approveBankTransfer(Payment $payment): Payment
+    {
+        $this->ensureCurrentTenant($payment);
+
+        return DB::transaction(function () use ($payment): Payment {
+            $locked = Payment::query()->whereKey($payment->getKey())->lockForUpdate()->firstOrFail();
+
+            if (! $locked->isOpenBankTransfer()) {
+                throw ValidationException::withMessages(['payment' => __('billing.bank_transfer.errors.not_open')]);
+            }
+
+            $this->settle($locked, null, null, null, null);
+
+            return $locked;
+        });
+    }
+
+    /**
+     * Ends an open bank transfer without applying it: rejected by a super
+     * admin (the money didn't arrive) or cancelled by the owner before
+     * reporting it ($requireUnreported). A shop order's payment fails the order.
+     *
+     * @throws ValidationException when the transfer is no longer open (or already reported)
+     */
+    public function closeBankTransfer(Payment $payment, string $code, ?string $message, bool $requireUnreported = false): Payment
+    {
+        $this->ensureCurrentTenant($payment);
+
+        return DB::transaction(function () use ($payment, $code, $message, $requireUnreported): Payment {
+            $locked = Payment::query()->whereKey($payment->getKey())->lockForUpdate()->firstOrFail();
+
+            if (! $locked->isOpenBankTransfer() || ($requireUnreported && $locked->transfer_notified_at !== null)) {
+                throw ValidationException::withMessages(['payment' => __('billing.bank_transfer.errors.not_open')]);
+            }
+
+            $this->fail($locked, $code, $message);
+
+            return $locked;
+        });
+    }
+
+    /**
+     * Records a payment as succeeded and applies it: a shop order becomes
+     * paid, a plan payment goes through one SubscriptionService transition.
+     * Card details are null for bank transfers.
+     */
+    private function settle(Payment $payment, ?string $providerPaymentId, ?string $cardAssociation, ?string $cardFamily, ?string $cardLastFour): void
+    {
         if ($payment->isShopOrder()) {
-            $this->succeedShopOrder($payment, $result);
+            $this->succeedShopOrder($payment, $providerPaymentId, $cardAssociation, $cardFamily, $cardLastFour);
 
             return;
         }
@@ -116,7 +180,7 @@ class PaymentProcessor
         $price = PlanPrice::query()->findOrFail($payment->plan_price_id);
         [$subscription, $kind, $startsAt, $endsAt] = $payment->isUpgrade()
             ? $this->applyUpgrade($plan, $price, $payment)
-            : $this->applyToSubscription($tenant, $plan, $price, $payment, (string) $result->paymentId);
+            : $this->applyToSubscription($tenant, $plan, $price, $payment, (string) ($providerPaymentId ?? $payment->transfer_reference));
 
         $now = CarbonImmutable::now();
 
@@ -124,10 +188,10 @@ class PaymentProcessor
             'status' => PaymentStatus::Succeeded,
             'kind' => $kind,
             'subscription_id' => $subscription->getKey(),
-            'provider_payment_id' => $result->paymentId,
-            'card_association' => $result->cardAssociation,
-            'card_family' => $result->cardFamily,
-            'card_last_four' => $result->cardLastFour,
+            'provider_payment_id' => $providerPaymentId,
+            'card_association' => $cardAssociation,
+            'card_family' => $cardFamily,
+            'card_last_four' => $cardLastFour,
             'period_starts_at' => $startsAt,
             'period_ends_at' => $endsAt,
             'failure_code' => null,
@@ -160,16 +224,16 @@ class PaymentProcessor
         }
     }
 
-    private function succeedShopOrder(Payment $payment, CheckoutResult $result): void
+    private function succeedShopOrder(Payment $payment, ?string $providerPaymentId, ?string $cardAssociation, ?string $cardFamily, ?string $cardLastFour): void
     {
         $now = CarbonImmutable::now();
 
         $payment->forceFill([
             'status' => PaymentStatus::Succeeded,
-            'provider_payment_id' => $result->paymentId,
-            'card_association' => $result->cardAssociation,
-            'card_family' => $result->cardFamily,
-            'card_last_four' => $result->cardLastFour,
+            'provider_payment_id' => $providerPaymentId,
+            'card_association' => $cardAssociation,
+            'card_family' => $cardFamily,
+            'card_last_four' => $cardLastFour,
             'failure_code' => null,
             'failure_message' => null,
             'failed_at' => null,

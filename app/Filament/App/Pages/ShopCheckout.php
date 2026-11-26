@@ -4,11 +4,15 @@ declare(strict_types=1);
 
 namespace App\Filament\App\Pages;
 
+use App\Enums\PaymentMethod;
 use App\Exceptions\CheckoutNotAllowedException;
 use App\Filament\App\Support\PanelContext;
 use App\Filament\App\Support\ServiceCall;
+use App\Models\Payment;
 use App\Models\TenantBillingProfile;
+use App\Services\Billing\BankTransferService;
 use App\Services\Billing\BillingProfileService;
+use App\Services\Billing\PaymentMethods;
 use App\Services\Shop\DeliveryAddress;
 use App\Services\Shop\ShopCart;
 use App\Services\Shop\ShopCatalog;
@@ -32,6 +36,7 @@ use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Group;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Text;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\View;
 use Filament\Schemas\Schema;
 use Filament\Support\Enums\FontWeight;
@@ -61,6 +66,11 @@ class ShopCheckout extends Page
 
     private TenantBillingProfile|false|null $profile = false;
 
+    /** @var list<PaymentMethod>|null */
+    private ?array $methods = null;
+
+    private Payment|false|null $openTransfer = false;
+
     public static function canAccess(): bool
     {
         return Shop::canAccess();
@@ -84,21 +94,36 @@ class ShopCheckout extends Page
 
     public function mount(): void
     {
-        $this->form->fill([...app(DeliveryAddress::class)->prefill(), 'note' => null, 'terms' => false]);
+        $this->form->fill([...app(DeliveryAddress::class)->prefill(), 'note' => null, 'method' => ($this->methods()[0] ?? PaymentMethod::Card)->value, 'terms' => false]);
         $this->shownTotal = $this->quote()->total->minor;
     }
 
     public function form(Schema $schema): Schema
     {
-        $payable = app(ShopCatalog::class)->isOpen() && ! $this->quote()->isEmpty();
+        $openTransfer = $this->openTransfer();
+        $payable = app(ShopCatalog::class)->isOpen() && ! $this->quote()->isEmpty() && $this->methods() !== [] && $openTransfer === null;
 
         return $schema
             ->statePath('data')
             ->components([
+                Callout::make(__('billing.bank_transfer.open.title'))
+                    ->description(__('billing.bank_transfer.open.body_shop', ['reference' => $openTransfer?->transfer_reference]))
+                    ->warning()
+                    ->columnSpanFull()
+                    ->actions([
+                        Action::make('openTransfer')
+                            ->label(__('billing.bank_transfer.open.action'))
+                            ->url(fn (): ?string => $openTransfer !== null ? BankTransferPayment::getUrl(['payment' => $openTransfer->public_id]) : null),
+                    ])
+                    ->visible($openTransfer !== null),
+                Callout::make(__('billing.errors.method_unavailable'))
+                    ->warning()
+                    ->columnSpanFull()
+                    ->visible($openTransfer === null && $this->methods() === []),
                 Callout::make(app(ShopCatalog::class)->isOpen() ? __('shop.checkout.empty') : __('billing.errors.shop_closed'))
                     ->info()
                     ->columnSpanFull()
-                    ->visible(! $payable),
+                    ->visible(! app(ShopCatalog::class)->isOpen() || $this->quote()->isEmpty()),
                 Grid::make(['default' => 1, 'lg' => 3])
                     ->columnSpanFull()
                     ->visible($payable)
@@ -153,6 +178,7 @@ class ShopCheckout extends Page
                 $this->shownTotal,
                 (string) request()->ip(),
                 app()->getLocale(),
+                PaymentMethod::tryFrom((string) ($data['method'] ?? '')) ?? ($this->methods()[0] ?? PaymentMethod::Card),
             ));
         } catch (CheckoutNotAllowedException $exception) {
             $this->shownTotal = $this->quote()->total->minor;
@@ -239,21 +265,45 @@ class ShopCheckout extends Page
                 Text::make(fn (): ?string => app(ShopCatalog::class)->settings()->deliveryText())
                     ->icon(Heroicon::OutlinedTruck)
                     ->visible(app(ShopCatalog::class)->settings()->deliveryText() !== null),
+                Checkout::methodField($this->methods()),
                 Checkbox::make('terms')
                     ->label(new HtmlString(e(__('shop.checkout.terms')).' <a href="'.e(MarketingUrl::to('terms')).'" target="_blank" rel="noopener" class="underline">'.e(__('billing.checkout.fields.terms_link')).'</a>'))
                     ->accepted()
                     ->validationMessages(['accepted' => __('billing.checkout.fields.terms_required')]),
                 Actions::make([
                     Action::make('pay')
-                        ->label(fn (): string => __('billing.checkout.pay_amount', ['amount' => $this->quote()->total->format()]))
-                        ->icon(Heroicon::LockClosed)
+                        ->label(fn (Get $get): string => Checkout::isTransfer($get)
+                            ? __('billing.bank_transfer.pay_amount', ['amount' => $this->quote()->total->format()])
+                            : __('billing.checkout.pay_amount', ['amount' => $this->quote()->total->format()]))
+                        ->icon(fn (Get $get): Heroicon => Checkout::isTransfer($get) ? Heroicon::BuildingLibrary : Heroicon::LockClosed)
                         ->size('lg')
                         ->disabled($this->profile() === null)
                         ->submit('pay'),
                 ])->fullWidth(),
-                Text::make(__('billing.checkout.trust.secure'))->icon(Heroicon::OutlinedShieldCheck)->color('gray')->size(TextSize::Small),
-                Text::make(__('billing.checkout.trust.card'))->icon(Heroicon::OutlinedCreditCard)->color('gray')->size(TextSize::Small),
+                Text::make(__('billing.checkout.trust.secure'))->icon(Heroicon::OutlinedShieldCheck)->color('gray')->size(TextSize::Small)
+                    ->visible(fn (Get $get): bool => ! Checkout::isTransfer($get)),
+                Text::make(__('billing.checkout.trust.card'))->icon(Heroicon::OutlinedCreditCard)->color('gray')->size(TextSize::Small)
+                    ->visible(fn (Get $get): bool => ! Checkout::isTransfer($get)),
+                Text::make(__('billing.bank_transfer.trust'))->icon(Heroicon::OutlinedBuildingLibrary)->color('gray')->size(TextSize::Small)
+                    ->visible(fn (Get $get): bool => Checkout::isTransfer($get)),
             ]);
+    }
+
+    /**
+     * @return list<PaymentMethod>
+     */
+    private function methods(): array
+    {
+        return $this->methods ??= app(PaymentMethods::class)->enabled();
+    }
+
+    private function openTransfer(): ?Payment
+    {
+        if ($this->openTransfer === false) {
+            $this->openTransfer = app(BankTransferService::class)->open(shop: true);
+        }
+
+        return $this->openTransfer;
     }
 
     private function quote(): ShopQuote

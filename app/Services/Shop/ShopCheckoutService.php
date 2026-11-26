@@ -6,11 +6,13 @@ namespace App\Services\Shop;
 
 use App\Contracts\PaymentGateway;
 use App\Enums\PaymentKind;
+use App\Enums\PaymentMethod;
 use App\Enums\PaymentStatus;
 use App\Enums\ShopOrderStatus;
 use App\Exceptions\CheckoutNotAllowedException;
 use App\Exceptions\CrossTenantWriteException;
 use App\Exceptions\PaymentGatewayException;
+use App\Filament\App\Pages\BankTransferPayment;
 use App\Models\Payment;
 use App\Models\ShopCartItem;
 use App\Models\ShopOrder;
@@ -18,7 +20,9 @@ use App\Models\ShopOrderItem;
 use App\Models\Tenant;
 use App\Models\TenantBillingProfile;
 use App\Models\User;
+use App\Services\Billing\BankTransferService;
 use App\Services\Billing\BillingProfileService;
+use App\Services\Billing\PaymentMethods;
 use App\Support\Billing\CheckoutLine;
 use App\Support\Billing\CheckoutRequest;
 use App\Support\Money;
@@ -47,16 +51,18 @@ class ShopCheckoutService
         private readonly ShopCart $cart,
         private readonly DeliveryAddress $addresses,
         private readonly BillingProfileService $profiles,
+        private readonly PaymentMethods $methods,
+        private readonly BankTransferService $bankTransfers,
     ) {}
 
     /**
      * @param  array<string, mixed>  $address
      * @param  int  $expectedTotal  the total the owner saw; a different one now is refused
-     * @return string the provider's payment page URL
+     * @return string the provider's payment page URL, or the bank transfer page
      *
      * @throws AuthorizationException|CheckoutNotAllowedException|ValidationException
      */
-    public function start(Tenant $tenant, User $user, array $address, ?string $note, int $expectedTotal, string $ip, string $locale): string
+    public function start(Tenant $tenant, User $user, array $address, ?string $note, int $expectedTotal, string $ip, string $locale, PaymentMethod $method = PaymentMethod::Card): string
     {
         if (! $this->context->check() || $this->context->id() !== (int) $tenant->getKey()) {
             throw new CrossTenantWriteException('A shop order can only be placed for the tenant in the current TenantContext.');
@@ -69,6 +75,10 @@ class ShopCheckoutService
         if (! $this->catalog->isOpen()) {
             throw CheckoutNotAllowedException::because('shop_closed');
         }
+
+        $this->methods->ensureEnabled($method);
+        // An order waiting for its transfer would be paid twice with the same cart.
+        $this->bankTransfers->ensureNoneOpen(shop: true);
 
         $delivery = $this->addresses->validate($address);
         $note = trim((string) $note);
@@ -89,7 +99,13 @@ class ShopCheckoutService
             throw CheckoutNotAllowedException::because('too_many_attempts');
         }
 
-        $payment = DB::transaction(fn (): Payment => $this->createOrder($tenant, $user, $quote, $delivery, $note === '' ? null : $note, $profile));
+        $payment = DB::transaction(fn (): Payment => $this->createOrder($tenant, $user, $quote, $delivery, $note === '' ? null : $note, $profile, $method));
+
+        // The owner transfers the amount; a super admin marks the order paid once the money arrived.
+        if ($payment->isBankTransfer()) {
+            return BankTransferPayment::getUrl(['payment' => $payment->public_id], panel: 'app', tenant: $tenant);
+        }
+
         // The request is built from the stored order, never from the cart again.
         $order = ShopOrder::query()->with('items')->findOrFail($payment->shop_order_id);
 
@@ -137,7 +153,7 @@ class ShopCheckoutService
     /**
      * @param  array<string, string|null>  $delivery
      */
-    private function createOrder(Tenant $tenant, User $user, ShopQuote $quote, array $delivery, ?string $note, TenantBillingProfile $profile): Payment
+    private function createOrder(Tenant $tenant, User $user, ShopQuote $quote, array $delivery, ?string $note, TenantBillingProfile $profile, PaymentMethod $method): Payment
     {
         $order = new ShopOrder;
         $order->forceFill([
@@ -177,7 +193,8 @@ class ShopCheckoutService
             'currency' => $order->currency,
             'base_amount' => $order->subtotal_amount,
             'amount' => $order->total_amount,
-            'provider' => $this->gateway->name(),
+            'provider' => $method === PaymentMethod::BankTransfer ? PaymentMethod::BANK_TRANSFER_PROVIDER : $this->gateway->name(),
+            'transfer_reference' => $method === PaymentMethod::BankTransfer ? $this->bankTransfers->newReference() : null,
             'billing_details' => $profile->snapshot(),
         ])->save();
 

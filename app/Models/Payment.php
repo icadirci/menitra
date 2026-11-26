@@ -6,6 +6,7 @@ namespace App\Models;
 
 use App\Enums\BillingInterval;
 use App\Enums\PaymentKind;
+use App\Enums\PaymentMethod;
 use App\Enums\PaymentStatus;
 use App\Models\Concerns\BelongsToTenant;
 use App\Support\Money;
@@ -15,8 +16,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
  * Tenant-owned record of one checkout (docs/architecture/subscriptions.md § Payments).
- * Written only by CheckoutService, ShopCheckoutService and PaymentProcessor, so nothing is
- * mass-assignable. Amounts are kuruş and computed on the server.
+ * Written only by CheckoutService, ShopCheckoutService, PaymentProcessor and
+ * BankTransferService, so nothing is mass-assignable. Amounts are kuruş and
+ * computed on the server.
  * billing_details is an encrypted snapshot of the billing profile.
  */
 class Payment extends Model
@@ -47,6 +49,7 @@ class Payment extends Model
             'period_ends_at' => 'immutable_datetime',
             'paid_at' => 'immutable_datetime',
             'failed_at' => 'immutable_datetime',
+            'transfer_notified_at' => 'immutable_datetime',
         ];
     }
 
@@ -121,6 +124,27 @@ class Payment extends Model
     public function isShopOrder(): bool
     {
         return $this->shop_order_id !== null;
+    }
+
+    public function method(): PaymentMethod
+    {
+        return $this->isBankTransfer() ? PaymentMethod::BankTransfer : PaymentMethod::Card;
+    }
+
+    /**
+     * Paid by havale/EFT and confirmed by a super admin (BankTransferService).
+     */
+    public function isBankTransfer(): bool
+    {
+        return $this->provider === PaymentMethod::BANK_TRANSFER_PROVIDER;
+    }
+
+    /**
+     * A bank transfer that is neither approved, rejected nor cancelled yet.
+     */
+    public function isOpenBankTransfer(): bool
+    {
+        return $this->isBankTransfer() && $this->isPending();
     }
 
     public function isPending(): bool

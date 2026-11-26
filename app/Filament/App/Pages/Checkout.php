@@ -5,16 +5,20 @@ declare(strict_types=1);
 namespace App\Filament\App\Pages;
 
 use App\Enums\BillingInterval;
+use App\Enums\PaymentMethod;
 use App\Exceptions\CheckoutNotAllowedException;
+use App\Models\Payment;
 use App\Models\Plan;
 use App\Models\Tenant;
 use App\Models\TenantBillingProfile;
 use App\Models\User;
+use App\Services\Billing\BankTransferService;
 use App\Services\Billing\BillingCalculator;
 use App\Services\Billing\BillingProfileService;
 use App\Services\Billing\BillingQuote;
 use App\Services\Billing\CheckoutEligibility;
 use App\Services\Billing\CheckoutService;
+use App\Services\Billing\PaymentMethods;
 use App\Services\Billing\UpgradeQuote;
 use App\Services\Marketing\MarketingContent;
 use App\Services\Marketing\PricingPlan;
@@ -94,6 +98,11 @@ class Checkout extends Page
 
     private TenantBillingProfile|false|null $profile = false;
 
+    /** @var list<PaymentMethod>|null */
+    private ?array $methods = null;
+
+    private Payment|false|null $openTransfer = false;
+
     public static function canAccess(): bool
     {
         $context = app(TenantContext::class);
@@ -146,6 +155,7 @@ class Checkout extends Page
             'plan' => $selected?->code,
             'interval' => in_array($preferred, $intervals, true) ? $preferred : ($intervals[0] ?? BillingInterval::Monthly->value),
             'years' => 1,
+            'method' => ($this->methods()[0] ?? PaymentMethod::Card)->value,
             'terms' => false,
         ]);
     }
@@ -154,7 +164,8 @@ class Checkout extends Page
     {
         $eligibility = $this->eligibility();
         $plans = $this->plans();
-        $payable = $eligibility->canPayAnything() && $plans !== [];
+        $openTransfer = $this->openTransfer();
+        $payable = $eligibility->canPayAnything() && $plans !== [] && $this->methods() !== [] && $openTransfer === null;
 
         return $schema
             ->statePath('data')
@@ -162,11 +173,26 @@ class Checkout extends Page
                 Hidden::make('plan')
                     ->required()
                     ->in(collect($plans)->pluck('code')->all()),
+                Callout::make(__('billing.bank_transfer.open.title'))
+                    ->description(__('billing.bank_transfer.open.body', ['reference' => $openTransfer?->transfer_reference]))
+                    ->warning()
+                    ->columnSpanFull()
+                    ->actions([
+                        Action::make('openTransfer')
+                            ->label(__('billing.bank_transfer.open.action'))
+                            ->url(fn (): ?string => $openTransfer !== null ? BankTransferPayment::getUrl(['payment' => $openTransfer->public_id]) : null),
+                    ])
+                    ->visible($openTransfer !== null),
+                Callout::make(__('billing.checkout.not_open.title'))
+                    ->description(__('billing.errors.method_unavailable'))
+                    ->warning()
+                    ->columnSpanFull()
+                    ->visible($openTransfer === null && $this->methods() === []),
                 Callout::make(__('billing.checkout.not_open.title'))
                     ->description(__('billing.errors.'.($eligibility->reason ?? 'not_allowed'), ['date' => $this->date($eligibility->opensAt)]))
                     ->warning()
                     ->columnSpanFull()
-                    ->visible(! $payable),
+                    ->visible(! $eligibility->canPayAnything() || $plans === []),
                 $this->activePeriodCallout()?->visible($payable),
                 Grid::make(['default' => 1, 'lg' => 3])
                     ->columnSpanFull()
@@ -210,6 +236,8 @@ class Checkout extends Page
             : BillingInterval::tryFrom((string) ($data['interval'] ?? ''));
         // Hidden for monthly and upgrades; the service re-checks the number against its limit.
         $periods = ! $upgrade && $interval === BillingInterval::Yearly ? (int) ($data['years'] ?? 1) : 1;
+        // Hidden when only one method is on; the service re-checks that it is enabled.
+        $method = PaymentMethod::tryFrom((string) ($data['method'] ?? '')) ?? ($this->methods()[0] ?? PaymentMethod::Card);
         $user = auth()->user();
 
         if ($plan === null || $interval === null || ! $user instanceof User) {
@@ -219,7 +247,7 @@ class Checkout extends Page
         }
 
         try {
-            $url = app(CheckoutService::class)->start($this->tenant(), $user, $plan, $interval, (string) request()->ip(), app()->getLocale(), $periods);
+            $url = app(CheckoutService::class)->start($this->tenant(), $user, $plan, $interval, (string) request()->ip(), app()->getLocale(), $periods, $method);
         } catch (CheckoutNotAllowedException $exception) {
             Notification::make()->danger()->title($exception->getMessage())->send();
 
@@ -471,25 +499,76 @@ class Checkout extends Page
                     ->label(__('billing.checkout.summary.period'))
                     ->state(fn (Get $get): string => $this->periodText($get))
                     ->icon(Heroicon::OutlinedCalendarDays),
+                self::methodField($this->methods()),
                 Checkbox::make('terms')
                     ->label(new HtmlString(e(__('billing.checkout.fields.terms')).' <a href="'.e(MarketingUrl::to('terms')).'" target="_blank" rel="noopener" class="underline">'.e(__('billing.checkout.fields.terms_link')).'</a>'))
                     ->accepted()
                     ->validationMessages(['accepted' => __('billing.checkout.fields.terms_required')]),
                 Actions::make([
                     Action::make('pay')
-                        ->label(fn (Get $get): string => __('billing.checkout.pay_amount', ['amount' => $this->totalFor($get)?->format() ?? '']))
-                        ->icon(Heroicon::LockClosed)
+                        ->label(fn (Get $get): string => self::isTransfer($get)
+                            ? __('billing.bank_transfer.pay_amount', ['amount' => $this->totalFor($get)?->format() ?? ''])
+                            : __('billing.checkout.pay_amount', ['amount' => $this->totalFor($get)?->format() ?? '']))
+                        ->icon(fn (Get $get): Heroicon => self::isTransfer($get) ? Heroicon::BuildingLibrary : Heroicon::LockClosed)
                         ->size('lg')
                         ->disabled($this->profile() === null)
                         ->submit('pay'),
                 ])->fullWidth(),
                 Group::make([
-                    Text::make(__('billing.checkout.trust.secure'))->icon(Heroicon::OutlinedShieldCheck)->color('gray')->size(TextSize::Small),
-                    Text::make(__('billing.checkout.trust.card'))->icon(Heroicon::OutlinedCreditCard)->color('gray')->size(TextSize::Small),
+                    Text::make(__('billing.checkout.trust.secure'))->icon(Heroicon::OutlinedShieldCheck)->color('gray')->size(TextSize::Small)
+                        ->visible(fn (Get $get): bool => ! self::isTransfer($get)),
+                    Text::make(__('billing.checkout.trust.card'))->icon(Heroicon::OutlinedCreditCard)->color('gray')->size(TextSize::Small)
+                        ->visible(fn (Get $get): bool => ! self::isTransfer($get)),
+                    Text::make(__('billing.bank_transfer.trust'))->icon(Heroicon::OutlinedBuildingLibrary)->color('gray')->size(TextSize::Small)
+                        ->visible(fn (Get $get): bool => self::isTransfer($get)),
                     Text::make(__('billing.checkout.trust.receipt'))->icon(Heroicon::OutlinedEnvelope)->color('gray')->size(TextSize::Small),
                     Text::make(__('billing.checkout.trust.no_auto'))->icon(Heroicon::OutlinedArrowPath)->color('gray')->size(TextSize::Small),
                 ])->dense(),
             ]);
+    }
+
+    /**
+     * Card / bank transfer, as switched on in /admin; shown only when both are.
+     *
+     * @param  list<PaymentMethod>  $methods
+     */
+    public static function methodField(array $methods): ToggleButtons
+    {
+        return ToggleButtons::make('method')
+            ->label(__('billing.methods.label'))
+            ->options(collect($methods)->mapWithKeys(fn (PaymentMethod $method): array => [$method->value => $method->label()])->all())
+            ->icons([
+                PaymentMethod::Card->value => Heroicon::OutlinedCreditCard,
+                PaymentMethod::BankTransfer->value => Heroicon::OutlinedBuildingLibrary,
+            ])
+            ->helperText(fn (Get $get): ?string => self::isTransfer($get) ? __('billing.bank_transfer.method_help') : null)
+            ->in(array_map(fn (PaymentMethod $method): string => $method->value, $methods))
+            ->required(count($methods) > 1)
+            ->grouped()
+            ->live()
+            ->visible(count($methods) > 1);
+    }
+
+    public static function isTransfer(Get $get): bool
+    {
+        return $get('method') === PaymentMethod::BankTransfer->value;
+    }
+
+    /**
+     * @return list<PaymentMethod>
+     */
+    private function methods(): array
+    {
+        return $this->methods ??= app(PaymentMethods::class)->enabled();
+    }
+
+    private function openTransfer(): ?Payment
+    {
+        if ($this->openTransfer === false) {
+            $this->openTransfer = app(BankTransferService::class)->open(shop: false);
+        }
+
+        return $this->openTransfer;
     }
 
     private function intervalLabel(BillingInterval $interval, ?Plan $plan): string

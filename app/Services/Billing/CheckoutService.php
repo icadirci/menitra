@@ -7,11 +7,13 @@ namespace App\Services\Billing;
 use App\Contracts\PaymentGateway;
 use App\Enums\BillingInterval;
 use App\Enums\PaymentKind;
+use App\Enums\PaymentMethod;
 use App\Enums\PaymentStatus;
 use App\Enums\SubscriptionStatus;
 use App\Exceptions\CheckoutNotAllowedException;
 use App\Exceptions\CrossTenantWriteException;
 use App\Exceptions\PaymentGatewayException;
+use App\Filament\App\Pages\BankTransferPayment;
 use App\Models\Payment;
 use App\Models\Plan;
 use App\Models\Subscription;
@@ -27,7 +29,8 @@ use Illuminate\Support\Facades\Log;
 /**
  * Starts a manual period payment (docs/architecture/subscriptions.md § Payments):
  * checks who may pay and what, computes the amount on the server, stores a
- * pending payment and opens the provider's hosted checkout. Nothing here
+ * pending payment and opens the provider's hosted checkout, or (bank
+ * transfer) shows the account to pay into. Nothing here
  * changes the subscription; PaymentProcessor applies the verified result.
  */
 class CheckoutService
@@ -40,6 +43,8 @@ class CheckoutService
         private readonly PaymentGateway $gateway,
         private readonly BillingCalculator $calculator,
         private readonly BillingProfileService $profiles,
+        private readonly PaymentMethods $methods,
+        private readonly BankTransferService $bankTransfers,
     ) {}
 
     public function eligibility(): CheckoutEligibility
@@ -187,17 +192,20 @@ class CheckoutService
 
     /**
      * @param  int  $periods  periods of $interval to pay for at once (yearly: up to maxPeriods(); monthly and upgrades: 1)
-     * @return string the provider's payment page URL
+     * @return string the provider's payment page URL, or the bank transfer page
      *
      * @throws AuthorizationException|CheckoutNotAllowedException
      */
-    public function start(Tenant $tenant, User $user, Plan $plan, BillingInterval $interval, string $ip, string $locale, int $periods = 1): string
+    public function start(Tenant $tenant, User $user, Plan $plan, BillingInterval $interval, string $ip, string $locale, int $periods = 1, PaymentMethod $method = PaymentMethod::Card): string
     {
         $this->ensureCurrentTenant($tenant);
 
         if (! $user->can('manageSettings', $tenant)) {
             throw new AuthorizationException;
         }
+
+        $this->methods->ensureEnabled($method);
+        $this->bankTransfers->ensureNoneOpen(shop: false);
 
         $eligibility = $this->eligibility();
 
@@ -234,6 +242,7 @@ class CheckoutService
         }
 
         $quote = $this->calculator->quote($plan, $interval, $periods);
+        $bankTransfer = $method === PaymentMethod::BankTransfer;
 
         $payment = new Payment;
         $payment->forceFill([
@@ -244,7 +253,8 @@ class CheckoutService
             'period_count' => $periods,
             'status' => PaymentStatus::Pending,
             'currency' => $quote->total->currency,
-            'provider' => $this->gateway->name(),
+            'provider' => $bankTransfer ? PaymentMethod::BANK_TRANSFER_PROVIDER : $this->gateway->name(),
+            'transfer_reference' => $bankTransfer ? $this->bankTransfers->newReference() : null,
             'billing_details' => $profile->snapshot(),
             ...($upgrade === null ? [
                 'base_amount' => $quote->base->minor,
@@ -263,6 +273,11 @@ class CheckoutService
                 'period_ends_at' => $upgrade->periodEndsAt,
             ]),
         ])->save();
+
+        // The owner transfers the amount; a super admin applies it once the money arrived.
+        if ($bankTransfer) {
+            return BankTransferPayment::getUrl(['payment' => $payment->public_id], panel: 'app', tenant: $tenant);
+        }
 
         try {
             $session = $this->gateway->initializeCheckout($this->request($payment, $quote, $user, $ip, $locale, $upgrade));

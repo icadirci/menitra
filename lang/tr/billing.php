@@ -26,6 +26,7 @@ return [
 
     'validation' => [
         'tax_id_individual' => 'Geçerli bir T.C. kimlik numarası girin (11 hane).',
+        'iban' => 'Geçerli bir TR IBAN girin (TR ile başlayan 26 karakter).',
         'tax_id_corporate' => 'Geçerli bir vergi kimlik numarası girin (10 hane).',
     ],
 
@@ -42,6 +43,8 @@ return [
         'too_many_attempts' => 'Çok fazla ödeme denemesi yapıldı. Lütfen bir süre sonra tekrar deneyin.',
         'gateway_rejected' => 'Ödeme sayfası açılamadı: iyzico gönderilen bilgileri kabul etmedi. Kartınızdan çekim yapılmadı. Fatura bilgilerinizi (e-posta, telefon, T.C. kimlik / vergi no, adres) kontrol edip tekrar deneyin.',
         'gateway_unavailable' => 'Ödeme sayfası şu anda açılamadı. Kartınızdan çekim yapılmadı; lütfen birkaç dakika sonra tekrar deneyin.',
+        'method_unavailable' => 'Seçilen ödeme yöntemi şu anda kullanılamıyor. Lütfen başka bir yöntem seçin veya daha sonra tekrar deneyin.',
+        'transfer_open' => 'Bekleyen bir havale/EFT ödemeniz var. Yeni bir ödeme başlatmadan önce onu tamamlayın, onaylanmasını bekleyin veya iptal edin.',
         'no_price' => 'Bu paket için seçilen dönemde fiyat tanımlı değil.',
     ],
 
@@ -54,13 +57,13 @@ return [
         'back_to_subscription' => 'Aboneliğe dön',
     ],
 
-    'subscription_note' => 'Ödemeler iyzico güvencesiyle 3D Secure ile alınır; kart bilgileriniz Menitra\'da saklanmaz. Her ödeme bir ayı ya da bir veya birkaç yılı kapsar, süreyi istediğiniz zaman uzatabilirsiniz ve otomatik çekim yapılmaz; süre bitmeden size hatırlatma e-postası göndeririz.',
+    'subscription_note' => 'Kartla ödemeler iyzico güvencesiyle 3D Secure ile alınır ve kart bilgileriniz Menitra\'da saklanmaz; havale/EFT ödemeleri ekibimizce onaylanır. Her ödeme bir ayı ya da bir veya birkaç yılı kapsar, süreyi istediğiniz zaman uzatabilirsiniz ve otomatik çekim yapılmaz; süre bitmeden size hatırlatma e-postası göndeririz.',
 
     'checkout' => [
         'title' => 'Ödeme',
         'title_active' => 'Süreyi uzat veya paketi yükselt',
         'title_upgrade' => 'Paketi yükselt',
-        'subheading' => 'Paketinizi ve ödeme döneminizi seçin; ödemeyi iyzico güvencesiyle tamamlayın.',
+        'subheading' => 'Paketinizi ve ödeme döneminizi seçin, ardından ödemeyi tamamlayın.',
         'active' => [
             'title' => 'Aktif aboneliğiniz: :plan · :interval · :date tarihine kadar',
             'upgrade_help' => 'Üst pakete geçerseniz yeni paketiniz ödemeden hemen sonra açılır; yalnızca önceden ödenmiş kalan süreniz için fark ödersiniz.',
@@ -179,7 +182,7 @@ return [
         'paid_at' => 'Ödeme tarihi',
         'plan' => 'Paket',
         'period' => 'Dönem',
-        'card' => 'Kart',
+        'card' => 'Ödeme yöntemi',
         'reference' => 'iyzico ödeme no',
         'total' => 'Toplam (KDV dahil)',
         'tax_id' => 'Vergi dairesi / kimlik no',
@@ -248,6 +251,123 @@ return [
                 'subject' => ':business – ödemeniz bekleniyor',
                 'body' => ':business için :plan aboneliğinizin süresi doldu ve ek süreye girdi. Menünüz :date tarihine kadar yayında kalır; bu tarihe kadar ödeme yapılmazsa menünüz yayından kalkar.',
             ],
+        ],
+    ],
+
+    'methods' => [
+        'label' => 'Ödeme yöntemi',
+        'card' => 'Kredi / banka kartı',
+        'bank_transfer' => 'Havale / EFT',
+    ],
+
+    'bank_transfer' => [
+        'title' => 'Havale / EFT ile ödeme',
+        'pay_amount' => ':amount havale/EFT ile öde',
+        'method_help' => 'Sonraki adımda hesap bilgilerimizi ve açıklamaya yazmanız gereken ödeme kodunu göreceksiniz. Ödemeniz onaylandığında aboneliğiniz / siparişiniz güncellenir.',
+        'trust' => 'Ödemeniz ekibimiz tarafından kontrol edilip onaylanır',
+        'amount' => 'Tutar',
+        'reference' => 'Ödeme kodu',
+        'reference_help' => 'Bu kodu havale/EFT açıklamasına yazın.',
+        'purpose' => 'Ödeme konusu',
+        'instructions' => 'Açıklama',
+        'sections' => [
+            'payment' => 'Ödeme bilgileri',
+            'account' => 'Hesap bilgileri',
+        ],
+        'states' => [
+            'awaiting' => [
+                'title' => 'Ödemeniz bekleniyor',
+                'body' => 'Tutarı aşağıdaki hesaba gönderin ve açıklamaya :reference kodunu yazın. Ödemeyi yaptıktan sonra "Ödemeyi yaptım" düğmesine tıklayın.',
+            ],
+            'notified' => [
+                'title' => 'Ödeme bildiriminiz alındı',
+                'body' => ':reference kodlu ödemeniz kontrol ediliyor. Tutar hesabımıza ulaştığında onaylanır ve size e-posta göndeririz.',
+            ],
+            'succeeded' => [
+                'title' => 'Ödemeniz onaylandı, teşekkürler!',
+                'body' => ':reference kodlu havale/EFT ödemeniz onaylandı.',
+            ],
+            'rejected' => [
+                'title' => 'Ödemeniz onaylanmadı',
+                'body' => ':reference kodlu ödeme onaylanmadı. Gerekçe: :reason. Sorularınız için bizimle iletişime geçin.',
+            ],
+            'cancelled' => [
+                'title' => 'Ödeme iptal edildi',
+                'body' => ':reference kodlu havale/EFT ödemesi iptal edildi. Dilediğiniz zaman yeni bir ödeme başlatabilirsiniz.',
+            ],
+        ],
+        'open' => [
+            'title' => 'Bekleyen bir havale/EFT ödemeniz var',
+            'body' => ':reference kodlu ödeme tamamlanana, onaylanana veya iptal edilene kadar yeni bir abonelik ödemesi başlatılamaz.',
+            'body_shop' => ':reference kodlu sipariş ödemesi tamamlanana, onaylanana veya iptal edilene kadar yeni bir sipariş verilemez.',
+            'action' => 'Havale bilgilerini göster',
+        ],
+        'actions' => [
+            'notify' => 'Ödemeyi yaptım',
+            'notify_confirm' => ':amount tutarını açıklamaya :reference yazarak gönderdiğinizi onaylıyor musunuz? Ekibimiz ödemeyi kontrol edip onaylayacak.',
+            'notified' => 'Bildiriminiz alındı. Ödemeniz onaylandığında size haber vereceğiz.',
+            'cancel' => 'Ödemeyi iptal et',
+            'cancel_confirm' => 'Bu havale/EFT ödemesi iptal edilecek. Henüz para göndermediyseniz devam edin.',
+            'cancelled' => 'Ödeme iptal edildi.',
+        ],
+        'errors' => [
+            'not_open' => 'Bu ödeme artık beklemede değil.',
+        ],
+        'statuses' => [
+            'awaiting' => 'Ödeme bekleniyor',
+            'notified' => 'Onay bekliyor',
+            'rejected' => 'Reddedildi',
+            'cancelled' => 'İptal edildi',
+        ],
+        'mail' => [
+            'subject' => 'Havale/EFT bildirimi: :reference',
+            'intro' => ':business havale/EFT ile ödeme yaptığını bildirdi.',
+            'check' => 'Banka hesabını kontrol edip ödemeyi yönetim panelinden onaylayın veya reddedin.',
+        ],
+        'admin' => [
+            'singular' => 'Havale/EFT',
+            'plural' => 'Havale/EFT ödemeleri',
+            'purpose' => 'Konu',
+            'notified_at' => 'Bildirildi',
+            'shop_order' => 'Stand siparişi :number',
+            'upgrade' => ':plan paketine yükseltme',
+            'approve' => 'Onayla',
+            'approve_heading' => ':reference ödemesini onayla',
+            'approve_confirm' => ':amount tutarının bu ödeme koduyla hesaba geçtiğini kontrol ettiniz mi? Onay, ödemeyi kart ödemesi gibi uygular (abonelik başlar / uzar ya da sipariş ödenmiş olur) ve geri alınamaz.',
+            'approved' => 'Ödeme onaylandı',
+            'reject' => 'Reddet',
+            'reject_confirm' => 'Ödeme uygulanmaz. İşletme sahibi gerekçeyi ödeme sayfasında görür.',
+            'reject_reason' => 'Gerekçe',
+            'reject_reason_help' => 'İşletme sahibine gösterilir.',
+            'rejected' => 'Ödeme reddedildi',
+        ],
+    ],
+
+    'settings' => [
+        'title' => 'Ödeme ayarları',
+        'subheading' => 'İşletmelerin hangi yöntemlerle ödeme yapabileceğini ve havale/EFT için hesap bilgilerini belirleyin.',
+        'sections' => [
+            'methods' => 'Ödeme yöntemleri',
+            'methods_help' => 'Kapalı bir yöntem ödeme sayfalarında gösterilmez ve sunucuda da reddedilir. İkisi de kapalıysa yeni ödeme alınamaz.',
+            'bank' => 'Havale / EFT hesabı',
+            'bank_help' => 'Bu bilgiler ve açıklama metni, havale/EFT seçen işletme sahibine ödeme sayfasında gösterilir.',
+        ],
+        'fields' => [
+            'card_enabled' => 'Kartla ödeme (iyzico)',
+            'card_enabled_help' => 'iyzico hesabı ve anahtarları hazır değilse kapalı tutun.',
+            'bank_transfer_enabled' => 'Havale / EFT',
+            'bank_transfer_enabled_help' => 'İşletme ödemeyi yapıp "Ödemeyi yaptım" der; ödeme "Havale/EFT ödemeleri" sayfasında elle onaylanır.',
+            'bank_account_holder' => 'Hesap sahibi',
+            'bank_name' => 'Banka',
+            'bank_iban' => 'IBAN',
+            'notification_email' => 'Bildirim e-postası',
+            'notification_email_help' => '"Ödemeyi yaptım" bildirimleri bu adrese gider. Boşsa site ayarlarındaki iletişim e-postası kullanılır.',
+            'instructions' => 'Açıklama metni',
+            'instructions_help' => 'Ödeme sayfasında hesap bilgilerinin altında gösterilir. Kullanılabilir alanlar: :placeholders (ödeme kodu, tutar, işletme adı).',
+            'instructions_placeholder' => 'Havale/EFT açıklamasına yalnızca {reference} yazın. Ödemeniz genellikle 1 iş günü içinde onaylanır.',
+        ],
+        'errors' => [
+            'bank_account_required' => 'Havale/EFT açıkken hesap sahibi ve IBAN zorunludur.',
         ],
     ],
 

@@ -28,6 +28,9 @@ enum AdminAuditAction: string
     case ShopOrderCancelled = 'shop_order.cancelled';
     case ShopOrderRefunded = 'shop_order.refunded';
 
+    case BankTransferApproved = 'payment.bank_transfer_approved';
+    case BankTransferRejected = 'payment.bank_transfer_rejected';
+
     public function label(): string
     {
         return __('admin.audit.actions.'.str_replace('.', '_', $this->value));

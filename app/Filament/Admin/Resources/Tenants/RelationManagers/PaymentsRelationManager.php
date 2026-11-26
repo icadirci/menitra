@@ -70,8 +70,12 @@ class PaymentsRelationManager extends RelationManager
                 TextColumn::make('receipt_number')
                     ->label(__('admin.tenants.payments.receipt'))
                     ->placeholder('—'),
+                TextColumn::make('provider')
+                    ->label(__('billing.methods.label'))
+                    ->formatStateUsing(fn (Payment $record): string => $record->method()->label()),
                 TextColumn::make('provider_payment_id')
                     ->label(__('admin.tenants.payments.provider_reference'))
+                    ->state(fn (Payment $record): ?string => $record->provider_payment_id ?? $record->transfer_reference)
                     ->copyable()
                     ->placeholder('—'),
                 TextColumn::make('failure_code')

@@ -190,6 +190,8 @@ return [
             'shop_order_delivered' => 'Shop order delivered',
             'shop_order_cancelled' => 'Shop order cancelled',
             'shop_order_refunded' => 'Shop order refund recorded',
+            'payment_bank_transfer_approved' => 'Bank transfer approved',
+            'payment_bank_transfer_rejected' => 'Bank transfer rejected',
         ],
     ],
 

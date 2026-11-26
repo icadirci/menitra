@@ -135,8 +135,12 @@ class ViewReceipt extends Page
             'plan' => $payment->isShopOrder() ? null : $planName.' · '.$payment->periodLabel(),
             'period' => $payment->isShopOrder() ? null : $date($payment->period_starts_at).' – '.$date($payment->period_ends_at),
             'order' => $payment->isShopOrder() ? $planName : null,
-            'card' => $payment->card_last_four !== null ? trim(($payment->card_association ?? '').' •••• '.$payment->card_last_four) : null,
-            'reference' => $payment->provider_payment_id,
+            'card' => match (true) {
+                $payment->isBankTransfer() => $payment->method()->label(),
+                $payment->card_last_four !== null => trim(($payment->card_association ?? '').' •••• '.$payment->card_last_four),
+                default => null,
+            },
+            'reference' => $payment->provider_payment_id ?? $payment->transfer_reference,
             'billing' => [
                 'name' => $billing['name'] ?? null,
                 'tax' => $taxLine !== '' ? $taxLine : null,

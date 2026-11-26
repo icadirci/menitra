@@ -190,6 +190,8 @@ return [
             'shop_order_delivered' => 'Stand siparişi teslim edildi',
             'shop_order_cancelled' => 'Stand siparişi iptal edildi',
             'shop_order_refunded' => 'Stand siparişi iadesi kaydedildi',
+            'payment_bank_transfer_approved' => 'Havale/EFT ödemesi onaylandı',
+            'payment_bank_transfer_rejected' => 'Havale/EFT ödemesi reddedildi',
         ],
     ],
 

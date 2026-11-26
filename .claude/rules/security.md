@@ -76,6 +76,8 @@
 - A payment is applied at most once (row lock, `succeeded` is final). Subscription changes go only through `SubscriptionService`.
 - Only owners start checkouts and edit billing details (checked in `canAccess()` and in the services). Card data never reaches the app; only masked card info (association, family, last four) is stored. `tenant_billing_profiles.tax_id` and `payments.billing_details` are encrypted and hidden from serialization; `/admin` never shows them.
 - Payment logs and Sentry get the payment's public id and tenant id only, never billing details or card data.
+- Payment methods (`payment_settings`) are super-admin only (`PaymentSettingPolicy`, `canAccess()` + `save()`); a disabled method is refused in the checkout services, not only hidden. The IBAN is validated (`Iban`, mod-97) and the instructions are rendered escaped.
+- Bank transfers: the reference is random (not an id), the transfer page is owner-only and read through the tenant scope; "I have paid" only notifies, it never applies anything. Only a super admin applies or rejects a transfer (`PaymentPolicy::review`, `PaymentAdminService`, in the payment's own tenant context, audited); applying goes through `PaymentProcessor` (row lock, at most once) and `SubscriptionService` / `ShopOrderService`. While a transfer is open no second payment for the same purpose starts. The notification mail carries no billing data.
 - iyzico credentials only in `.env` (`IYZICO_*`); the SDK is used only inside `IyzicoGateway`, with timeouts (`IyzicoCurl`) and TLS verification on.
 
 ## QR stand shop

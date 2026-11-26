@@ -12,6 +12,7 @@ use App\Models\Plan;
 use App\Models\Subscription;
 use App\Models\Tenant;
 use App\Models\User;
+use App\Services\Billing\BankTransferService;
 use App\Services\Billing\CheckoutService;
 use App\Services\Shop\ShopCart;
 use App\Services\Subscription\FeatureGate;
@@ -161,7 +162,7 @@ class ViewSubscription extends Page implements HasTable
     public function content(Schema $schema): Schema
     {
         $subscription = $this->subscription();
-        $result = $this->paymentResult();
+        $result = $this->paymentResult() ?? $this->openTransferCallout();
 
         if ($subscription === null) {
             return $schema->components(array_values(array_filter([
@@ -204,6 +205,31 @@ class ViewSubscription extends Page implements HasTable
             Section::make()
                 ->schema([Text::make(__('billing.subscription_note'))]),
         ])));
+    }
+
+    /**
+     * A bank transfer waiting for the money or for the platform's confirmation.
+     */
+    private function openTransferCallout(): ?Callout
+    {
+        $transfer = app(BankTransferService::class)->open(shop: false);
+
+        if ($transfer === null) {
+            return null;
+        }
+
+        $state = $transfer->transfer_notified_at === null ? 'awaiting' : 'notified';
+
+        return Callout::make(__("billing.bank_transfer.states.{$state}.title"))
+            ->description(__("billing.bank_transfer.states.{$state}.body", ['reference' => $transfer->transfer_reference]))
+            ->icon(Heroicon::OutlinedBuildingLibrary)
+            ->warning()
+            ->columnSpanFull()
+            ->actions([
+                Action::make('openTransfer')
+                    ->label(__('billing.bank_transfer.open.action'))
+                    ->url(BankTransferPayment::getUrl(['payment' => $transfer->public_id])),
+            ]);
     }
 
     /**

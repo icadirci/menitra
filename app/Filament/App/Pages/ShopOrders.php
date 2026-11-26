@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Filament\App\Pages;
 
+use App\Enums\PaymentMethod;
 use App\Enums\PaymentStatus;
 use App\Enums\ShopOrderStatus;
 use App\Models\Payment;
@@ -77,7 +78,9 @@ class ShopOrders extends Page implements HasTable
             // Never-paid attempts older than a day are noise.
             ->query(ShopOrder::query()->with(['items', 'payment'])->where(fn (Builder $query) => $query
                 ->whereIn('status', ShopOrderStatus::placed())
-                ->orWhere('created_at', '>=', now()->subDay())))
+                ->orWhere('created_at', '>=', now()->subDay())
+                // A bank transfer may take days to be confirmed.
+                ->orWhereHas('payment', fn (Builder $payment) => $payment->where('provider', PaymentMethod::BANK_TRANSFER_PROVIDER)->where('status', PaymentStatus::Pending))))
             ->defaultSort('id', 'desc')
             ->paginated([10, 25])
             ->emptyStateHeading(__('shop.orders.empty'))
@@ -107,6 +110,11 @@ class ShopOrders extends Page implements HasTable
                     ->modalHeading(fn (ShopOrder $record): string => (string) $record->order_number)
                     ->modalSubmitAction(false)
                     ->schema(fn (ShopOrder $record): array => $this->details($record)),
+                Action::make('bankTransfer')
+                    ->label(__('billing.bank_transfer.open.action'))
+                    ->icon(Heroicon::OutlinedBuildingLibrary)
+                    ->visible(fn (ShopOrder $record): bool => $record->payment?->isOpenBankTransfer() === true)
+                    ->url(fn (ShopOrder $record): string => BankTransferPayment::getUrl(['payment' => $record->payment?->public_id])),
                 Action::make('track')
                     ->label(__('shop.track'))
                     ->icon(Heroicon::OutlinedTruck)

@@ -26,6 +26,7 @@ return [
 
     'validation' => [
         'tax_id_individual' => 'Enter a valid Turkish ID number (11 digits).',
+        'iban' => 'Enter a valid Turkish IBAN (26 characters starting with TR).',
         'tax_id_corporate' => 'Enter a valid tax number (10 digits).',
     ],
 
@@ -42,6 +43,8 @@ return [
         'too_many_attempts' => 'Too many payment attempts. Please try again later.',
         'gateway_rejected' => 'The payment page couldn\'t be opened: iyzico didn\'t accept the details sent. Your card was not charged. Please check your billing details (email, phone, ID / tax number, address) and try again.',
         'gateway_unavailable' => 'The payment page couldn\'t be opened. Your card was not charged; please try again in a few minutes.',
+        'method_unavailable' => 'The selected payment method is not available right now. Please choose another one or try again later.',
+        'transfer_open' => 'You have a pending bank transfer. Complete it, wait for its confirmation or cancel it before starting a new payment.',
         'no_price' => 'This plan has no price for the selected period.',
     ],
 
@@ -54,13 +57,13 @@ return [
         'back_to_subscription' => 'Back to subscription',
     ],
 
-    'subscription_note' => 'Payments are taken by iyzico with 3-D Secure; Menitra never stores your card details. Each payment covers one month or one or more years, you can extend at any time and nothing is charged automatically; we email you a reminder before your time runs out.',
+    'subscription_note' => 'Card payments are taken by iyzico with 3-D Secure and Menitra never stores your card details; bank transfers are confirmed by our team. Each payment covers one month or one or more years, you can extend at any time and nothing is charged automatically; we email you a reminder before your time runs out.',
 
     'checkout' => [
         'title' => 'Payment',
         'title_active' => 'Extend or upgrade your plan',
         'title_upgrade' => 'Upgrade your plan',
-        'subheading' => 'Choose your plan and billing period, then pay securely with iyzico.',
+        'subheading' => 'Choose your plan and billing period, then complete the payment.',
         'active' => [
             'title' => 'Your subscription: :plan · :interval · until :date',
             'upgrade_help' => 'Upgrade now and the new plan is active right after payment; you only pay the difference for your remaining prepaid time.',
@@ -179,7 +182,7 @@ return [
         'paid_at' => 'Paid on',
         'plan' => 'Plan',
         'period' => 'Period',
-        'card' => 'Card',
+        'card' => 'Payment method',
         'reference' => 'iyzico payment ID',
         'total' => 'Total (VAT included)',
         'tax_id' => 'Tax office / ID number',
@@ -248,6 +251,123 @@ return [
                 'subject' => ':business – payment due',
                 'body' => 'Your :plan subscription for :business has ended and is in its grace period. Your menu stays online until :date; without a payment by then it goes offline.',
             ],
+        ],
+    ],
+
+    'methods' => [
+        'label' => 'Payment method',
+        'card' => 'Credit / debit card',
+        'bank_transfer' => 'Bank transfer',
+    ],
+
+    'bank_transfer' => [
+        'title' => 'Pay by bank transfer',
+        'pay_amount' => 'Pay :amount by bank transfer',
+        'method_help' => 'Next you will see our bank account and the payment code to write in the transfer description. Your subscription / order is updated once the payment is confirmed.',
+        'trust' => 'Your payment is checked and confirmed by our team',
+        'amount' => 'Amount',
+        'reference' => 'Payment code',
+        'reference_help' => 'Write this code in the transfer description.',
+        'purpose' => 'Payment for',
+        'instructions' => 'Instructions',
+        'sections' => [
+            'payment' => 'Payment details',
+            'account' => 'Bank account',
+        ],
+        'states' => [
+            'awaiting' => [
+                'title' => 'Waiting for your payment',
+                'body' => 'Send the amount to the account below and write :reference in the description. Then click "I have paid".',
+            ],
+            'notified' => [
+                'title' => 'We received your payment notice',
+                'body' => 'Your payment :reference is being checked. It is confirmed once the amount reaches our account and we will email you.',
+            ],
+            'succeeded' => [
+                'title' => 'Your payment was confirmed, thank you!',
+                'body' => 'Your bank transfer :reference was confirmed.',
+            ],
+            'rejected' => [
+                'title' => 'Your payment was not confirmed',
+                'body' => 'The payment :reference was not confirmed. Reason: :reason. Please contact us with any questions.',
+            ],
+            'cancelled' => [
+                'title' => 'Payment cancelled',
+                'body' => 'The bank transfer :reference was cancelled. You can start a new payment at any time.',
+            ],
+        ],
+        'open' => [
+            'title' => 'You have a pending bank transfer',
+            'body' => 'No new subscription payment can be started until the payment :reference is completed, confirmed or cancelled.',
+            'body_shop' => 'No new order can be placed until the order payment :reference is completed, confirmed or cancelled.',
+            'action' => 'Show transfer details',
+        ],
+        'actions' => [
+            'notify' => 'I have paid',
+            'notify_confirm' => 'Do you confirm that you sent :amount with :reference in the description? Our team will check and confirm the payment.',
+            'notified' => 'Thank you. We will let you know once your payment is confirmed.',
+            'cancel' => 'Cancel payment',
+            'cancel_confirm' => 'This bank transfer will be cancelled. Continue only if you have not sent any money.',
+            'cancelled' => 'Payment cancelled.',
+        ],
+        'errors' => [
+            'not_open' => 'This payment is no longer pending.',
+        ],
+        'statuses' => [
+            'awaiting' => 'Awaiting payment',
+            'notified' => 'Awaiting confirmation',
+            'rejected' => 'Rejected',
+            'cancelled' => 'Cancelled',
+        ],
+        'mail' => [
+            'subject' => 'Bank transfer notice: :reference',
+            'intro' => ':business reported a bank transfer.',
+            'check' => 'Check the bank account and approve or reject the payment in the admin panel.',
+        ],
+        'admin' => [
+            'singular' => 'Bank transfer',
+            'plural' => 'Bank transfers',
+            'purpose' => 'For',
+            'notified_at' => 'Reported',
+            'shop_order' => 'Stand order :number',
+            'upgrade' => 'Upgrade to :plan',
+            'approve' => 'Approve',
+            'approve_heading' => 'Approve :reference',
+            'approve_confirm' => 'Did you check that :amount arrived with this payment code? Approving applies the payment like a card payment (the subscription starts / is extended or the order is paid) and cannot be undone.',
+            'approved' => 'Payment approved',
+            'reject' => 'Reject',
+            'reject_confirm' => 'The payment is not applied. The owner sees the reason on the payment page.',
+            'reject_reason' => 'Reason',
+            'reject_reason_help' => 'Shown to the business owner.',
+            'rejected' => 'Payment rejected',
+        ],
+    ],
+
+    'settings' => [
+        'title' => 'Payment settings',
+        'subheading' => 'Choose how businesses can pay and the bank account for transfers.',
+        'sections' => [
+            'methods' => 'Payment methods',
+            'methods_help' => 'A disabled method is not offered on the payment pages and is refused on the server. With both disabled no new payment can be made.',
+            'bank' => 'Bank transfer account',
+            'bank_help' => 'These details and the instructions are shown to owners who choose bank transfer.',
+        ],
+        'fields' => [
+            'card_enabled' => 'Card payments (iyzico)',
+            'card_enabled_help' => 'Keep this off until the iyzico account and keys are ready.',
+            'bank_transfer_enabled' => 'Bank transfer',
+            'bank_transfer_enabled_help' => 'The business pays and clicks "I have paid"; the payment is approved manually on the "Bank transfers" page.',
+            'bank_account_holder' => 'Account holder',
+            'bank_name' => 'Bank',
+            'bank_iban' => 'IBAN',
+            'notification_email' => 'Notification email',
+            'notification_email_help' => '"I have paid" notices go to this address. When empty, the contact email from the site settings is used.',
+            'instructions' => 'Instructions',
+            'instructions_help' => 'Shown below the bank account on the payment page. Available fields: :placeholders (payment code, amount, business name).',
+            'instructions_placeholder' => 'Write only {reference} in the transfer description. Payments are usually confirmed within one business day.',
+        ],
+        'errors' => [
+            'bank_account_required' => 'Account holder and IBAN are required while bank transfers are enabled.',
         ],
     ],
 

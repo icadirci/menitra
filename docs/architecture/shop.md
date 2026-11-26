@@ -38,6 +38,7 @@ With "pay now" at registration the plan is paid first; the stands wait in the ca
 - **Open** means the switch is on and at least one product is active. Closed: hidden on the site, at registration and in the panel (the shop page stays reachable for past orders).
 - **Owner-only** in `/app` (`TenantPolicy::manageSettings`), checked in the pages, `ShopCart` and `ShopCheckoutService`. No subscription is required to order.
 - **Amounts** come only from products and settings. The total the owner saw is passed along; a different total is refused (`shop_price_changed`).
+- **Bank transfer** (2026-11-26): when enabled in `/admin`, the owner may pay an order by havale/EFT ([subscriptions.md § Payment methods and bank transfers](subscriptions.md#payment-methods-and-bank-transfers)); the order stays `awaiting_payment` until a super admin approves the transfer (→ `paid`) or rejects it (→ `payment_failed`). While one is open no further order can be placed.
 - **Failed or abandoned payment:** the order ends as `payment_failed`, the cart is kept, a retry creates a new order. Money that arrives later still makes the order paid.
 - **Stock** is checked at checkout and taken when the payment succeeds, so it may go below zero in a race (logged; the order is never dropped). Cancelling puts it back.
 - **Status** changes only through `ShopOrderService`, in the order's own tenant context. `/admin` uses `ShopOrderAdminService`: the scope bypass only reads, writes set the order's tenant first; every change is audited.

@@ -11,6 +11,7 @@
 - [Scheduled processing](#scheduled-processing)
 - [Plan features and limits](#plan-features-and-limits)
 - [Payments](#payments)
+  - [Payment methods and bank transfers](#payment-methods-and-bank-transfers)
 - [Pricing page](#pricing-page)
 - [Data retention](#data-retention)
 - [Configuration](#configuration)
@@ -219,6 +220,21 @@ iyzico hosted payment page (3-D Secure, single payment, no installments)
 
 - **Shop orders** (2026-11-25) use the same payments table, callback, webhook and reconciliation; such a payment has `shop_order_id` and no plan, never touches a subscription and is not in the subscription page's history. See [shop.md](shop.md).
 
+### Payment methods and bank transfers
+
+> Decided 2026-11-26: card payments (iyzico) and bank transfers (havale/EFT) are switched on and off in `/admin`; a bank transfer is confirmed manually by a super admin. Requested because iyzico can't be activated until the company is set up.
+
+- **Settings** (`payment_settings`, single row id = 1, platform data; `PaymentSetting`, `/admin/payment-settings`, `ManagePaymentSettings`, super admins only via `PaymentSettingPolicy`, checked in `canAccess()` and in `save()`): `card_enabled` (default on), `bank_transfer_enabled` (default off), account holder, bank name, IBAN (`App\Rules\Iban`: `TR` + 24 digits, mod-97, stored without spaces), notification email (fallback: site contact email) and translatable instructions (`payment_setting_translations.bank_transfer_instructions`, plain text, placeholders `{reference}`, `{amount}`, `{business}`). A transfer is offered only when it is switched on **and** holder + IBAN are set (`PaymentSetting::isEnabled()`).
+- **Enforcement:** `PaymentMethods::ensureEnabled()` in `CheckoutService::start()` and `ShopCheckoutService::start()` (`method_unavailable`); the checkout pages show a method toggle only when both are on, and no pay button when none is. Callback, webhook and reconciliation keep working for card payments already started.
+- **Starting a transfer:** the same eligibility, amount and billing snapshot as a card payment; the payment row gets `provider = bank_transfer`, a random `transfer_reference` (`MN` + 8 unambiguous characters, unique) and no `provider_token` (CHECK `payments_bank_transfer`), the gateway is never called and the owner is sent to `/app/{slug}/payments/bank-transfer?payment={public_id}` (`BankTransferPayment`, owner-only, read through the tenant scope; other payments 404). The page shows amount, reference, the account (IBAN copyable) and the instructions (escaped, line breaks kept).
+- **One open transfer per purpose:** while a tenant has a pending transfer for its subscription (or for a shop order), no other checkout for that purpose starts, card or transfer (`transfer_open`), so nothing is paid twice. The pages link to the open transfer.
+- **Owner actions** (`BankTransferService`, owner-only, in the payment's tenant context): "I have paid" sets `transfer_notified_at` (once) and queues `BankTransferNotifiedMail` to the platform team (reference, business name, amount; no billing data); "cancel" is possible only before reporting (`failed`, `failure_code = cancelled`).
+- **Admin decision** (`/admin/bank-transfers`, `BankTransferResource`, list only; badge = reported and undecided): `PaymentAdminService` lists bank transfers across tenants (documented admin bypass, read-only) and, for a decision, authorizes `PaymentPolicy::review` (super admins; platform staff only read), sets `TenantContext` to the payment's tenant, calls `PaymentProcessor` and writes `payment.bank_transfer_approved` / `payment.bank_transfer_rejected` to `admin_audit_events`.
+  - **Approve** → `PaymentProcessor::approveBankTransfer()`: locked, only an open transfer, applied exactly like a verified card payment (same transition table, receipt number and mail; shop orders become paid). The transition is chosen when the money is confirmed: a trial's days are kept, a renewal is added to the current period end; if the trial ended meanwhile, the period starts at approval.
+  - **Reject** (reason required, shown to the owner) → `closeBankTransfer()`: `failed`, `failure_code = transfer_rejected`; a shop order becomes `payment_failed`.
+- **Never expires automatically:** reconciliation only looks at payments with a provider token; an open transfer stays pending until reported, approved, rejected or cancelled.
+- Receipts show "Bank transfer" as the method and the transfer reference; the subscription's `provider` is `bank_transfer` and `provider_reference` the transfer reference.
+
 ### Production checklist (iyzico)
 
 1. Approved iyzico merchant account; production keys in `.env` (`IYZICO_API_KEY`, `IYZICO_SECRET_KEY`, `IYZICO_BASE_URL=https://api.iyzipay.com`); sandbox keys from sandbox-merchant.iyzipay.com for staging.
@@ -230,7 +246,7 @@ iyzico hosted payment page (3-D Secure, single payment, no installments)
 
 ### Configuration
 
-`config/billing.php`: `gateway` (`iyzico`), `max_years_per_payment` (5), `max_prepaid_years` (5), `pending_expires_minutes` (120), `reconcile_after_minutes` (5), `reminder_days` ([7, 1]). Credentials: `config/services.php` → `iyzico`.
+`config/billing.php`: `gateway` (`iyzico`, the card adapter; whether card payments are offered is `payment_settings.card_enabled`), `max_years_per_payment` (5), `max_prepaid_years` (5), `pending_expires_minutes` (120), `reconcile_after_minutes` (5), `reminder_days` ([7, 1]). Credentials: `config/services.php` → `iyzico`.
 
 ## Pricing page
 
@@ -281,4 +297,5 @@ The 14-day trial and 7-day grace defaults are working values pending confirmatio
 - `/register?plan=`: an active public plan is used with its own trial days; inactive, hidden or unknown codes fall back to the default plan; pricing CTAs carry the plan code. *(RegistrationTest, PricingPageTest)*
 - The dashboard widget and subscription page show grace (with its end date), cancellation and expired subscriptions (ended date, menu offline, data kept). *(DashboardTest, SubscriptionPageTest)*
 - Payments *(tests/Feature/Billing)*: server-computed amounts incl. extra branches; eligibility (renewal window, plan change only without a paid period, hidden plans, owners only, tenant in context, attempt limit); provider error keeps a failed payment; callback applies trial → active from the trial end, active → renewed from the period end, grace + plan change, expired → new row; never twice; declined, wrong amount, wrong reference and pending/stale results change nothing; unknown tokens reveal nothing; no session cookie on the callback; webhook signature (valid, invalid, missing, mismatched) and its status never trusted; reconciliation and suspended tenants; reminders once per threshold, closest only, grace once, escaped names; billing profile validation (TCKN/VKN checksums), encryption and owner-only; receipt page and other tenants' payments (404); "pay now" at registration.
+- Bank transfers *(BankTransferTest)*: IBAN rule; settings super-admin only and validated; a disabled method (or a transfer without an account) is refused on the server; a transfer never calls the provider and blocks a second payment for the same purpose; the page shows the account and filled-in instructions; "I have paid" mails the team without billing data; reported transfers can't be cancelled; owner-only and tenant-isolated (404); approval applies the payment once (trial days kept, receipt, audited, no context left behind); rejection changes nothing and shows the reason; staff only read; reconciliation leaves transfers alone; a shop order paid by transfer becomes paid on approval.
 - `FeatureGate` handles unlimited, count limits, boolean features and missing rows; trialing / active / past_due / grace apply the plan, expired or no subscription allows no creation; a downgrade falls back to `classic` without deleting settings.
