@@ -13,6 +13,7 @@ use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
+use App\Filament\Shared\InitialsAvatarProvider;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
@@ -47,6 +48,8 @@ class AdminPanelProvider extends PanelProvider
             ->brandLogo(fn () => view('filament.brand-logo', ['name' => __('panels.admin.brand')]))
             ->brandLogoHeight('2rem')
             ->favicon(fn (): string => asset('favicon.svg'))
+            // Initials on a per-record colour; Filament's default loads ui-avatars.com (blocked by CSP).
+            ->defaultAvatarProvider(InitialsAvatarProvider::class)
             ->colors([
                 // Menitra design system: Forest primary on warm neutrals.
                 'primary' => Color::hex('#1F4D3B'),

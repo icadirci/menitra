@@ -10,7 +10,9 @@ use App\Enums\TenantStatus;
 use App\Models\Concerns\HasTenantMedia;
 use App\Models\Concerns\HasTranslations;
 use App\Models\Translations\TenantTranslation;
+use App\Support\Media\TenantMediaPath;
 use Database\Factories\TenantFactory;
+use Filament\Models\Contracts\HasAvatar;
 use Filament\Models\Contracts\HasName;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
@@ -18,11 +20,12 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Storage;
 
 /**
  * One tenant = one business. Its name and texts live in tenant_translations.
  */
-class Tenant extends Model implements HasName
+class Tenant extends Model implements HasAvatar, HasName
 {
     /** @use HasFactory<TenantFactory> */
     use HasFactory, HasTenantMedia, HasTranslations, HasUlids, SoftDeletes;
@@ -131,6 +134,15 @@ class Tenant extends Model implements HasName
     public function mediaTenant(): Tenant
     {
         return $this;
+    }
+
+    /**
+     * The logo in the panels' tenant switcher; without one Filament falls back
+     * to the initials avatar (InitialsAvatarProvider).
+     */
+    public function getFilamentAvatarUrl(): ?string
+    {
+        return filled($this->logo_path) ? Storage::disk(TenantMediaPath::DISK)->url($this->logo_path) : null;
     }
 
     public function getFilamentName(): string
