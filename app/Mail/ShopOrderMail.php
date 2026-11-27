@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Mail;
 
 use App\Enums\ShopOrderStatus;
+use App\Mail\Concerns\SentFromBillingAddress;
 use App\Support\Money;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -19,6 +20,7 @@ use Illuminate\Mail\Mailables\Envelope;
 class ShopOrderMail extends Mailable implements ShouldQueue
 {
     use Queueable;
+    use SentFromBillingAddress;
 
     public int $tries = 3;
 
@@ -41,7 +43,7 @@ class ShopOrderMail extends Mailable implements ShouldQueue
 
     public function envelope(): Envelope
     {
-        return new Envelope(subject: __("shop.mail.{$this->status->value}.subject", ['number' => $this->orderNumber]));
+        return new Envelope(from: $this->billingFrom(), subject: __("shop.mail.{$this->status->value}.subject", ['number' => $this->orderNumber]));
     }
 
     public function content(): Content

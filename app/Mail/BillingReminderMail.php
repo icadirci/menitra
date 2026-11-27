@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Mail;
 
 use App\Enums\BillingReminderType;
+use App\Mail\Concerns\SentFromBillingAddress;
 use Carbon\CarbonImmutable;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -19,6 +20,7 @@ use Illuminate\Mail\Mailables\Envelope;
 class BillingReminderMail extends Mailable implements ShouldQueue
 {
     use Queueable;
+    use SentFromBillingAddress;
 
     public int $tries = 3;
 
@@ -34,6 +36,7 @@ class BillingReminderMail extends Mailable implements ShouldQueue
     public function envelope(): Envelope
     {
         return new Envelope(
+            from: $this->billingFrom(),
             subject: __("billing.mail.reminder.{$this->type->value}.subject", ['business' => $this->businessName]),
         );
     }

@@ -115,4 +115,21 @@ return [
         'name' => env('MAIL_FROM_NAME', env('APP_NAME', 'Laravel')),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Billing "From" Address
+    |--------------------------------------------------------------------------
+    |
+    | Customer-facing payment mails (receipts, billing reminders, shop order
+    | updates) are sent from this address. Empty values fall back to the
+    | global "from" above. With Gmail SMTP the address must be a verified
+    | "Send mail as" alias of the authenticated account.
+    |
+    */
+
+    'billing_from' => [
+        'address' => env('MAIL_BILLING_FROM_ADDRESS'),
+        'name' => env('MAIL_BILLING_FROM_NAME'),
+    ],
+
 ];
