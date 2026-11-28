@@ -44,6 +44,10 @@ class GoogleTagTest extends TestCase
         $this->assertStringContainsString('https://www.googletagmanager.com', $this->scriptSources($response), $label);
         $this->assertStringNotContainsString("'unsafe-inline'", $this->scriptSources($response), $label);
         $this->assertStringContainsString('frame-src', (string) $response->headers->get('Content-Security-Policy'), $label);
+        foreach (['img-src', 'connect-src'] as $directive) {
+            preg_match("/{$directive} ([^;]*)/", (string) $response->headers->get('Content-Security-Policy'), $match);
+            $this->assertStringContainsString('https://ad.doubleclick.net', $match[1] ?? '', "{$label}: {$directive}");
+        }
         $this->assertDoesNotMatchRegularExpression('/<script\b(?![^>]*\ssrc=")/i', (string) $response->getContent(), "{$label}: inline script.");
         $response->assertDontSee('googletagmanager.com/gtm.js', false); // loaded by app.js after consent only
     }

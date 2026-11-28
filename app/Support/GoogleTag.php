@@ -22,8 +22,8 @@ final class GoogleTag
     /** CSP sources the tag needs, added only to responses that render it. */
     public const array CSP = [
         'script-src' => ['https://www.googletagmanager.com', 'https://www.googleadservices.com', 'https://googleads.g.doubleclick.net', 'https://www.google.com'],
-        'img-src' => ['https://www.googletagmanager.com', 'https://www.googleadservices.com', 'https://googleads.g.doubleclick.net', 'https://www.google.com', 'https://www.google.com.tr'],
-        'connect-src' => ['https://www.googletagmanager.com', 'https://www.googleadservices.com', 'https://googleads.g.doubleclick.net', 'https://www.google.com', 'https://www.google.com.tr', 'https://pagead2.googlesyndication.com'],
+        'img-src' => ['https://www.googletagmanager.com', 'https://www.googleadservices.com', 'https://googleads.g.doubleclick.net', 'https://www.google.com', 'https://www.google.com.tr', 'https://ad.doubleclick.net'],
+        'connect-src' => ['https://www.googletagmanager.com', 'https://www.googleadservices.com', 'https://googleads.g.doubleclick.net', 'https://www.google.com', 'https://www.google.com.tr', 'https://pagead2.googlesyndication.com', 'https://ad.doubleclick.net'],
         'frame-src' => ['https://www.googletagmanager.com', 'https://td.doubleclick.net', 'https://bid.g.doubleclick.net'],
     ];
 
