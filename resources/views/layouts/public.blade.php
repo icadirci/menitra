@@ -15,5 +15,7 @@
 {{-- Shared shell for the public site and auth pages (app.css + app.js only). --}}
 <body class="min-h-screen bg-paper font-sans text-base/normal text-ink">
     @yield('body')
+    {{-- Google Ads tag + consent banner, opted in only by marketing, /register and /email/verify. --}}
+    @yield('tracking')
 </body>
 </html>

@@ -2,6 +2,8 @@
 import './bootstrap';
 import { startAlpine } from './lib/alpine';
 import { startReveal } from './lib/reveal';
+import { startGoogleTag } from './lib/google-tag';
 
 startAlpine();
 startReveal();
+startGoogleTag();

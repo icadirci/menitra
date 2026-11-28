@@ -23,6 +23,10 @@
 
 @section('document_title')@yield('title')@endsection
 
+@section('tracking')
+    <x-google-tag />
+@endsection
+
 @section('body')
     <a href="#main" class="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-50 focus:rounded-input focus:bg-white focus:px-4 focus:py-3 focus:font-semibold focus:shadow-card">{{ __('marketing.skip_to_content') }}</a>
 

@@ -23,7 +23,7 @@ return [
     'privacy' => [
         'title' => 'Privacy and Personal Data Protection',
         'description' => 'Why Menitra processes personal data, how it is protected and your rights under the Turkish Personal Data Protection Law (KVKK).',
-        'updated' => '15 November 2026',
+        'updated' => '28 November 2026',
         'intro' => 'This notice explains, in line with the Turkish Personal Data Protection Law No. 6698 ("KVKK"), how your personal data is processed when you use the Menitra platform (website, business panel and QR menu pages).',
         'sections' => [
             [
@@ -51,13 +51,14 @@ return [
             [
                 'title' => '4. Cookies',
                 'paragraphs' => [
-                    'The website and business panel use only strictly necessary cookies for your session and form security (CSRF). No advertising or third-party tracking cookies are used.',
+                    'The website and business panel use strictly necessary cookies for your session and form security (CSRF).',
+                    'The marketing pages, the registration page and the email verification page use the Google Ads tag and its cookies to measure how our ads perform, only with your explicit consent (KVKK Art. 5/1). Without consent no request is sent to Google. You can change your choice at any time with the "Cookie settings" link at the bottom of the page. The business panel and the account page use no advertising cookies.',
                     'QR menu pages use no cookies and start no session.',
                 ],
             ],
             [
                 'title' => '5. Transfers',
-                'paragraphs' => ['Data may be shared with our hosting, email delivery and infrastructure providers only as far as needed to provide the service and in line with KVKK Articles 8 and 9. [List of providers and cross-border transfer details to be added.] Data may be shared with authorities where required by law.'],
+                'paragraphs' => ['Data may be shared with our hosting, email delivery and infrastructure providers only as far as needed to provide the service and in line with KVKK Articles 8 and 9. [List of providers and cross-border transfer details to be added.] Data may be shared with authorities where required by law.', 'If you accept Google Ads cookies, the page you visit, browser and device details, your IP address and ad click details are transferred to Google LLC (USA). This cross-border transfer is based on the explicit consent you give in the cookie banner (KVKK Art. 9).'],
             ],
             [
                 'title' => '6. Retention',

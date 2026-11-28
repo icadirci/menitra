@@ -87,6 +87,8 @@
             <nav class="flex flex-wrap gap-x-5 gap-y-2" aria-label="{{ __('legal.eyebrow') }}">
                 <a href="{{ MarketingUrl::to('privacy') }}" class="text-[#A9AEAA] no-underline hover:text-saffron-500">{{ __('marketing.footer.privacy') }}</a>
                 <a href="{{ MarketingUrl::to('terms') }}" class="text-[#A9AEAA] no-underline hover:text-saffron-500">{{ __('marketing.footer.terms') }}</a>
+                {{-- Shown by google-tag.js only while the Ads tag is configured. --}}
+                <button type="button" data-consent-open hidden class="cursor-pointer text-[#A9AEAA] hover:text-saffron-500">{{ __('marketing.consent.settings') }}</button>
             </nav>
             <x-marketing.language-switcher :page="$page" dark />
         </div>

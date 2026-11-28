@@ -449,4 +449,12 @@ return [
         ],
     ],
 
+    'consent' => [
+        'title' => 'Çerez tercihiniz',
+        'body' => 'Zorunlu çerezlerin yanında, reklamlarımızın etkisini ölçmek için Google Ads çerezlerini kullanmak istiyoruz. Bu çerezler yalnızca onay verirseniz yüklenir; verileriniz Google tarafından yurt dışında işlenebilir.',
+        'privacy' => 'Ayrıntılar',
+        'accept' => 'Kabul et',
+        'reject' => 'Reddet',
+        'settings' => 'Çerez tercihleri',
+    ],
 ];

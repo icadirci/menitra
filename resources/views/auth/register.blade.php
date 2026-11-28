@@ -6,6 +6,10 @@
 
 @section('document_title', __('auth.register.title'))
 
+@section('tracking')
+    <x-google-tag />
+@endsection
+
 @section('body')
     <div class="flex min-h-screen flex-wrap">
         {{-- Form side --}}

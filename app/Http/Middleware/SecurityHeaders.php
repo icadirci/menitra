@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Middleware;
 
 use Closure;
+use App\Support\GoogleTag;
 use Illuminate\Foundation\Vite;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -22,11 +23,14 @@ use Symfony\Component\HttpFoundation\Response;
  * - panels (/admin, /app, Livewire endpoints): Filament and Livewire inject
  *   inline scripts, so scripts also allow 'unsafe-inline' (documented
  *   exception); everything else matches the public profile.
+ * A public page that rendered the Google Ads tag (GoogleTag, marketing,
+ * registration and email verification only) additionally allows Google's
+ * tag origins for that response only; still no inline scripts.
  * Headers a response already carries are never overwritten.
  */
 final class SecurityHeaders
 {
-    public function __construct(private readonly Vite $vite) {}
+    public function __construct(private readonly Vite $vite, private readonly GoogleTag $googleTag) {}
 
     public function handle(Request $request, Closure $next): Response
     {
@@ -34,7 +38,7 @@ final class SecurityHeaders
         $response = $next($request);
 
         $headers = [
-            'Content-Security-Policy' => $this->policy($this->isPanel($request)),
+            'Content-Security-Policy' => $this->policy($this->isPanel($request), $this->googleTag->rendered($request)),
             'X-Content-Type-Options' => 'nosniff',
             'X-Frame-Options' => 'DENY',
             'Referrer-Policy' => 'strict-origin-when-cross-origin',
@@ -64,7 +68,7 @@ final class SecurityHeaders
             || $request->is('admin', 'admin/*', 'app', 'app/*', 'livewire*');
     }
 
-    private function policy(bool $panel): string
+    private function policy(bool $panel, bool $googleTag): string
     {
         $hot = $this->hotOrigins();
         $media = $this->origin((string) config('filesystems.disks.media.url'));
@@ -82,6 +86,12 @@ final class SecurityHeaders
             'base-uri' => ["'self'"],
             'object-src' => ["'none'"],
         ];
+
+        if ($googleTag && ! $panel) {
+            foreach (GoogleTag::CSP as $directive => $sources) {
+                $directives[$directive] = [...($directives[$directive] ?? []), ...$sources];
+            }
+        }
 
         return implode('; ', array_map(
             fn (string $directive, array $sources): string => $directive.' '.implode(' ', array_unique($sources)),

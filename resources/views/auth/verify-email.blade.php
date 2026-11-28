@@ -3,6 +3,11 @@
 @section('title', __('auth.verify.title'))
 @section('subtitle', __('auth.verify.body'))
 
+{{-- First page after registration: reports the sign-up conversion (GoogleTag). --}}
+@section('tracking')
+    <x-google-tag />
+@endsection
+
 @section('icon')
     <span class="inline-flex size-[72px] items-center justify-center rounded-[22px] bg-forest-700 text-paper">
         <x-ui.icon name="mail" :size="32" />

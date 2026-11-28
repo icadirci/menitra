@@ -22,7 +22,7 @@ return [
     'privacy' => [
         'title' => 'Gizlilik ve Kişisel Verilerin Korunması',
         'description' => 'Menitra\'nın kişisel verileri hangi amaçlarla işlediği, nasıl koruduğu ve 6698 sayılı KVKK kapsamındaki haklarınız.',
-        'updated' => '15 Kasım 2026',
+        'updated' => '28 Kasım 2026',
         'intro' => 'Bu aydınlatma metni, 6698 sayılı Kişisel Verilerin Korunması Kanunu ("KVKK") uyarınca, Menitra platformunu (web sitesi, işletme paneli ve QR menü sayfaları) kullanırken kişisel verilerinizin nasıl işlendiğini açıklar.',
         'sections' => [
             [
@@ -50,13 +50,14 @@ return [
             [
                 'title' => '4. Çerezler',
                 'paragraphs' => [
-                    'Web sitesi ve işletme paneli, yalnızca oturumunuzu ve form güvenliğini (CSRF) sağlamak için zorunlu çerezler kullanır. Reklam veya üçüncü taraf takip çerezleri kullanılmaz.',
+                    'Web sitesi ve işletme paneli, oturumunuzu ve form güvenliğini (CSRF) sağlamak için zorunlu çerezler kullanır.',
+                    'Tanıtım sayfaları, kayıt sayfası ve e-posta doğrulama sayfası, yalnızca açık rızanızla (KVKK m.5/1) reklamlarımızın etkisini ölçmek için Google Ads etiketini ve çerezlerini kullanır. Onay vermezseniz Google\'a hiçbir istek gönderilmez. Tercihinizi sayfa altındaki "Çerez tercihleri" bağlantısıyla dilediğiniz zaman değiştirebilirsiniz. İşletme paneli ve hesap sayfası reklam çerezi kullanmaz.',
                     'QR menü sayfaları çerez kullanmaz ve oturum başlatmaz.',
                 ],
             ],
             [
                 'title' => '5. Aktarım',
-                'paragraphs' => ['Veriler; barındırma, e-posta gönderimi ve teknik altyapı hizmeti aldığımız tedarikçilerle, yalnızca hizmetin sunulması için gerekli ölçüde ve KVKK m.8 ve m.9\'a uygun olarak paylaşılabilir. [Tedarikçi listesi ve yurt dışı aktarım bilgisi eklenecek.] Yasal zorunluluk hâlinde yetkili kurumlarla paylaşılabilir.'],
+                'paragraphs' => ['Veriler; barındırma, e-posta gönderimi ve teknik altyapı hizmeti aldığımız tedarikçilerle, yalnızca hizmetin sunulması için gerekli ölçüde ve KVKK m.8 ve m.9\'a uygun olarak paylaşılabilir. [Tedarikçi listesi ve yurt dışı aktarım bilgisi eklenecek.] Yasal zorunluluk hâlinde yetkili kurumlarla paylaşılabilir.', 'Google Ads çerezlerine onay verirseniz; ziyaret ettiğiniz sayfa, tarayıcı ve cihaz bilgileri, IP adresi ve reklam tıklaması bilgileri Google LLC\'ye (ABD) aktarılır. Bu yurt dışı aktarım, çerez onayında verdiğiniz açık rızaya (KVKK m.9) dayanır.'],
             ],
             [
                 'title' => '6. Saklama süresi',

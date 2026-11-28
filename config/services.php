@@ -43,4 +43,11 @@ return [
         'base_url' => env('IYZICO_BASE_URL', 'https://sandbox-api.iyzipay.com'),
     ],
 
+    // Google Ads tag on the marketing site only (App\Support\GoogleTag). Empty = no tag.
+    // id: "AW-…" from Google Ads; signup_conversion: "AW-…/label" of the sign-up conversion.
+    'google_ads' => [
+        'id' => env('GOOGLE_ADS_ID'),
+        'signup_conversion' => env('GOOGLE_ADS_SIGNUP_CONVERSION'),
+    ],
+
 ];

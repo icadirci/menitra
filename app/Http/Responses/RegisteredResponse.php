@@ -8,6 +8,7 @@ use App\Filament\App\Pages\Checkout;
 use App\Filament\App\Pages\ShopCheckout;
 use App\Models\Tenant;
 use App\Models\User;
+use App\Support\GoogleTag;
 use App\Services\Shop\ShopCart;
 use App\Tenancy\TenantContext;
 use Illuminate\Http\JsonResponse;
@@ -33,6 +34,8 @@ class RegisteredResponse implements RegisterResponse
         if ($request->wantsJson()) {
             return new JsonResponse('', Response::HTTP_CREATED);
         }
+
+        app(GoogleTag::class)->queueSignupConversion($request->session());
 
         $user = $request->user();
         $membership = $user instanceof User ? $user->memberships()->with('tenant')->first() : null;

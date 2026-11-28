@@ -449,4 +449,12 @@ return [
         ],
     ],
 
+    'consent' => [
+        'title' => 'Your cookie choice',
+        'body' => 'Besides strictly necessary cookies, we would like to use Google Ads cookies to measure how our ads perform. They load only if you agree; your data may be processed by Google outside Türkiye.',
+        'privacy' => 'Details',
+        'accept' => 'Accept',
+        'reject' => 'Reject',
+        'settings' => 'Cookie settings',
+    ],
 ];
